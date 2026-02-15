@@ -1,8 +1,7 @@
 # Choice Race
 
 A dynamic web-based racing game built with **Pixi.js v8**, **TypeScript**, and **Vite**. Players choose a racer count and distance, then watch animal characters race with randomized stats, stamina management, and a competitive "Comeback Engine" that keeps every race exciting until the finish line.
-
-For a detailed technical breakdown of the balancing logic and architecture, see the [Design Spec](documents/spec.md).
+For a detailed technical breakdown of the balancing logic and architecture, see the [Design Spec](documents/spec.md) and the [Development & Design Guide](documents/DEVELOPMENT.md).
 
 ## Getting Started
 
