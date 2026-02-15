@@ -70,8 +70,10 @@ export class RaceScene extends Container implements Scene {
   private gameViewH: number = 0;
   private isPortrait: boolean = false;
 
+  private entranceFinished: boolean = false;
   private countdownTimer: number = VISUALS.COUNTDOWN_DURATION;
   private countdownText: Text | null = null;
+  private remainingDistanceText: Text | null = null;
   private raceStarted: boolean = false;
 
   constructor(
@@ -82,6 +84,7 @@ export class RaceScene extends Container implements Scene {
     groundTextures: GroundTextures,
     grassTextures: GrassTextures,
     onFinished: (results: Racer[]) => void,
+    selectedKeys?: string[],
   ) {
     super();
     this.onFinished = onFinished;
@@ -173,10 +176,11 @@ export class RaceScene extends Container implements Scene {
     this.trackGraphics = new Graphics();
     this.world.addChild(this.trackGraphics);
 
-    this.createRacers(playerNames);
+    this.createRacers(playerNames, selectedKeys);
     this.initLeaderboardUI();
 
     this.initCountdownUI();
+    this.initDistanceUI();
   }
 
   private initCountdownUI() {
@@ -198,7 +202,30 @@ export class RaceScene extends Container implements Scene {
       style,
     });
     this.countdownText.anchor.set(0.5);
+    this.countdownText.visible = false;
     this.ui.addChild(this.countdownText);
+  }
+
+  private initDistanceUI() {
+    const style = new TextStyle({
+      fill: "#ffffff",
+      fontSize: 80,
+      fontWeight: "900",
+      stroke: { color: "#4e342e", width: 8 },
+      dropShadow: {
+        alpha: 0.5,
+        angle: Math.PI / 4,
+        blur: 4,
+        color: "#000000",
+        distance: 6,
+      },
+    });
+    this.remainingDistanceText = new Text({
+      text: `${this.distance}m`,
+      style,
+    });
+    this.remainingDistanceText.anchor.set(0.5, 0);
+    this.ui.addChild(this.remainingDistanceText);
   }
 
   public resize(width: number, height: number) {
@@ -270,6 +297,11 @@ export class RaceScene extends Container implements Scene {
     if (this.countdownText) {
       this.countdownText.x = this.gameViewW / 2;
       this.countdownText.y = yOffset + this.gameViewH / 2;
+    }
+
+    if (this.remainingDistanceText) {
+      this.remainingDistanceText.x = this.gameViewW / 2;
+      this.remainingDistanceText.y = 20;
     }
   }
 
@@ -448,20 +480,17 @@ export class RaceScene extends Container implements Scene {
       treeTop.animationSpeed = 0.1;
       treeTop.play();
       this.world.addChild(treeTop);
-
-      const marker = new Text({
-        text: `${m}m`,
-        style: { fill: COLORS.TEXT_MARKER, fontSize: 14 },
-      });
-      marker.anchor.set(0.5, 0);
-      marker.x = x;
-      marker.y = this.gameViewH - ITEMS.tree.height - grassStripH - 10;
-      this.world.addChild(marker);
     }
   }
 
-  private createRacers(names: string[]) {
-    const results = createRacers(names, this.characterAnimations);
+  private createRacers(names: string[], selectedKeys?: string[]) {
+    const results = createRacers(names, this.characterAnimations, selectedKeys);
+
+    // Shuffle results so track assignment is random (spec §3)
+    for (let i = results.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [results[i], results[j]] = [results[j], results[i]];
+    }
 
     results.forEach(({ racer, characterKey }) => {
       this.racers.push(racer);
@@ -484,6 +513,20 @@ export class RaceScene extends Container implements Scene {
 
   update(delta: number) {
     if (this.raceEnded) return;
+
+    if (!this.entranceFinished) {
+      let allAtStart = true;
+      this.racers.forEach((racer) => {
+        if (!racer.walkEntrance(TRACK.START_LINE_X, delta)) {
+          allAtStart = false;
+        }
+      });
+      if (allAtStart) {
+        this.entranceFinished = true;
+        if (this.countdownText) this.countdownText.visible = true;
+      }
+      return;
+    }
 
     if (!this.raceStarted) {
       this.countdownTimer -= delta / 60;
@@ -549,6 +592,14 @@ export class RaceScene extends Container implements Scene {
         }
       }
     });
+
+    // Update remaining distance UI based on the current leader
+    if (this.remainingDistanceText) {
+      const leader = ranked[0] || this.racers[0];
+      const distToFinishPx = Math.max(0, this.finishLineX - leader.x);
+      const distToFinishM = Math.ceil((distToFinishPx / totalDistPx) * this.distance);
+      this.remainingDistanceText.text = `${distToFinishM}m`;
+    }
 
     this.updateLeaderboard(delta);
 

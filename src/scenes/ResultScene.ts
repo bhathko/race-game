@@ -4,13 +4,11 @@ import { COLORS } from "../config";
 import { LeaderboardSidebar } from "../ui/LeaderboardSidebar";
 import type { RankEntry } from "../ui/LeaderboardSidebar";
 import { createWoodenButton } from "../ui/WoodenButton";
-import { drawHillBackground } from "../ui/HillBackground";
 import type { RacerAnimations } from "../core/types";
 
 export class ResultScene extends Container {
   private onRestart: () => void;
   private bg: Graphics;
-  private hills: Graphics;
   private winnerText: Text;
   private leaderboardSidebar: LeaderboardSidebar;
   private restartBtn: Container;
@@ -25,9 +23,6 @@ export class ResultScene extends Container {
 
     this.bg = new Graphics();
     this.addChild(this.bg);
-
-    this.hills = new Graphics();
-    this.addChild(this.hills);
 
     const winner = finishedRacers[0];
 
@@ -83,7 +78,8 @@ export class ResultScene extends Container {
     const centerX = width / 2;
     const isSmall = width < 600 || height < 500;
 
-    drawHillBackground(this.bg, this.hills, width, height);
+    // Draw solid background
+    this.bg.clear().rect(0, 0, width, height).fill(0x81c784);
 
     this.winnerText.x = centerX;
     this.winnerText.y = height * 0.12;

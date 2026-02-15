@@ -49,8 +49,9 @@ function shuffledCharacterKeys(): string[] {
 export function createRacers(
   names: string[],
   characterAnimations: Map<string, RacerAnimations>,
+  selectedKeys?: string[],
 ): CreatedRacer[] {
-  const charKeys = shuffledCharacterKeys();
+  const charKeys = selectedKeys || shuffledCharacterKeys();
 
   return names.map((name, i) => {
     const color = COLORS.RACERS[i % COLORS.RACERS.length];

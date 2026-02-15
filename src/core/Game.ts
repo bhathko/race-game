@@ -9,6 +9,7 @@ import {
 import { RaceScene } from "../scenes/RaceScene";
 import { MenuScene } from "../scenes/MenuScene";
 import { ResultScene } from "../scenes/ResultScene";
+import { CharacterSelectionScene } from "../scenes/CharacterSelectionScene";
 import { Racer } from "../entities/Racer";
 import { CHARACTERS, ITEMS } from "../config";
 import type { Scene } from "./Scene";
@@ -120,16 +121,30 @@ export class Game {
   showMenuScene() {
     this.setScene(
       new MenuScene((playerCount, distance) => {
-        const names = Array.from(
-          { length: playerCount },
-          (_, i) => `Racer ${i + 1}`,
-        );
-        this.showRaceScene(names, distance);
+        this.showCharacterSelectionScene(playerCount, distance);
       }),
     );
   }
 
-  showRaceScene(playerNames: string[], distance: number) {
+  showCharacterSelectionScene(playerCount: number, distance: number) {
+    this.setScene(
+      new CharacterSelectionScene(
+        playerCount,
+        distance,
+        this.characterAnimations,
+        (selectedKeys, dist) => {
+          const names = selectedKeys.map((key) => {
+             const char = CHARACTERS[key as keyof typeof CHARACTERS];
+             return `The ${char.name}`;
+          });
+          this.showRaceScene(names, dist, selectedKeys);
+        },
+        () => this.showMenuScene()
+      )
+    );
+  }
+
+  showRaceScene(playerNames: string[], distance: number, selectedKeys?: string[]) {
     if (!this.groundTextures || !this.grassTextures) return;
 
     this.setScene(
@@ -141,6 +156,7 @@ export class Game {
         this.groundTextures,
         this.grassTextures,
         (results) => this.showResultScene(results),
+        selectedKeys,
       ),
     );
   }

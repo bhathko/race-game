@@ -1,7 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { GAMEPLAY, COLORS } from "../config";
 import { createWoodenButton } from "../ui/WoodenButton";
-import { drawHillBackground } from "../ui/HillBackground";
 
 const STORAGE_KEY = "choice-race-settings";
 
@@ -16,7 +15,6 @@ export class MenuScene extends Container {
   private selectedDistance = 50;
 
   private bg: Graphics;
-  private hills: Graphics;
   private title: Text;
   private countLabel: Text;
   private countValue: Text;
@@ -34,9 +32,6 @@ export class MenuScene extends Container {
 
     this.bg = new Graphics();
     this.addChild(this.bg);
-
-    this.hills = new Graphics();
-    this.addChild(this.hills);
 
     const titleStyle = new TextStyle({
       fill: "#ffffff",
@@ -125,7 +120,8 @@ export class MenuScene extends Container {
   public resize(width: number, height: number) {
     const centerX = width / 2;
 
-    drawHillBackground(this.bg, this.hills, width, height);
+    // Draw solid background
+    this.bg.clear().rect(0, 0, width, height).fill(0x81c784);
 
     this.title.x = centerX;
     this.title.y = height * 0.15;

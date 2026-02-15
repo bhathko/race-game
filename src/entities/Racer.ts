@@ -101,7 +101,7 @@ export class Racer extends Container {
     this.addChild(this.staminaBar);
 
     const labelStyle = new TextStyle({
-      fill: color,
+      fill: "#ffffff",
       fontSize: 14,
       fontWeight: "bold",
       dropShadow: {
@@ -117,8 +117,29 @@ export class Racer extends Container {
     label.y = -RACER.HEIGHT - 10;
     this.addChild(label);
 
-    this.x = TRACK.START_LINE_X;
+    this.x = -100; // Start off-screen for entrance
     this.y = y + RACER.HEIGHT; // Offset for anchor at bottom
+  }
+
+  /**
+   * Pre-race entrance logic.
+   * @returns true if racer has reached targetX
+   */
+  walkEntrance(targetX: number, delta: number): boolean {
+    const entranceSpeed = 2;
+    if (this.x < targetX) {
+      this.x += entranceSpeed * delta;
+      this.setAnimation("walk");
+      this.sprite.animationSpeed = 0.15;
+      if (this.x >= targetX) {
+        this.x = targetX;
+        this.setAnimation("idle");
+        return true;
+      }
+      return false;
+    }
+    this.setAnimation("idle");
+    return true;
   }
 
   private updateStaminaBar() {
