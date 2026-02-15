@@ -8,6 +8,7 @@ import {
   TilingSprite,
 } from "pixi.js";
 import { Racer } from "../entities/Racer";
+import { createRacers } from "../factories/RacerFactory";
 import {
   CANVAS,
   RACER,
@@ -53,13 +54,14 @@ export class RaceScene extends Container implements Scene {
   private leaderboardContainer: Container;
   private sidebarBg: Graphics;
   private leaderboardItems: Map<Racer, Container> = new Map();
+  private racerCharacters: Map<Racer, string> = new Map();
   private elapsedTime: number = 0;
   private raceEnded: boolean = false;
   private trackWidth: number = 0;
   private finishLineX: number = 0;
   private onFinished: (results: Racer[]) => void;
   private distance: number;
-  private bearAnimations: RacerAnimations;
+  private characterAnimations: Map<string, RacerAnimations>;
   private treeAnimation: Texture[];
   private groundTextures: GroundTextures;
   private grassTextures: GrassTextures;
@@ -75,7 +77,7 @@ export class RaceScene extends Container implements Scene {
   constructor(
     playerNames: string[],
     distance: number,
-    bearAnimations: RacerAnimations,
+    characterAnimations: Map<string, RacerAnimations>,
     treeAnimation: Texture[],
     groundTextures: GroundTextures,
     grassTextures: GrassTextures,
@@ -84,7 +86,7 @@ export class RaceScene extends Container implements Scene {
     super();
     this.onFinished = onFinished;
     this.distance = distance;
-    this.bearAnimations = bearAnimations;
+    this.characterAnimations = characterAnimations;
     this.treeAnimation = treeAnimation;
     this.groundTextures = groundTextures;
     this.grassTextures = grassTextures;
@@ -280,10 +282,12 @@ export class RaceScene extends Container implements Scene {
       container.addChild(bg);
 
       // Animal Icon
-      const icon = new AnimatedSprite(this.bearAnimations.idle);
+      const charKey = this.racerCharacters.get(racer) || "bear";
+      const anims = this.characterAnimations.get(charKey)!;
+      const icon = new AnimatedSprite(anims.idle);
       icon.name = "item-icon";
       icon.anchor.set(0.5);
-      icon.scale.set(0.4);
+      icon.scale.set(1);
       icon.x = 25;
       icon.y = 18;
       icon.stop(); // Just show first frame
@@ -457,21 +461,11 @@ export class RaceScene extends Container implements Scene {
   }
 
   private createRacers(names: string[]) {
-    names.forEach((name, i) => {
-      const color = COLORS.RACERS[i % COLORS.RACERS.length];
-      const stats = {
-        accel:
-          GAMEPLAY.STATS.ACCEL_BASE +
-          Math.random() * GAMEPLAY.STATS.ACCEL_VARIANCE,
-        topSpeed:
-          GAMEPLAY.STATS.BASE_SPEED +
-          Math.random() * GAMEPLAY.STATS.SPEED_VARIANCE,
-        endurance:
-          GAMEPLAY.STATS.ENDURANCE_BASE +
-          Math.random() * GAMEPLAY.STATS.ENDURANCE_VARIANCE,
-      };
-      const racer = new Racer(name, color, 0, stats, this.bearAnimations);
+    const results = createRacers(names, this.characterAnimations);
+
+    results.forEach(({ racer, characterKey }) => {
       this.racers.push(racer);
+      this.racerCharacters.set(racer, characterKey);
       this.world.addChild(racer);
     });
   }
@@ -516,10 +510,34 @@ export class RaceScene extends Container implements Scene {
       if (!r.isFinished() && r.x > leaderX) leaderX = r.x;
     });
 
+    // Compute per-frame rank for every active racer (spec §3)
+    const activeRacers = this.racers.filter((r) => !r.isFinished());
+    const ranked = [...activeRacers].sort((a, b) => b.x - a.x);
+    const rankMap = new Map<Racer, number>();
+    ranked.forEach((r, i) => rankMap.set(r, i + 1));
+
+    // Total race distance in pixels (used for climax & overdrive range)
+    const totalDistPx = this.finishLineX - TRACK.START_LINE_X;
+
+    // Climax Phase — any racer in the final 20 % of the track? (spec §4)
+    const climaxThreshold =
+      this.finishLineX - totalDistPx * GAMEPLAY.BALANCE.CLIMAX_THRESHOLD;
+    const inClimaxPhase = activeRacers.some((r) => r.x >= climaxThreshold);
+
     this.racers.forEach((racer) => {
       if (!racer.isFinished()) {
         allFinished = false;
-        racer.update(delta, this.elapsedTime, leaderX, this.finishLineX);
+        const rank = rankMap.get(racer) ?? 1;
+        racer.update(
+          delta,
+          this.elapsedTime,
+          leaderX,
+          this.finishLineX,
+          rank,
+          totalDistPx,
+          inClimaxPhase,
+          activeRacers.length,
+        );
 
         if (
           racer.x >=

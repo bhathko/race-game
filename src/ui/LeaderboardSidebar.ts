@@ -1,17 +1,19 @@
-import { Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
+import type { RacerAnimations } from "../core/types";
 
 /**
  * Farming-simulation leaderboard sidebar.
  *
  * Hand-drawn vector-art style inspired by Story of Seasons.
  * Dark oak wooden plank background, gold / silver rank cards,
- * cute animal icons (cow / sheep), grass accents & daisy decorations.
+ * dynamic animal icons, grass accents & daisy decorations.
  */
 
 export interface RankEntry {
   rank: number; // 1-based
   name: string; // e.g. "Farmer 2"
   time?: string; // optional time string
+  character?: string; // character key (e.g. "bear", "cat")
 }
 
 // ── colour palette ────────────────────────────────────────────────────────────
@@ -34,14 +36,6 @@ const COL = {
   // card body
   CARD_BG: 0x4e342e,
   CARD_BG_ALPHA: 0.72,
-
-  // animals
-  COW_TAN: 0xf5e6ca,
-  COW_SPOT: 0x795548,
-  COW_NOSE: 0xffccbc,
-  SHEEP_BODY: 0xfaf0e6,
-  SHEEP_FACE: 0xd7ccc8,
-  SHEEP_DARK: 0x5d4037,
 
   // accents
   GRASS_LIGHT: 0x81c784,
@@ -79,12 +73,19 @@ export class LeaderboardSidebar extends Container {
   private elapsed = 0; // animation timer (frames)
   private daisies: { g: Graphics; baseY: number }[] = [];
   private glowGraphics: Graphics[] = [];
+  private animations: Map<string, RacerAnimations> | null = null;
 
-  constructor(entries: RankEntry[], width = 280, height = 520) {
+  constructor(
+    entries: RankEntry[],
+    width = 280,
+    height = 520,
+    animations: Map<string, RacerAnimations> | null = null,
+  ) {
     super();
     this.entries = entries;
     this.sidebarW = width;
     this.sidebarH = height;
+    this.animations = animations;
 
     // ── background ──────────────────────────────────────────────────────────
     this.bg = new Graphics();
@@ -396,13 +397,11 @@ export class LeaderboardSidebar extends Container {
       card.addChild(leaves);
     }
 
-    // Cow icon
-    const cow = new Graphics();
-    this.drawCowIcon(cow, 0, 0);
-    cow.x = iconX;
-    cow.y = h / 2;
-    cow.scale.set(iconScale);
-    card.addChild(cow);
+    // Animal icon
+    const icon = this.createIcon(entry.character, iconScale);
+    icon.x = iconX;
+    icon.y = h / 2;
+    card.addChild(icon);
 
     // Text
     const label = `${entry.rank}${ordinalSuffix(entry.rank)}: ${entry.name}`;
@@ -493,13 +492,11 @@ export class LeaderboardSidebar extends Container {
       card.addChild(can);
     }
 
-    // Sheep icon
-    const sheep = new Graphics();
-    this.drawSheepIcon(sheep, 0, 0);
-    sheep.x = iconX;
-    sheep.y = h / 2;
-    sheep.scale.set(iconScale);
-    card.addChild(sheep);
+    // Animal icon
+    const icon = this.createIcon(entry.character, iconScale);
+    icon.x = iconX;
+    icon.y = h / 2;
+    card.addChild(icon);
 
     // Text
     const label = `${entry.rank}${ordinalSuffix(entry.rank)}: ${entry.name}`;
@@ -539,6 +536,9 @@ export class LeaderboardSidebar extends Container {
   ) {
     const r = compact ? 6 : 10;
     const fontSize = compact ? 13 : 18;
+    const iconScale = 1;
+    const iconX = compact ? 18 : 28;
+    const textX = compact ? 36 : 54;
 
     const body = new Graphics();
     body.roundRect(0, 0, w, h, r).fill({ color: COL.CARD_BG, alpha: 0.6 });
@@ -546,6 +546,12 @@ export class LeaderboardSidebar extends Container {
       .roundRect(0, 0, w, h, r)
       .stroke({ color: COL.OAK_LIGHT, width: compact ? 1 : 2 });
     card.addChild(body);
+
+    // Animal icon
+    const icon = this.createIcon(entry.character, iconScale);
+    icon.x = iconX;
+    icon.y = h / 2;
+    card.addChild(icon);
 
     const label = `${entry.rank}${ordinalSuffix(entry.rank)}: ${entry.name}`;
     const text = new Text({
@@ -559,9 +565,26 @@ export class LeaderboardSidebar extends Container {
       }),
     });
     text.anchor.set(0, 0.5);
-    text.x = compact ? 12 : 20;
+    text.x = textX;
     text.y = h / 2;
     card.addChild(text);
+  }
+
+  /** Create an animal icon from sprite animations if available, else use a fallback circle. */
+  private createIcon(characterKey?: string, _scale = 1.0): Container {
+    if (this.animations && characterKey && this.animations.has(characterKey)) {
+      const anims = this.animations.get(characterKey)!;
+      const sprite = new AnimatedSprite(anims.idle);
+      sprite.anchor.set(0.5);
+      sprite.scale.set(1);
+      sprite.stop();
+      return sprite;
+    }
+
+    // Fallback: simple dot
+    const g = new Graphics();
+    g.circle(0, 0, 8).fill(0xffffff);
+    return g;
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -657,104 +680,6 @@ export class LeaderboardSidebar extends Container {
       g.quadraticCurveTo(lx + dx + dy * 0.4, ly + dy - dx * 0.4, lx, ly);
       g.fill({ color: COL.VINE_LEAF, alpha: 0.75 });
     }
-  }
-
-  // ════════════════════════════════════════════════════════════════════════════
-  //  ANIMAL ICONS  (cute, minimal vector art)
-  // ════════════════════════════════════════════════════════════════════════════
-
-  /** Cute tan cow – front-facing */
-  private drawCowIcon(g: Graphics, cx: number, cy: number) {
-    // Body oval
-    g.ellipse(cx, cy + 2, 12, 10).fill(COL.COW_TAN);
-
-    // Head circle
-    g.circle(cx, cy - 6, 9).fill(COL.COW_TAN);
-
-    // Ears
-    g.ellipse(cx - 10, cy - 10, 5, 3).fill(COL.COW_TAN);
-    g.ellipse(cx + 10, cy - 10, 5, 3).fill(COL.COW_TAN);
-    g.ellipse(cx - 10, cy - 10, 3, 2).fill(COL.COW_NOSE);
-    g.ellipse(cx + 10, cy - 10, 3, 2).fill(COL.COW_NOSE);
-
-    // Spots
-    g.circle(cx - 4, cy - 8, 3).fill({ color: COL.COW_SPOT, alpha: 0.55 });
-    g.circle(cx + 5, cy - 4, 2.5).fill({ color: COL.COW_SPOT, alpha: 0.45 });
-
-    // Muzzle
-    g.ellipse(cx, cy - 2, 5, 3.5).fill(COL.COW_NOSE);
-
-    // Nostrils
-    g.circle(cx - 2, cy - 1.5, 1).fill({ color: COL.COW_SPOT, alpha: 0.6 });
-    g.circle(cx + 2, cy - 1.5, 1).fill({ color: COL.COW_SPOT, alpha: 0.6 });
-
-    // Eyes
-    g.circle(cx - 4, cy - 8, 1.8).fill(0x000000);
-    g.circle(cx + 4, cy - 8, 1.8).fill(0x000000);
-    // Eye shine
-    g.circle(cx - 3.3, cy - 8.6, 0.7).fill(0xffffff);
-    g.circle(cx + 4.7, cy - 8.6, 0.7).fill(0xffffff);
-
-    // Tiny horns
-    g.beginPath();
-    g.moveTo(cx - 6, cy - 14);
-    g.lineTo(cx - 7, cy - 19);
-    g.lineTo(cx - 4, cy - 14);
-    g.fill(COL.DAISY_CENTER);
-    g.beginPath();
-    g.moveTo(cx + 6, cy - 14);
-    g.lineTo(cx + 7, cy - 19);
-    g.lineTo(cx + 4, cy - 14);
-    g.fill(COL.DAISY_CENTER);
-  }
-
-  /** Cute tan sheep – front-facing */
-  private drawSheepIcon(g: Graphics, cx: number, cy: number) {
-    // Woolly body (cluster of circles)
-    const woolOffsets = [
-      { x: 0, y: 3, r: 8 },
-      { x: -6, y: 1, r: 6 },
-      { x: 6, y: 1, r: 6 },
-      { x: -4, y: 7, r: 5 },
-      { x: 4, y: 7, r: 5 },
-      { x: 0, y: -2, r: 5 },
-    ];
-    for (const w of woolOffsets) {
-      g.circle(cx + w.x, cy + w.y, w.r).fill(COL.SHEEP_BODY);
-    }
-
-    // Head
-    g.circle(cx, cy - 6, 7).fill(COL.SHEEP_FACE);
-
-    // Woolly top (fluffy tufts on head)
-    g.circle(cx - 3, cy - 12, 3.5).fill(COL.SHEEP_BODY);
-    g.circle(cx + 3, cy - 12, 3.5).fill(COL.SHEEP_BODY);
-    g.circle(cx, cy - 13, 3).fill(COL.SHEEP_BODY);
-
-    // Ears
-    g.ellipse(cx - 9, cy - 7, 4, 2.5).fill(COL.SHEEP_FACE);
-    g.ellipse(cx + 9, cy - 7, 4, 2.5).fill(COL.SHEEP_FACE);
-    g.ellipse(cx - 9, cy - 7, 2.5, 1.5).fill({
-      color: COL.SHEEP_DARK,
-      alpha: 0.25,
-    });
-    g.ellipse(cx + 9, cy - 7, 2.5, 1.5).fill({
-      color: COL.SHEEP_DARK,
-      alpha: 0.25,
-    });
-
-    // Eyes
-    g.circle(cx - 3, cy - 7, 1.8).fill(0x000000);
-    g.circle(cx + 3, cy - 7, 1.8).fill(0x000000);
-    g.circle(cx - 2.3, cy - 7.6, 0.7).fill(0xffffff);
-    g.circle(cx + 3.7, cy - 7.6, 0.7).fill(0xffffff);
-
-    // Nose
-    g.ellipse(cx, cy - 3, 2, 1.5).fill({ color: COL.SHEEP_DARK, alpha: 0.5 });
-
-    // Tiny legs
-    g.roundRect(cx - 5, cy + 10, 3, 6, 1).fill(COL.SHEEP_DARK);
-    g.roundRect(cx + 2, cy + 10, 3, 6, 1).fill(COL.SHEEP_DARK);
   }
 
   // ════════════════════════════════════════════════════════════════════════════

@@ -5,6 +5,7 @@ import { LeaderboardSidebar } from "../ui/LeaderboardSidebar";
 import type { RankEntry } from "../ui/LeaderboardSidebar";
 import { createWoodenButton } from "../ui/WoodenButton";
 import { drawHillBackground } from "../ui/HillBackground";
+import type { RacerAnimations } from "../core/types";
 
 export class ResultScene extends Container {
   private onRestart: () => void;
@@ -14,7 +15,11 @@ export class ResultScene extends Container {
   private leaderboardSidebar: LeaderboardSidebar;
   private restartBtn: Container;
 
-  constructor(finishedRacers: Racer[], onRestart: () => void) {
+  constructor(
+    finishedRacers: Racer[],
+    onRestart: () => void,
+    characterAnimations: Map<string, RacerAnimations>,
+  ) {
     super();
     this.onRestart = onRestart;
 
@@ -54,9 +59,15 @@ export class ResultScene extends Container {
       rank: index + 1,
       name: racer.racerName,
       time: (racer.finishTime / 60).toFixed(2) + "s",
+      character: racer.characterKey,
     }));
 
-    this.leaderboardSidebar = new LeaderboardSidebar(entries, 300, 480);
+    this.leaderboardSidebar = new LeaderboardSidebar(
+      entries,
+      300,
+      480,
+      characterAnimations,
+    );
     this.addChild(this.leaderboardSidebar);
 
     this.restartBtn = createWoodenButton({

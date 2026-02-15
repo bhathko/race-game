@@ -18,7 +18,7 @@ export class Game {
   private app: Application;
   private currentScene: (Container & Scene) | null = null;
   private updateFn: ((ticker: Ticker) => void) | null = null;
-  private bearAnimations: RacerAnimations | null = null;
+  private characterAnimations: Map<string, RacerAnimations> = new Map();
   private treeAnimation: Texture[] = [];
   private groundTextures: GroundTextures | null = null;
   private grassTextures: GrassTextures | null = null;
@@ -40,18 +40,21 @@ export class Game {
   }
 
   private async loadAssets() {
-    // Load images
-    const idleSheet = await Assets.load(CHARACTERS.bear.idle.path);
-    const walkSheet = await Assets.load(CHARACTERS.bear.walk.path);
+    // Load character animations
+    for (const [key, char] of Object.entries(CHARACTERS)) {
+      const idleSheet = await Assets.load(char.idle.path);
+      const walkSheet = await Assets.load(char.walk.path);
+
+      this.characterAnimations.set(key, {
+        idle: this.createFrames(idleSheet, char.idle.frames, 1, 0),
+        walk: this.createFrames(walkSheet, char.walk.frames, 1, 0),
+      });
+    }
+
+    // Load other images
     const treeSheet = await Assets.load(ITEMS.tree.path);
     const groundSheet = await Assets.load(ITEMS.ground.path);
     const grassSheet = await Assets.load(ITEMS.grass.path);
-
-    // Create textures from sheets
-    this.bearAnimations = {
-      idle: this.createFrames(idleSheet, CHARACTERS.bear.idle.frames, 1, 0),
-      walk: this.createFrames(walkSheet, CHARACTERS.bear.walk.frames, 1, 0),
-    };
 
     // Create tree animation from the 4th row (index 3)
     this.treeAnimation = this.createFrames(
@@ -127,14 +130,13 @@ export class Game {
   }
 
   showRaceScene(playerNames: string[], distance: number) {
-    if (!this.bearAnimations || !this.groundTextures || !this.grassTextures)
-      return;
+    if (!this.groundTextures || !this.grassTextures) return;
 
     this.setScene(
       new RaceScene(
         playerNames,
         distance,
-        this.bearAnimations,
+        this.characterAnimations,
         this.treeAnimation,
         this.groundTextures,
         this.grassTextures,
@@ -144,7 +146,13 @@ export class Game {
   }
 
   showResultScene(results: Racer[]) {
-    this.setScene(new ResultScene(results, () => this.showMenuScene()));
+    this.setScene(
+      new ResultScene(
+        results,
+        () => this.showMenuScene(),
+        this.characterAnimations,
+      ),
+    );
   }
 
   // ── helpers ─────────────────────────────────────────────────────────────

@@ -3,6 +3,13 @@ import { GAMEPLAY, COLORS } from "../config";
 import { createWoodenButton } from "../ui/WoodenButton";
 import { drawHillBackground } from "../ui/HillBackground";
 
+const STORAGE_KEY = "choice-race-settings";
+
+interface SavedSettings {
+  count: number;
+  distance: number;
+}
+
 export class MenuScene extends Container {
   private onStartRace: (playerCount: number, distance: number) => void;
   private selectedCount = 2;
@@ -22,6 +29,8 @@ export class MenuScene extends Container {
   constructor(onStartRace: (playerCount: number, distance: number) => void) {
     super();
     this.onStartRace = onStartRace;
+
+    this.loadSettings();
 
     this.bg = new Graphics();
     this.addChild(this.bg);
@@ -54,6 +63,7 @@ export class MenuScene extends Container {
       if (inc && this.selectedCount < GAMEPLAY.MAX_RACERS) this.selectedCount++;
       else if (!inc && this.selectedCount > 2) this.selectedCount--;
       this.countValue.text = this.selectedCount.toString();
+      this.saveSettings();
     });
 
     // Distance
@@ -66,6 +76,7 @@ export class MenuScene extends Container {
         this.selectedDistance = distances[idx + 1];
       else if (!inc && idx > 0) this.selectedDistance = distances[idx - 1];
       this.distValue.text = `${this.selectedDistance}m`;
+      this.saveSettings();
     });
 
     this.startBtn = createWoodenButton({
@@ -78,6 +89,39 @@ export class MenuScene extends Container {
     this.addChild(this.startBtn);
   }
 
+  // ── Settings persistence ────────────────────────────────────────────────
+
+  private loadSettings() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const settings = JSON.parse(saved) as SavedSettings;
+        if (settings.count >= 2 && settings.count <= GAMEPLAY.MAX_RACERS) {
+          this.selectedCount = settings.count;
+        }
+        if ([50, 100, 200, 400].includes(settings.distance)) {
+          this.selectedDistance = settings.distance;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load settings", e);
+    }
+  }
+
+  private saveSettings() {
+    try {
+      const settings: SavedSettings = {
+        count: this.selectedCount,
+        distance: this.selectedDistance,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.warn("Failed to save settings", e);
+    }
+  }
+
+  // ── Layout ──────────────────────────────────────────────────────────────
+
   public resize(width: number, height: number) {
     const centerX = width / 2;
 
@@ -87,7 +131,7 @@ export class MenuScene extends Container {
     this.title.y = height * 0.15;
     this.title.style.fontSize = width < 600 ? 40 : 64;
 
-    const labelY1 = height * 0.32;
+    const labelY1 = height * 0.3;
     const valueY1 = height * 0.42;
     this.countLabel.x = centerX;
     this.countLabel.y = labelY1;
@@ -96,7 +140,7 @@ export class MenuScene extends Container {
     this.countStepper.x = centerX;
     this.countStepper.y = valueY1;
 
-    const labelY2 = height * 0.57;
+    const labelY2 = height * 0.55;
     const valueY2 = height * 0.67;
     this.distLabel.x = centerX;
     this.distLabel.y = labelY2;
@@ -106,8 +150,10 @@ export class MenuScene extends Container {
     this.distStepper.y = valueY2;
 
     this.startBtn.x = centerX;
-    this.startBtn.y = height * 0.85;
+    this.startBtn.y = height * 0.82;
   }
+
+  // ── UI helpers ──────────────────────────────────────────────────────────
 
   private createLabel(text: string) {
     const style = new TextStyle({
