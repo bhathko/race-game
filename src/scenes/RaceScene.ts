@@ -76,6 +76,11 @@ export class RaceScene extends Container implements Scene {
   private remainingDistanceText: Text | null = null;
   private raceStarted: boolean = false;
 
+  // Throttling for leaderboard sorting
+  private leaderboardUpdateTimer: number = 0;
+  private readonly LEADERBOARD_THROTTLE: number = 30; // frames
+  private sortedRacersCache: Racer[] = [];
+
   constructor(
     playerNames: string[],
     distance: number,
@@ -624,14 +629,18 @@ export class RaceScene extends Container implements Scene {
   }
 
   private updateLeaderboard(delta: number) {
-    const sortedRacers = [...this.racers].sort((a, b) => {
-      if (a.isFinished() && b.isFinished()) return a.finishTime - b.finishTime;
-      if (a.isFinished()) return -1;
-      if (b.isFinished()) return 1;
-      return b.x - a.x;
-    });
+    this.leaderboardUpdateTimer += delta;
+    if (this.leaderboardUpdateTimer >= this.LEADERBOARD_THROTTLE || this.sortedRacersCache.length === 0) {
+      this.leaderboardUpdateTimer = 0;
+      this.sortedRacersCache = [...this.racers].sort((a, b) => {
+        if (a.isFinished() && b.isFinished()) return a.finishTime - b.finishTime;
+        if (a.isFinished()) return -1;
+        if (b.isFinished()) return 1;
+        return b.x - a.x;
+      });
+    }
 
-    sortedRacers.forEach((racer, index) => {
+    this.sortedRacersCache.forEach((racer, index) => {
       const container = this.leaderboardItems.get(racer);
       if (container) {
         let targetY, targetX;
