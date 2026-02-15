@@ -17,10 +17,12 @@ A dynamic web-based racing game built with **Pixi.js v8**, **TypeScript**, and *
 
 ## Key Features
 
+- **Nature-Themed Aesthetic:** High-quality 2D graphics featuring a racetrack with grass and dirt tones, complemented by playful pixel art hills.
+- **Modern Game UI:** A clean, playful vector-style UI with semi-transparent dark grey wooden textures and bold cartoon typography.
+- **Dynamic Leaderboard:** A vertical ranking system with animated cards. Top ranks feature Gold, Silver, and Bronze borders with cute animal sprite icons.
 - **Responsive Design (RWD):** The game adapts to any screen size. On mobile/portrait, the leaderboard moves to the bottom; on desktop, it remains a sidebar.
 - **Dynamic AI Strategy:** Racers conserve energy in the mid-game and perform a "final kick" sprint near the finish line.
 - **Competitive Balancing:** Includes slipstream and rubber-banding effects to keep the pack close and encourage lead changes.
-- **Real-time Standings:** A dynamic leaderboard that smoothly reorders items as racers overtake each other.
 
 ## Building and Running
 
@@ -37,5 +39,5 @@ A dynamic web-based racing game built with **Pixi.js v8**, **TypeScript**, and *
 
 - **Responsive Positioning:** Use the `resize(width, height)` method in scenes for element placement rather than hardcoded X/Y coordinates.
 - **Pixi.js v8 Standards:** Follow modern Pixi.js v8 practices, particularly for `Graphics` and `Application` initialization.
-- **Configuration-Driven:** All gameplay parameters (speed, acceleration, stamina rates) should be defined in `src/config.ts`.
+- **Configuration-Driven:** All gameplay parameters (speed, acceleration, stamina rates) and UI colors should be defined in `src/config.ts`.
 - **Interpolation:** Use LERP (Linear Interpolation) for camera movements and UI transitions to maintain a polished feel.

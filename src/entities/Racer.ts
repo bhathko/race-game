@@ -53,8 +53,19 @@ export class Racer extends Container {
     this.updateStaminaBar();
     this.addChild(this.staminaBar);
 
-    const style = new TextStyle({ fill: CONFIG.COLORS.TEXT_NORMAL, fontSize: 14, fontWeight: 'bold' });
-    const label = new Text({ text: name, style });
+    const labelStyle = new TextStyle({ 
+      fill: color, 
+      fontSize: 14, 
+      fontWeight: 'bold',
+      dropShadow: {
+        alpha: 0.5,
+        angle: Math.PI / 6,
+        blur: 2,
+        color: "#000000",
+        distance: 2,
+      }
+    });
+    const label = new Text({ text: name, style: labelStyle });
     label.anchor.set(0.5);
     label.y = -CONFIG.RACER_HEIGHT - 10;
     this.addChild(label);

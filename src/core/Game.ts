@@ -6,12 +6,26 @@ import { Racer } from "../entities/Racer";
 import type { RacerAnimations } from "../entities/Racer";
 import { CONFIG } from "../config";
 
+export interface GroundTextures {
+  top: Texture;
+  middle: Texture;
+  bottom: Texture;
+}
+
+export interface GrassTextures {
+  top: Texture;
+  middle: Texture;
+  bottom: Texture;
+}
+
 export class Game {
   private app: Application;
   private currentScene: Container | null = null;
   private updateFn: ((ticker: Ticker) => void) | null = null;
   private bearAnimations: RacerAnimations | null = null;
   private treeAnimation: Texture[] = [];
+  private groundTextures: GroundTextures | null = null;
+  private grassTextures: GrassTextures | null = null;
 
   constructor(app: Application) {
     this.app = app;
@@ -37,6 +51,8 @@ export class Game {
     const idleSheet = await Assets.load(CONFIG.CHARACTERS.bear.idle.path);
     const walkSheet = await Assets.load(CONFIG.CHARACTERS.bear.walk.path);
     const treeSheet = await Assets.load(CONFIG.ITEMS.tree.path);
+    const groundSheet = await Assets.load(CONFIG.ITEMS.ground.path);
+    const grassSheet = await Assets.load(CONFIG.ITEMS.grass.path);
 
     // Create textures from sheets
     this.bearAnimations = {
@@ -61,6 +77,38 @@ export class Game {
       5, // Total rows in sheet
       3  // 4th row index
     );
+
+    const groundUnit = CONFIG.ITEMS.ground.unit;
+    this.groundTextures = {
+      top: new Texture({
+        source: groundSheet.source,
+        frame: new Rectangle(0, 0, groundUnit, groundUnit),
+      }),
+      middle: new Texture({
+        source: groundSheet.source,
+        frame: new Rectangle(0, groundUnit, groundUnit, groundUnit),
+      }),
+      bottom: new Texture({
+        source: groundSheet.source,
+        frame: new Rectangle(0, groundUnit * 2, groundUnit, groundUnit),
+      }),
+    };
+
+    const grassUnit = CONFIG.ITEMS.grass.unit;
+    this.grassTextures = {
+      top: new Texture({
+        source: grassSheet.source,
+        frame: new Rectangle(0, 0, grassUnit, grassUnit),
+      }),
+      middle: new Texture({
+        source: grassSheet.source,
+        frame: new Rectangle(0, grassUnit, grassUnit, grassUnit),
+      }),
+      bottom: new Texture({
+        source: grassSheet.source,
+        frame: new Rectangle(0, grassUnit * 2, grassUnit, grassUnit),
+      }),
+    };
   }
 
   private createFrames(
@@ -107,13 +155,15 @@ export class Game {
   showRaceScene(playerNames: string[], distance: number) {
     this.cleanupCurrentScene();
 
-    if (!this.bearAnimations) return;
+    if (!this.bearAnimations || !this.groundTextures || !this.grassTextures) return;
 
     const raceScene = new RaceScene(
       playerNames,
       distance,
       this.bearAnimations,
       this.treeAnimation,
+      this.groundTextures,
+      this.grassTextures,
       (results) => {
         this.showResultScene(results);
       }

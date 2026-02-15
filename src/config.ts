@@ -32,6 +32,14 @@ export const CONFIG = {
       rows: 4,
       width: 48,
       height: 48
+    },
+    ground: {
+      path: "src/assets/item/ground.png",
+      unit: 16
+    },
+    grass: {
+      path: "src/assets/item/grass.png",
+      unit: 16
     }
   },
 
@@ -74,38 +82,44 @@ export const CONFIG = {
   
   COLORS: {
     BACKGROUND: 0x1a1a1a,
-    SIDEBAR_BG: 0x2a2a2a,
+    SIDEBAR_BG: 0x2c2c2c,
+    SIDEBAR_WOOD: 0x1e1e1e,
     SIDEBAR_STROKE: 0x444444,
+    RANK_GOLD: 0xffd700,
+    RANK_SILVER: 0xc0c0c0,
+    RANK_BRONZE: 0xcd7f32,
+    RANK_DEFAULT: 0x444444,
+    
     TRACK_LINES: 0x444444,
     START_LINE: 0x5555ff,
     FINISH_LINE: 0xffffff,
     MASK_FILL: 0xffffff,
 
     STAMINA_BG: 0x333333,
-    STAMINA_GOOD: 0x00ff00,
-    STAMINA_TIRED: 0xff0000,
+    STAMINA_GOOD: 0x4caf50,
+    STAMINA_TIRED: 0xf44336,
 
     TEXT_TITLE: "#ffffff",
     TEXT_NORMAL: "#ffffff",
     TEXT_MUTED: "#cccccc",
     TEXT_SUBTLE: "#aaaaaa",
-    TEXT_HIGHLIGHT: "#00ff00",
-    TEXT_MARKER: "#666666",
+    TEXT_HIGHLIGHT: "#4caf50",
+    TEXT_MARKER: "#795548",
 
-    BUTTON_PRIMARY: 0x3357ff,
-    BUTTON_DANGER: 0xcc3333,
-    BUTTON_SUCCESS: 0x33cc33,
+    BUTTON_PRIMARY: 0x4e342e,
+    BUTTON_DANGER: 0xc62828,
+    BUTTON_SUCCESS: 0x2e7d32,
     BUTTON_TEXT: "#ffffff",
 
     RACERS: [
-      0xff5733, // Red-Orange
-      0x33ff57, // Green
-      0x3357ff, // Blue
-      0xf333ff, // Magenta
-      0xfff333, // Yellow
-      0x33fff3, // Cyan
-      0xffa500, // Orange
-      0x800080, // Purple
+      0xff7043, // Deep Orange
+      0x66bb6a, // Green
+      0x42a5f5, // Blue
+      0xab47bc, // Purple
+      0xffee58, // Yellow
+      0x26c6da, // Cyan
+      0xffa726, // Orange
+      0xec407a, // Pink
     ],
   },
 };
