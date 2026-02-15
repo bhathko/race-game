@@ -1,5 +1,5 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
-import { GAMEPLAY, COLORS } from "../config";
+import { GAMEPLAY, COLORS, PALETTE } from "../config";
 import { createWoodenButton } from "../ui/WoodenButton";
 
 const STORAGE_KEY = "choice-race-settings";
@@ -34,15 +34,15 @@ export class MenuScene extends Container {
     this.addChild(this.bg);
 
     const titleStyle = new TextStyle({
-      fill: "#ffffff",
+      fill: PALETTE.STR_WHITE,
       fontSize: 64,
       fontWeight: "900",
-      stroke: { color: "#4e342e", width: 8 },
+      stroke: { color: COLORS.SIDEBAR_WOOD, width: 8 },
       dropShadow: {
         alpha: 0.5,
         angle: Math.PI / 4,
         blur: 4,
-        color: "#000000",
+        color: PALETTE.STR_BLACK,
         distance: 8,
       },
       letterSpacing: 4,
@@ -121,7 +121,7 @@ export class MenuScene extends Container {
     const centerX = width / 2;
 
     // Draw solid background
-    this.bg.clear().rect(0, 0, width, height).fill(0x81c784);
+    this.bg.clear().rect(0, 0, width, height).fill(PALETTE.GRASS_LIGHT);
 
     this.title.x = centerX;
     this.title.y = height * 0.15;
@@ -153,10 +153,10 @@ export class MenuScene extends Container {
 
   private createLabel(text: string) {
     const style = new TextStyle({
-      fill: "#ffffff",
+      fill: PALETTE.STR_WHITE,
       fontSize: 28,
       fontWeight: "900",
-      stroke: { color: "#000000", width: 4 },
+      stroke: { color: PALETTE.STR_BLACK, width: 4 },
     });
     const label = new Text({ text, style });
     label.anchor.set(0.5);
@@ -166,10 +166,10 @@ export class MenuScene extends Container {
 
   private createValueText(text: string) {
     const style = new TextStyle({
-      fill: "#ffffff",
+      fill: PALETTE.STR_WHITE,
       fontSize: 64,
       fontWeight: "900",
-      stroke: { color: "#4e342e", width: 6 },
+      stroke: { color: COLORS.SIDEBAR_WOOD, width: 6 },
     });
     const valText = new Text({ text, style });
     valText.anchor.set(0.5);

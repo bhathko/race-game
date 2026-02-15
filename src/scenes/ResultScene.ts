@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { Racer } from "../entities/Racer";
-import { COLORS } from "../config";
+import { COLORS, PALETTE } from "../config";
 import { LeaderboardSidebar } from "../ui/LeaderboardSidebar";
 import type { RankEntry } from "../ui/LeaderboardSidebar";
 import { createWoodenButton } from "../ui/WoodenButton";
@@ -27,16 +27,16 @@ export class ResultScene extends Container {
     const winner = finishedRacers[0];
 
     const titleStyle = new TextStyle({
-      fill: "#ffffff",
+      fill: PALETTE.STR_WHITE,
       fontSize: 56,
       fontWeight: "900",
       fontFamily: '"Fredoka One", "Comic Sans MS", "Segoe UI", sans-serif',
-      stroke: { color: "#4e342e", width: 8 },
+      stroke: { color: COLORS.SIDEBAR_WOOD, width: 8 },
       dropShadow: {
         alpha: 0.5,
         angle: Math.PI / 4,
         blur: 4,
-        color: "#000000",
+        color: PALETTE.STR_BLACK,
         distance: 8,
       },
       align: "center",
@@ -79,7 +79,7 @@ export class ResultScene extends Container {
     const isSmall = width < 600 || height < 500;
 
     // Draw solid background
-    this.bg.clear().rect(0, 0, width, height).fill(0x81c784);
+    this.bg.clear().rect(0, 0, width, height).fill(PALETTE.GRASS_LIGHT);
 
     this.winnerText.x = centerX;
     this.winnerText.y = height * 0.12;

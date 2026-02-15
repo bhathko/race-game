@@ -1,4 +1,5 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
+import { PALETTE } from "../config";
 
 export interface WoodenButtonOptions {
   label: string;
@@ -30,23 +31,23 @@ export function createWoodenButton(opts: WoodenButtonOptions): Container {
   // ── background ──────────────────────────────────────────────────────────
   const bg = new Graphics();
   // Drop shadow
-  bg.roundRect(-width / 2, -h / 2 + 6, width, h, 8).fill(0x000000, 0.4);
+  bg.roundRect(-width / 2, -h / 2 + 6, width, h, 8).fill(PALETTE.BLACK, 0.4);
   // Main body
   bg.roundRect(-width / 2, -h / 2, width, h, 8)
     .fill(color)
-    .stroke({ color: 0x2e1a1a, width: 4 });
+    .stroke({ color: PALETTE.WOOD_DARK, width: 4 });
   // Wood grain lines
   for (let i = -h / 2 + 10; i < h / 2; i += 15) {
-    bg.rect(-width / 2 + 10, i, width - 20, 2).fill(0x000000, 0.1);
+    bg.rect(-width / 2 + 10, i, width - 20, 2).fill(PALETTE.BLACK, 0.1);
   }
   btn.addChild(bg);
 
   // ── label ───────────────────────────────────────────────────────────────
   const style = new TextStyle({
-    fill: "#ffffff",
+    fill: PALETTE.STR_WHITE,
     fontSize,
     fontWeight: "900",
-    stroke: { color: "#000000", width: 4 },
+    stroke: { color: PALETTE.STR_BLACK, width: 4 },
   });
   const text = new Text({ text: label, style });
   text.anchor.set(0.5);

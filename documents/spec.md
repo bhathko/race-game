@@ -76,6 +76,7 @@ Triggered when any racer enters the final 20% of the track:
 ## 8. Visual Design & UI
 
 - **Theme:** Clean nature-themed racing with solid green backgrounds.
+- **Design System:** Utilizes a centralized `PALETTE` token system in `config.ts` to manage all hex values, ensuring project-wide consistency and easy theme swapping.
 - **Responsive Layout:** Sidebar leaderboard on desktop, bottom-docked on mobile.
 - **HUD:** Large real-time "Remaining Distance" indicator at top center.
-- **Aesthetics:** Dark oak wood backgrounds, gold/silver rank cards, unified white racer names, animated pixel-art characters.
+- **Aesthetics:** Refreshed lighter oak wood style for better vibrancy, gold/silver rank cards, unified white racer names with brown strokes, animated pixel-art characters.

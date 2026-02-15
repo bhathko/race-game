@@ -17,6 +17,7 @@ import {
   GAMEPLAY,
   VISUALS,
   COLORS,
+  PALETTE,
 } from "../config";
 import type { Scene } from "../core/Scene";
 import type {
@@ -28,7 +29,7 @@ import type {
 /** Track-line color palette (extracted from inline literals). */
 const TRACK_COLORS = {
   CREAM: 0xfff9c4,
-  DARK_BROWN: 0x3e2723,
+  DARK_BROWN: COLORS.RANK_DEFAULT,
   WARM_RED: 0xff8a65,
 } as const;
 
@@ -116,15 +117,15 @@ export class RaceScene extends Container implements Scene {
     this.ui.addChild(this.leaderboardContainer);
 
     const titleStyle = new TextStyle({
-      fill: "#ffffff",
+      fill: PALETTE.STR_WHITE,
       fontSize: 24,
       fontWeight: "900",
-      stroke: { color: "#000000", width: 4 },
+      stroke: { color: PALETTE.STR_BLACK, width: 4 },
       dropShadow: {
         alpha: 0.5,
         angle: Math.PI / 2,
         blur: 0,
-        color: "#000000",
+        color: PALETTE.STR_BLACK,
         distance: 4,
       },
     });
@@ -190,15 +191,15 @@ export class RaceScene extends Container implements Scene {
 
   private initCountdownUI() {
     const style = new TextStyle({
-      fill: "#ffeb3b",
+      fill: PALETTE.STR_WHITE,
       fontSize: 120,
       fontWeight: "900",
-      stroke: { color: "#e91e63", width: 12 },
+      stroke: { color: COLORS.TEXT_MARKER, width: 12 },
       dropShadow: {
         alpha: 0.5,
         angle: Math.PI / 6,
         blur: 0,
-        color: "#000000",
+        color: PALETTE.STR_BLACK,
         distance: 8,
       },
     });
@@ -213,15 +214,15 @@ export class RaceScene extends Container implements Scene {
 
   private initDistanceUI() {
     const style = new TextStyle({
-      fill: "#ffffff",
+      fill: PALETTE.STR_WHITE,
       fontSize: 80,
       fontWeight: "900",
-      stroke: { color: "#4e342e", width: 8 },
+      stroke: { color: COLORS.TEXT_MARKER, width: 8 },
       dropShadow: {
         alpha: 0.5,
         angle: Math.PI / 4,
         blur: 4,
-        color: "#000000",
+        color: PALETTE.STR_BLACK,
         distance: 6,
       },
     });
@@ -331,10 +332,10 @@ export class RaceScene extends Container implements Scene {
       container.addChild(icon);
 
       const style = new TextStyle({
-        fill: "#ffffff",
+        fill: PALETTE.STR_WHITE,
         fontSize: 16,
         fontWeight: "900",
-        stroke: { color: "#000000", width: 3 },
+        stroke: { color: PALETTE.STR_BLACK, width: 3 },
       });
       const text = new Text({ text: racer.racerName, style });
       text.name = "item-text";
@@ -678,7 +679,7 @@ export class RaceScene extends Container implements Scene {
           bg.clear();
           // Main card body (semi-transparent dark)
           bg.roundRect(0, 0, w, h, 4)
-            .fill(0x000000, 0.5)
+            .fill(PALETTE.BLACK, 0.5)
             .stroke({ color: borderColor, width: index < 3 ? 3 : 1 });
         }
 
@@ -687,7 +688,7 @@ export class RaceScene extends Container implements Scene {
           const suffix =
             rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
           text.text = `${rank}${suffix}: ${racer.racerName.split(" ")[1]}`;
-          text.style.fill = "#ffffff";
+          text.style.fill = PALETTE.STR_WHITE;
           text.style.fontWeight = "900";
           if (this.isPortrait) text.style.fontSize = 12;
           else text.style.fontSize = 14;

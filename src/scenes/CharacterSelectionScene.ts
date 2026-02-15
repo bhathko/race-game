@@ -1,5 +1,5 @@
 import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
-import { CHARACTERS, COLORS, RACER } from "../config";
+import { CHARACTERS, COLORS, RACER, PALETTE } from "../config";
 import { createWoodenButton } from "../ui/WoodenButton";
 import type { RacerAnimations } from "../core/types";
 import type { Scene } from "../core/Scene";
@@ -42,15 +42,15 @@ export class CharacterSelectionScene extends Container implements Scene {
     this.addChild(this.bg);
 
     const titleStyle = new TextStyle({
-      fill: "#ffffff",
+      fill: PALETTE.STR_WHITE,
       fontSize: 48,
       fontWeight: "900",
-      stroke: { color: "#4e342e", width: 6 },
+      stroke: { color: COLORS.SIDEBAR_WOOD, width: 6 },
       dropShadow: {
         alpha: 0.5,
         angle: Math.PI / 4,
         blur: 4,
-        color: "#000000",
+        color: PALETTE.STR_BLACK,
         distance: 4,
       },
     });
@@ -61,10 +61,10 @@ export class CharacterSelectionScene extends Container implements Scene {
     this.statusText = new Text({
       text: `Select ${this.playerCount} racers`,
       style: new TextStyle({
-        fill: "#ffffff",
+        fill: PALETTE.STR_WHITE,
         fontSize: 24,
         fontWeight: "bold",
-        stroke: { color: "#000000", width: 4 },
+        stroke: { color: PALETTE.STR_BLACK, width: 4 },
       }),
     });
     this.statusText.anchor.set(0.5);
@@ -110,7 +110,7 @@ export class CharacterSelectionScene extends Container implements Scene {
       item.cursor = "pointer";
 
       const bg = new Graphics();
-      bg.roundRect(-50, -50, 100, 100, 10).fill(0x000000, 0.3).stroke({ color: 0xffffff, width: 2, alpha: 0.5 });
+      bg.roundRect(-50, -50, 100, 100, 10).fill(PALETTE.BLACK, 0.3).stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
       item.addChild(bg);
 
       const sprite = new AnimatedSprite(anims.idle);
@@ -123,7 +123,7 @@ export class CharacterSelectionScene extends Container implements Scene {
 
       const nameText = new Text({
         text: charData.name,
-        style: new TextStyle({ fill: "#ffffff", fontSize: 14, fontWeight: "bold" })
+        style: new TextStyle({ fill: PALETTE.STR_WHITE, fontSize: 14, fontWeight: "bold" })
       });
       nameText.anchor.set(0.5);
       nameText.y = 40;
@@ -159,8 +159,8 @@ export class CharacterSelectionScene extends Container implements Scene {
       const isSelected = this.selectedKeys.includes(key);
       bg.clear();
       
-      const bgColor = isSelected ? 0x4e342e : 0x2e1b11;
-      const strokeColor = isSelected ? 0xffffff : 0x5d4037;
+      const bgColor = isSelected ? PALETTE.WOOD_LIGHT : PALETTE.WOOD_DARK;
+      const strokeColor = isSelected ? PALETTE.WHITE : PALETTE.WOOD_PALE;
       const strokeWidth = isSelected ? 4 : 2;
 
       bg.roundRect(-50, -50, 100, 100, 12)
@@ -200,8 +200,8 @@ export class CharacterSelectionScene extends Container implements Scene {
         // Character background card in lineup
         const card = new Graphics();
         card.roundRect(-RACER.WIDTH / 2 - 5, -RACER.HEIGHT - 5, RACER.WIDTH + 10, RACER.HEIGHT + 15, 8)
-          .fill(0x3e2723, 0.9)
-          .stroke({ color: 0xffffff, width: 2, alpha: 0.5 });
+          .fill(COLORS.SIDEBAR_BG, 0.9)
+          .stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
         racerContainer.addChild(card);
 
         const sprite = new AnimatedSprite(anims.idle);
@@ -215,14 +215,14 @@ export class CharacterSelectionScene extends Container implements Scene {
         // Placeholder "wooden box"
         const box = new Graphics();
         box.roundRect(-RACER.WIDTH / 2, -RACER.HEIGHT, RACER.WIDTH, RACER.HEIGHT, 8)
-          .fill(0x2e1b11, 0.6)
-          .stroke({ color: 0x5d4037, width: 2, alpha: 0.5 });
+          .fill(PALETTE.WOOD_DARK, 0.6)
+          .stroke({ color: PALETTE.WOOD_PALE, width: 2, alpha: 0.5 });
         racerContainer.addChild(box);
         
         const posText = new Text({
           text: (i + 1).toString(),
           style: new TextStyle({ 
-            fill: "#ffffff", 
+            fill: PALETTE.STR_WHITE, 
             fontSize: 24, 
             fontWeight: "bold",
             alpha: 0.3
@@ -268,7 +268,7 @@ export class CharacterSelectionScene extends Container implements Scene {
     const centerX = width / 2;
     
     // Draw solid background
-    this.bg.clear().rect(0, 0, width, height).fill(0x81c784);
+    this.bg.clear().rect(0, 0, width, height).fill(PALETTE.GRASS_LIGHT);
 
     this.title.x = centerX;
     this.title.y = height * 0.08;

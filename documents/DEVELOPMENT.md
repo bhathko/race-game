@@ -17,8 +17,10 @@ Every racer isn't just a set of stats; they have a **Personality**. By using the
 - **Closers** create late-game "come-from-behind" victories.
 - This variety ensures that every race tells a different story.
 
-### C. The Minimalist Aesthetic
-Weconsciously paired a high-performance **WebGPU/Pixi.js** engine with a clean, high-contrast solid green aesthetic. This removes visual clutter, ensuring players can focus on the intense, mathematical "Comeback Engine" running under the hood.
+### C. The Minimalist Aesthetic & Design System
+We consciously paired a high-performance **WebGPU/Pixi.js** engine with a clean, high-contrast solid green aesthetic. To ensure this remains maintainable as we add features, we implemented a **Design Token System** (`PALETTE` in `src/config.ts`). 
+
+Recently, we refreshed the UI with a **Lighter Wood Style** to increase vibrancy and legibility. By centralizing these values into tokens, we can perform global theme updates without touching individual scene files, maintaining a coherent "farming-sim" look across the entire application.
 
 ---
 

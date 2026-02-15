@@ -1,4 +1,5 @@
 import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
+import { COLORS, PALETTE } from "../config";
 import type { RacerAnimations } from "../core/types";
 
 /**
@@ -19,36 +20,36 @@ export interface RankEntry {
 // ── colour palette ────────────────────────────────────────────────────────────
 const COL = {
   // wood background
-  OAK_DARK: 0x3e2723,
-  OAK_MID: 0x5d4037,
-  OAK_LIGHT: 0x6d4c41,
-  OAK_PLANK_LINE: 0x2e1b11,
-  OAK_OVERLAY: 0x000000,
+  OAK_DARK: PALETTE.WOOD_MID,
+  OAK_MID: PALETTE.WOOD_PALE,
+  OAK_LIGHT: PALETTE.WOOD_EXTRA_PALE,
+  OAK_PLANK_LINE: PALETTE.WOOD_DARK,
+  OAK_OVERLAY: PALETTE.BLACK,
 
   // rank colours
-  GOLD: 0xffd700,
+  GOLD: PALETTE.GOLD,
   GOLD_GLOW: 0xfff176,
   GOLD_DARK: 0xc6a700,
-  SILVER: 0xc0c0c0,
+  SILVER: PALETTE.SILVER,
   SILVER_LIGHT: 0xe0e0e0,
   SILVER_DARK: 0x8a8a8a,
 
   // card body
-  CARD_BG: 0x4e342e,
+  CARD_BG: PALETTE.WOOD_LIGHT,
   CARD_BG_ALPHA: 0.72,
 
   // accents
-  GRASS_LIGHT: 0x81c784,
-  GRASS_MID: 0x66bb6a,
-  GRASS_DARK: 0x388e3c,
-  DAISY_PETAL: 0xffffff,
-  DAISY_CENTER: 0xffeb3b,
+  GRASS_LIGHT: PALETTE.GRASS_LIGHT,
+  GRASS_MID: PALETTE.GRASS_MID,
+  GRASS_DARK: PALETTE.GRASS_DARK,
+  DAISY_PETAL: PALETTE.WHITE,
+  DAISY_CENTER: PALETTE.WARNING,
   VINE_GREEN: 0x558b2f,
   VINE_LEAF: 0x7cb342,
 
   // text
-  TEXT_WHITE: "#FFFFFF",
-  TEXT_SHADOW: "#3E2723",
+  TEXT_WHITE: PALETTE.STR_WHITE,
+  TEXT_SHADOW: PALETTE.STR_WOOD_MID,
 };
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -107,7 +108,7 @@ export class LeaderboardSidebar extends Container {
         alpha: 0.45,
         angle: Math.PI / 4,
         blur: 4,
-        color: "#000000",
+        color: PALETTE.STR_BLACK,
         distance: 4,
       },
     });
@@ -140,7 +141,7 @@ export class LeaderboardSidebar extends Container {
     g.clear();
 
     // Outer shadow
-    g.roundRect(4, 6, w, h, r).fill({ color: 0x000000, alpha: 0.35 });
+    g.roundRect(4, 6, w, h, r).fill({ color: PALETTE.BLACK, alpha: 0.35 });
 
     // Main panel
     g.roundRect(0, 0, w, h, r).fill({ color: COL.OAK_DARK, alpha: 0.92 });
@@ -419,7 +420,7 @@ export class LeaderboardSidebar extends Container {
               alpha: 0.35,
               angle: Math.PI / 4,
               blur: 2,
-              color: "#000000",
+              color: PALETTE.STR_BLACK,
               distance: 2,
             },
       }),
@@ -514,7 +515,7 @@ export class LeaderboardSidebar extends Container {
               alpha: 0.35,
               angle: Math.PI / 4,
               blur: 2,
-              color: "#000000",
+              color: PALETTE.STR_BLACK,
               distance: 2,
             },
       }),
@@ -583,7 +584,7 @@ export class LeaderboardSidebar extends Container {
 
     // Fallback: simple dot
     const g = new Graphics();
-    g.circle(0, 0, 8).fill(0xffffff);
+    g.circle(0, 0, 8).fill(PALETTE.WHITE);
     return g;
   }
 

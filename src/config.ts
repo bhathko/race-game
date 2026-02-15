@@ -253,40 +253,84 @@ export const VISUALS = {
   COUNTDOWN_DURATION: 3,
 } as const;
 
-// ─── Colour Palette ─────────────────────────────────────────────────────────
+// ─── Design Tokens (Colour Palette) ─────────────────────────────────────────
+
+export const PALETTE = {
+  // Wood & Earth
+  WOOD_DARK: 0x4e342e,
+  WOOD_MID: 0x5d4037,
+  WOOD_LIGHT: 0x6d4c41,
+  WOOD_PALE: 0x795548,
+  WOOD_EXTRA_PALE: 0x8d6e63,
+  
+  // Nature
+  GRASS_LIGHT: 0x81c784,
+  GRASS_MID: 0x66bb6a,
+  GRASS_DARK: 0x388e3c,
+  
+  // UI States & Actions
+  SUCCESS: 0x2e7d32,
+  DANGER: 0xc62828,
+  WARNING: 0xffeb3b,
+  INFO: 0x2196f3,
+  
+  // Medals & Rankings
+  GOLD: 0xffd700,
+  SILVER: 0xc0c0c0,
+  BRONZE: 0xcd7f32,
+  
+  // Neutral / Base
+  BLACK: 0x000000,
+  WHITE: 0xffffff,
+  GREY_DARK: 0x1a1a1a,
+  GREY_MID: 0x333333,
+  GREY_LIGHT: 0x444444,
+  
+  // String Hex Codes (for CSS/TextStyle)
+  STR_WHITE: "#ffffff",
+  STR_BLACK: "#000000",
+  STR_GREY_MUTED: "#cccccc",
+  STR_GREY_SUBTLE: "#aaaaaa",
+  STR_WOOD_DARK: "#4e342e",
+  STR_WOOD_MID: "#5d4037",
+  STR_WOOD_EXTRA_PALE: "#8d6e63",
+  STR_SUCCESS: "#4caf50",
+} as const;
+
+// ─── Colour Palette Mapping ─────────────────────────────────────────────────
 
 export const COLORS = {
-  BACKGROUND: 0x1a1a1a,
+  BACKGROUND: PALETTE.GREY_DARK,
 
-  SIDEBAR_BG: 0x3e2723,
-  SIDEBAR_WOOD: 0x2e1b11,
-  SIDEBAR_STROKE: 0x5d4037,
+  SIDEBAR_BG: PALETTE.WOOD_MID,
+  SIDEBAR_WOOD: PALETTE.WOOD_DARK,
+  SIDEBAR_STROKE: PALETTE.WOOD_PALE,
 
-  RANK_GOLD: 0xffd700,
-  RANK_SILVER: 0xc0c0c0,
-  RANK_BRONZE: 0xcd7f32,
-  RANK_DEFAULT: 0x5d4037,
+  RANK_GOLD: PALETTE.GOLD,
+  RANK_SILVER: PALETTE.SILVER,
+  RANK_BRONZE: PALETTE.BRONZE,
+  RANK_DEFAULT: PALETTE.WOOD_PALE,
 
-  TRACK_LINES: 0x444444,
-  START_LINE: 0x5555ff,
-  FINISH_LINE: 0xffffff,
-  MASK_FILL: 0xffffff,
+  TRACK_LINES: PALETTE.GREY_LIGHT,
+  START_LINE: 0x5555ff, // Custom blue for start
+  FINISH_LINE: PALETTE.WHITE,
+  MASK_FILL: PALETTE.WHITE,
 
-  STAMINA_BG: 0x333333,
-  STAMINA_GOOD: 0x4caf50,
-  STAMINA_TIRED: 0xf44336,
+  STAMINA_BG: PALETTE.GREY_MID,
+  STAMINA_GOOD: PALETTE.STR_SUCCESS,
+  STAMINA_TIRED: 0xf44336, // Specific red for tired
 
-  TEXT_TITLE: "#ffffff",
-  TEXT_NORMAL: "#ffffff",
-  TEXT_MUTED: "#cccccc",
-  TEXT_SUBTLE: "#aaaaaa",
-  TEXT_HIGHLIGHT: "#4caf50",
-  TEXT_MARKER: "#795548",
+  TEXT_TITLE: PALETTE.STR_WHITE,
+  TEXT_NORMAL: PALETTE.STR_WHITE,
+  TEXT_MUTED: PALETTE.STR_GREY_MUTED,
+  TEXT_SUBTLE: PALETTE.STR_GREY_SUBTLE,
+  TEXT_HIGHLIGHT: PALETTE.STR_SUCCESS,
+  TEXT_MARKER: PALETTE.STR_WOOD_EXTRA_PALE,
 
-  BUTTON_PRIMARY: 0x4e342e,
-  BUTTON_DANGER: 0xc62828,
-  BUTTON_SUCCESS: 0x2e7d32,
-  BUTTON_TEXT: "#ffffff",
+  BUTTON_PRIMARY: PALETTE.WOOD_LIGHT,
+  BUTTON_DANGER: PALETTE.DANGER,
+  BUTTON_SUCCESS: PALETTE.SUCCESS,
+  BUTTON_TEXT: PALETTE.STR_WHITE,
 
   RACERS: [
     0xff7043, // Deep Orange
