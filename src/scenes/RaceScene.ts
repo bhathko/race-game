@@ -1,17 +1,44 @@
-import { Container, Graphics, Text, TextStyle, AnimatedSprite, Texture, TilingSprite } from "pixi.js";
+import {
+  Container,
+  Graphics,
+  Text,
+  TextStyle,
+  AnimatedSprite,
+  Texture,
+  TilingSprite,
+} from "pixi.js";
 import { Racer } from "../entities/Racer";
-import type { RacerAnimations } from "../entities/Racer";
-import { CONFIG } from "../config";
-import type { GroundTextures, GrassTextures } from "../core/Game";
+import {
+  CANVAS,
+  RACER,
+  TRACK,
+  ITEMS,
+  GAMEPLAY,
+  VISUALS,
+  COLORS,
+} from "../config";
+import type { Scene } from "../core/Scene";
+import type {
+  RacerAnimations,
+  GroundTextures,
+  GrassTextures,
+} from "../core/types";
 
-export class RaceScene extends Container {
+/** Track-line color palette (extracted from inline literals). */
+const TRACK_COLORS = {
+  CREAM: 0xfff9c4,
+  DARK_BROWN: 0x3e2723,
+  WARM_RED: 0xff8a65,
+} as const;
+
+export class RaceScene extends Container implements Scene {
   private world: Container;
   private worldMask: Graphics;
   private ui: Container;
   private racers: Racer[] = [];
   private finishedRacers: Racer[] = [];
   private trackGraphics: Graphics;
-  
+
   private groundContainer: Container;
   private topEdge: TilingSprite;
   private middleGround: TilingSprite;
@@ -41,7 +68,7 @@ export class RaceScene extends Container {
   private gameViewH: number = 0;
   private isPortrait: boolean = false;
 
-  private countdownTimer: number = CONFIG.COUNTDOWN_DURATION;
+  private countdownTimer: number = VISUALS.COUNTDOWN_DURATION;
   private countdownText: Text | null = null;
   private raceStarted: boolean = false;
 
@@ -52,7 +79,7 @@ export class RaceScene extends Container {
     treeAnimation: Texture[],
     groundTextures: GroundTextures,
     grassTextures: GrassTextures,
-    onFinished: (results: Racer[]) => void
+    onFinished: (results: Racer[]) => void,
   ) {
     super();
     this.onFinished = onFinished;
@@ -79,24 +106,38 @@ export class RaceScene extends Container {
     this.ui.addChild(this.leaderboardContainer);
 
     const titleStyle = new TextStyle({
-      fill: '#ffffff',
+      fill: "#ffffff",
       fontSize: 24,
-      fontWeight: '900',
-      stroke: { color: '#000000', width: 4 },
-      dropShadow: { alpha: 0.5, angle: Math.PI/2, blur: 0, color: '#000000', distance: 4 }
+      fontWeight: "900",
+      stroke: { color: "#000000", width: 4 },
+      dropShadow: {
+        alpha: 0.5,
+        angle: Math.PI / 2,
+        blur: 0,
+        color: "#000000",
+        distance: 4,
+      },
     });
     const title = new Text({ text: "RANKING", style: titleStyle });
-    title.name = 'leaderboard-title';
+    title.name = "leaderboard-title";
     this.leaderboardContainer.addChild(title);
 
     // Grass Layers
     this.grassContainer = new Container();
     this.world.addChild(this.grassContainer);
 
-    this.topGrassMiddle = new TilingSprite({ texture: this.grassTextures.middle });
-    this.topGrassEdge = new TilingSprite({ texture: this.grassTextures.bottom });
-    this.bottomGrassMiddle = new TilingSprite({ texture: this.grassTextures.middle });
-    this.bottomGrassEdge = new TilingSprite({ texture: this.grassTextures.top });
+    this.topGrassMiddle = new TilingSprite({
+      texture: this.grassTextures.middle,
+    });
+    this.topGrassEdge = new TilingSprite({
+      texture: this.grassTextures.bottom,
+    });
+    this.bottomGrassMiddle = new TilingSprite({
+      texture: this.grassTextures.middle,
+    });
+    this.bottomGrassEdge = new TilingSprite({
+      texture: this.grassTextures.top,
+    });
 
     this.grassContainer.addChild(this.topGrassMiddle);
     this.grassContainer.addChild(this.topGrassEdge);
@@ -115,12 +156,12 @@ export class RaceScene extends Container {
     this.topEdge = new TilingSprite({
       texture: this.groundTextures.top,
       width: 0,
-      height: CONFIG.ITEMS.ground.unit,
+      height: ITEMS.ground.unit,
     });
     this.bottomEdge = new TilingSprite({
       texture: this.groundTextures.bottom,
       width: 0,
-      height: CONFIG.ITEMS.ground.unit,
+      height: ITEMS.ground.unit,
     });
 
     this.groundContainer.addChild(this.middleGround);
@@ -138,10 +179,10 @@ export class RaceScene extends Container {
 
   private initCountdownUI() {
     const style = new TextStyle({
-      fill: '#ffeb3b',
+      fill: "#ffeb3b",
       fontSize: 120,
       fontWeight: "900",
-      stroke: { color: '#e91e63', width: 12 },
+      stroke: { color: "#e91e63", width: 12 },
       dropShadow: {
         alpha: 0.5,
         angle: Math.PI / 6,
@@ -162,60 +203,62 @@ export class RaceScene extends Container {
     this.isPortrait = width < 600;
 
     const availableH = this.isPortrait ? height * 0.7 : height;
-    
+
     this.gameViewH = availableH;
     const yOffset = 0;
 
     if (this.isPortrait) {
       this.gameViewW = width;
     } else {
-      this.gameViewW = width - CONFIG.UI_WIDTH;
+      this.gameViewW = width - CANVAS.UI_WIDTH;
     }
 
     this.world.y = yOffset;
     this.worldMask
       .clear()
       .rect(0, yOffset, this.gameViewW, this.gameViewH)
-      .fill(CONFIG.COLORS.MASK_FILL);
+      .fill(COLORS.MASK_FILL);
 
     this.sidebarBg.clear();
-    const woodColor = CONFIG.COLORS.SIDEBAR_WOOD;
-    const bgColor = CONFIG.COLORS.SIDEBAR_BG;
-    
+    const woodColor = COLORS.SIDEBAR_WOOD;
+    const bgColor = COLORS.SIDEBAR_BG;
+
     if (this.isPortrait) {
       this.sidebarBg
-        .rect(0, availableH, width, height - availableH).fill(bgColor, 0.95);
-      
+        .rect(0, availableH, width, height - availableH)
+        .fill(bgColor, 0.95);
+
       // Wooden Texture Lines
       for (let y = availableH + 5; y < height; y += 10) {
         this.sidebarBg.rect(0, y, width, 2).fill(woodColor, 0.3);
       }
-      
+
       this.leaderboardContainer.x = 20;
       this.leaderboardContainer.y = availableH + 15;
     } else {
       this.sidebarBg
-        .rect(this.gameViewW, 0, CONFIG.UI_WIDTH, height).fill(bgColor, 0.95);
-      
+        .rect(this.gameViewW, 0, CANVAS.UI_WIDTH, height)
+        .fill(bgColor, 0.95);
+
       // Wooden Texture Lines
       for (let x = this.gameViewW + 5; x < width; x += 15) {
         this.sidebarBg.rect(x, 0, 2, height).fill(woodColor, 0.3);
       }
-      
+
       this.leaderboardContainer.x = this.gameViewW + 15;
       this.leaderboardContainer.y = 20;
     }
 
-    const title = this.leaderboardContainer.getChildByName('leaderboard-title');
+    const title = this.leaderboardContainer.getChildByName("leaderboard-title");
     if (title) {
       title.x = 0;
       title.y = 0;
     }
 
-    const unitWidth = Math.max(this.gameViewW, CONFIG.MIN_UNIT_WIDTH);
+    const unitWidth = Math.max(this.gameViewW, CANVAS.MIN_UNIT_WIDTH);
     const racePixels = (this.distance / 50) * unitWidth;
-    
-    this.finishLineX = CONFIG.START_LINE_X + racePixels;
+
+    this.finishLineX = TRACK.START_LINE_X + racePixels;
     this.trackWidth = this.finishLineX + 200;
 
     this.setupTracks();
@@ -231,14 +274,14 @@ export class RaceScene extends Container {
   private initLeaderboardUI() {
     this.racers.forEach((racer) => {
       const container = new Container();
-      
+
       const bg = new Graphics();
-      bg.name = 'item-bg';
+      bg.name = "item-bg";
       container.addChild(bg);
 
       // Animal Icon
       const icon = new AnimatedSprite(this.bearAnimations.idle);
-      icon.name = 'item-icon';
+      icon.name = "item-icon";
       icon.anchor.set(0.5);
       icon.scale.set(0.4);
       icon.x = 25;
@@ -247,13 +290,13 @@ export class RaceScene extends Container {
       container.addChild(icon);
 
       const style = new TextStyle({
-        fill: '#ffffff',
+        fill: "#ffffff",
         fontSize: 16,
-        fontWeight: '900',
-        stroke: { color: '#000000', width: 3 },
+        fontWeight: "900",
+        stroke: { color: "#000000", width: 3 },
       });
       const text = new Text({ text: racer.racerName, style });
-      text.name = 'item-text';
+      text.name = "item-text";
       text.x = 50;
       text.y = 18;
       text.anchor.set(0, 0.5);
@@ -266,7 +309,7 @@ export class RaceScene extends Container {
 
   private setupTracks() {
     const count = this.racers.length;
-    const unit = CONFIG.ITEMS.ground.unit;
+    const unit = ITEMS.ground.unit;
     const grassStripH = unit * 4; // 64px grass on top/bottom to accommodate 48px trees
     const dirtH = this.gameViewH - grassStripH * 2;
     const trackHeight = dirtH / count;
@@ -301,9 +344,11 @@ export class RaceScene extends Container {
 
     this.trackGraphics.clear();
 
-    const colorLight = 0xfff9c4; // Cream
-    const colorDark = 0x3e2723;  // Dark Brown
-    const colorRed = 0xff8a65;   // Warm Red
+    const {
+      CREAM: colorLight,
+      DARK_BROWN: colorDark,
+      WARM_RED: colorRed,
+    } = TRACK_COLORS;
 
     // Solid Pixel Track Dividers (8x8 blocks)
     const dividerSize = 8;
@@ -321,19 +366,39 @@ export class RaceScene extends Container {
     // Large Solid Start Line (16x16 blocks) - Only on Dirt
     const startBlockSize = 16;
     const blockRadius = 4;
-    for (let y = grassStripH; y <= this.gameViewH - grassStripH - startBlockSize; y += startBlockSize) {
+    for (
+      let y = grassStripH;
+      y <= this.gameViewH - grassStripH - startBlockSize;
+      y += startBlockSize
+    ) {
       this.trackGraphics
-        .roundRect(CONFIG.START_LINE_X - startBlockSize, y, startBlockSize, startBlockSize, blockRadius)
+        .roundRect(
+          TRACK.START_LINE_X - startBlockSize,
+          y,
+          startBlockSize,
+          startBlockSize,
+          blockRadius,
+        )
         .fill(colorLight)
-        .roundRect(CONFIG.START_LINE_X, y, startBlockSize, startBlockSize, blockRadius)
+        .roundRect(
+          TRACK.START_LINE_X,
+          y,
+          startBlockSize,
+          startBlockSize,
+          blockRadius,
+        )
         .fill(colorRed);
     }
-    
+
     // Large Solid Finish Line (16x16 checkered blocks) - Only on Dirt
     const finishBlockSize = 16;
     for (let col = 0; col < 2; col++) {
       const x = this.finishLineX + col * finishBlockSize;
-      for (let row = 0; row * finishBlockSize <= dirtH - finishBlockSize; row++) {
+      for (
+        let row = 0;
+        row * finishBlockSize <= dirtH - finishBlockSize;
+        row++
+      ) {
         const y = grassStripH + row * finishBlockSize;
         const color = (row + col) % 2 === 0 ? colorLight : colorDark;
         this.trackGraphics
@@ -344,59 +409,66 @@ export class RaceScene extends Container {
 
     // Clean old markers and trees
     this.world.children
-      .filter((c) => 
-        (c instanceof Text && (c.text.includes("m") || c.name === 'start-label')) || 
-        (c instanceof AnimatedSprite && c.name === 'distance-tree')
+      .filter(
+        (c) =>
+          (c instanceof Text &&
+            (c.text.includes("m") || c.name === "start-label")) ||
+          (c instanceof AnimatedSprite && c.name === "distance-tree"),
       )
       .forEach((c) => this.world.removeChild(c));
 
-    const unitWidth = Math.max(this.gameViewW, CONFIG.MIN_UNIT_WIDTH);
+    const unitWidth = Math.max(this.gameViewW, CANVAS.MIN_UNIT_WIDTH);
     for (let m = 10; m <= this.distance; m += 10) {
-      const x = CONFIG.START_LINE_X + (m / 50) * unitWidth;
-      
+      const x = TRACK.START_LINE_X + (m / 50) * unitWidth;
+
       // Bottom Tree (On Grass)
       const treeBottom = new AnimatedSprite(this.treeAnimation);
-      treeBottom.name = 'distance-tree';
+      treeBottom.name = "distance-tree";
       treeBottom.anchor.set(0.5, 1);
-      treeBottom.width = CONFIG.ITEMS.tree.width;
-      treeBottom.height = CONFIG.ITEMS.tree.height;
+      treeBottom.width = ITEMS.tree.width;
+      treeBottom.height = ITEMS.tree.height;
       treeBottom.x = x;
-      treeBottom.y = this.gameViewH - (grassStripH - CONFIG.ITEMS.tree.height) / 2; 
+      treeBottom.y = this.gameViewH - (grassStripH - ITEMS.tree.height) / 2;
       treeBottom.animationSpeed = 0.1;
       treeBottom.play();
       this.world.addChild(treeBottom);
 
       // Top Tree (On Grass)
       const treeTop = new AnimatedSprite(this.treeAnimation);
-      treeTop.name = 'distance-tree';
-      treeTop.anchor.set(0.5, 0); 
-      treeTop.width = CONFIG.ITEMS.tree.width;
-      treeTop.height = CONFIG.ITEMS.tree.height;
+      treeTop.name = "distance-tree";
+      treeTop.anchor.set(0.5, 0);
+      treeTop.width = ITEMS.tree.width;
+      treeTop.height = ITEMS.tree.height;
       treeTop.x = x;
-      treeTop.y = (grassStripH - CONFIG.ITEMS.tree.height) / 2;
+      treeTop.y = (grassStripH - ITEMS.tree.height) / 2;
       treeTop.animationSpeed = 0.1;
       treeTop.play();
       this.world.addChild(treeTop);
 
       const marker = new Text({
         text: `${m}m`,
-        style: { fill: CONFIG.COLORS.TEXT_MARKER, fontSize: 14 },
+        style: { fill: COLORS.TEXT_MARKER, fontSize: 14 },
       });
       marker.anchor.set(0.5, 0);
       marker.x = x;
-      marker.y = this.gameViewH - CONFIG.ITEMS.tree.height - grassStripH - 10;
+      marker.y = this.gameViewH - ITEMS.tree.height - grassStripH - 10;
       this.world.addChild(marker);
     }
   }
 
   private createRacers(names: string[]) {
     names.forEach((name, i) => {
-      const color = CONFIG.COLORS.RACERS[i % CONFIG.COLORS.RACERS.length];
+      const color = COLORS.RACERS[i % COLORS.RACERS.length];
       const stats = {
-        accel: CONFIG.ACCEL_BASE + Math.random() * CONFIG.ACCEL_VARIANCE,
-        topSpeed: CONFIG.BASE_SPEED + Math.random() * CONFIG.SPEED_VARIANCE,
+        accel:
+          GAMEPLAY.STATS.ACCEL_BASE +
+          Math.random() * GAMEPLAY.STATS.ACCEL_VARIANCE,
+        topSpeed:
+          GAMEPLAY.STATS.BASE_SPEED +
+          Math.random() * GAMEPLAY.STATS.SPEED_VARIANCE,
         endurance:
-          CONFIG.ENDURANCE_BASE + Math.random() * CONFIG.ENDURANCE_VARIANCE,
+          GAMEPLAY.STATS.ENDURANCE_BASE +
+          Math.random() * GAMEPLAY.STATS.ENDURANCE_VARIANCE,
       };
       const racer = new Racer(name, color, 0, stats, this.bearAnimations);
       this.racers.push(racer);
@@ -405,14 +477,14 @@ export class RaceScene extends Container {
   }
 
   private repositionRacers() {
-    const unit = CONFIG.ITEMS.ground.unit;
+    const unit = ITEMS.ground.unit;
     const grassStripH = unit * 4;
     const dirtH = this.gameViewH - grassStripH * 2;
     const trackHeight = dirtH / this.racers.length;
-    
+
     this.racers.forEach((racer, i) => {
       // Offset by top grass strip height, then center in lane
-      racer.y = grassStripH + (i + 0.5) * trackHeight + CONFIG.RACER_HEIGHT / 2;
+      racer.y = grassStripH + (i + 0.5) * trackHeight + RACER.HEIGHT / 2;
     });
   }
 
@@ -451,10 +523,9 @@ export class RaceScene extends Container {
 
         if (
           racer.x >=
-          this.finishLineX - CONFIG.RACER_WIDTH + CONFIG.RACER_COLLISION_OFFSET
+          this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET
         ) {
-          racer.x =
-            this.finishLineX - CONFIG.RACER_WIDTH + CONFIG.RACER_COLLISION_OFFSET;
+          racer.x = this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET;
           racer.setFinished(this.elapsedTime);
           this.finishedRacers.push(racer);
         }
@@ -495,7 +566,7 @@ export class RaceScene extends Container {
       const container = this.leaderboardItems.get(racer);
       if (container) {
         let targetY, targetX;
-        
+
         if (this.isPortrait) {
           const count = this.racers.length;
           const totalW = this.gameViewW - 40;
@@ -507,33 +578,39 @@ export class RaceScene extends Container {
           targetY = 40 + index * 42;
         }
 
-        const smoothing = 1 - Math.pow(1 - CONFIG.LEADERBOARD_ANIMATION_SPEED, delta);
+        const smoothing =
+          1 - Math.pow(1 - VISUALS.LEADERBOARD_ANIMATION_SPEED, delta);
         container.x += (targetX - container.x) * smoothing;
         container.y += (targetY - container.y) * smoothing;
 
-        const bg = container.getChildByName('item-bg') as Graphics;
-        const text = container.getChildByName('item-text') as Text;
+        const bg = container.getChildByName("item-bg") as Graphics;
+        const text = container.getChildByName("item-text") as Text;
 
         if (bg) {
-          const w = this.isPortrait ? (this.gameViewW - 40) / this.racers.length - 5 : CONFIG.UI_WIDTH - 30;
+          const w = this.isPortrait
+            ? (this.gameViewW - 40) / this.racers.length - 5
+            : CANVAS.UI_WIDTH - 30;
           const h = 36;
-          
-          let borderColor = CONFIG.COLORS.RANK_DEFAULT;
-          if (index === 0) borderColor = CONFIG.COLORS.RANK_GOLD;
-          else if (index === 1) borderColor = CONFIG.COLORS.RANK_SILVER;
-          else if (index === 2) borderColor = CONFIG.COLORS.RANK_BRONZE;
+
+          let borderColor: number = COLORS.RANK_DEFAULT;
+          if (index === 0) borderColor = COLORS.RANK_GOLD;
+          else if (index === 1) borderColor = COLORS.RANK_SILVER;
+          else if (index === 2) borderColor = COLORS.RANK_BRONZE;
 
           bg.clear();
           // Main card body (semi-transparent dark)
-          bg.roundRect(0, 0, w, h, 4).fill(0x000000, 0.5).stroke({ color: borderColor, width: index < 3 ? 3 : 1 });
+          bg.roundRect(0, 0, w, h, 4)
+            .fill(0x000000, 0.5)
+            .stroke({ color: borderColor, width: index < 3 ? 3 : 1 });
         }
 
         if (text) {
           const rank = index + 1;
-          const suffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th';
-          text.text = `${rank}${suffix}: ${racer.racerName.split(' ')[1]}`;
-          text.style.fill = '#ffffff';
-          text.style.fontWeight = '900';
+          const suffix =
+            rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
+          text.text = `${rank}${suffix}: ${racer.racerName.split(" ")[1]}`;
+          text.style.fill = "#ffffff";
+          text.style.fontWeight = "900";
           if (this.isPortrait) text.style.fontSize = 12;
           else text.style.fontSize = 14;
         }
@@ -546,7 +623,7 @@ export class RaceScene extends Container {
     const minX = 0;
     const maxX = this.trackWidth - this.gameViewW;
     targetX = Math.max(minX, Math.min(targetX, maxX));
-    const smoothing = 1 - Math.pow(1 - CONFIG.CAMERA_SMOOTHING, delta);
+    const smoothing = 1 - Math.pow(1 - VISUALS.CAMERA_SMOOTHING, delta);
     const currentX = -this.world.x;
     const newX = currentX + (targetX - currentX) * smoothing;
     this.world.x = -newX;
@@ -556,6 +633,6 @@ export class RaceScene extends Container {
     this.raceEnded = true;
     setTimeout(() => {
       this.onFinished(this.finishedRacers);
-    }, CONFIG.RESULT_DELAY);
+    }, VISUALS.RESULT_DELAY);
   }
 }

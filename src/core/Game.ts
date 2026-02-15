@@ -1,26 +1,22 @@
-import { Application, Container, Ticker, Assets, Texture, Rectangle } from "pixi.js";
+import {
+  Application,
+  Container,
+  Ticker,
+  Assets,
+  Texture,
+  Rectangle,
+} from "pixi.js";
 import { RaceScene } from "../scenes/RaceScene";
 import { MenuScene } from "../scenes/MenuScene";
 import { ResultScene } from "../scenes/ResultScene";
 import { Racer } from "../entities/Racer";
-import type { RacerAnimations } from "../entities/Racer";
-import { CONFIG } from "../config";
-
-export interface GroundTextures {
-  top: Texture;
-  middle: Texture;
-  bottom: Texture;
-}
-
-export interface GrassTextures {
-  top: Texture;
-  middle: Texture;
-  bottom: Texture;
-}
+import { CHARACTERS, ITEMS } from "../config";
+import type { Scene } from "./Scene";
+import type { RacerAnimations, GroundTextures, GrassTextures } from "./types";
 
 export class Game {
   private app: Application;
-  private currentScene: Container | null = null;
+  private currentScene: (Container & Scene) | null = null;
   private updateFn: ((ticker: Ticker) => void) | null = null;
   private bearAnimations: RacerAnimations | null = null;
   private treeAnimation: Texture[] = [];
@@ -33,11 +29,8 @@ export class Game {
   }
 
   private onResize() {
-    if (this.currentScene && (this.currentScene as any).resize) {
-      (this.currentScene as any).resize(
-        this.app.screen.width,
-        this.app.screen.height
-      );
+    if (this.currentScene) {
+      this.currentScene.resize(this.app.screen.width, this.app.screen.height);
     }
   }
 
@@ -48,37 +41,27 @@ export class Game {
 
   private async loadAssets() {
     // Load images
-    const idleSheet = await Assets.load(CONFIG.CHARACTERS.bear.idle.path);
-    const walkSheet = await Assets.load(CONFIG.CHARACTERS.bear.walk.path);
-    const treeSheet = await Assets.load(CONFIG.ITEMS.tree.path);
-    const groundSheet = await Assets.load(CONFIG.ITEMS.ground.path);
-    const grassSheet = await Assets.load(CONFIG.ITEMS.grass.path);
+    const idleSheet = await Assets.load(CHARACTERS.bear.idle.path);
+    const walkSheet = await Assets.load(CHARACTERS.bear.walk.path);
+    const treeSheet = await Assets.load(ITEMS.tree.path);
+    const groundSheet = await Assets.load(ITEMS.ground.path);
+    const grassSheet = await Assets.load(ITEMS.grass.path);
 
     // Create textures from sheets
     this.bearAnimations = {
-      idle: this.createFrames(
-        idleSheet,
-        CONFIG.CHARACTERS.bear.idle.frames,
-        1,
-        0
-      ),
-      walk: this.createFrames(
-        walkSheet,
-        CONFIG.CHARACTERS.bear.walk.frames,
-        1,
-        0
-      ),
+      idle: this.createFrames(idleSheet, CHARACTERS.bear.idle.frames, 1, 0),
+      walk: this.createFrames(walkSheet, CHARACTERS.bear.walk.frames, 1, 0),
     };
 
     // Create tree animation from the 4th row (index 3)
     this.treeAnimation = this.createFrames(
       treeSheet,
-      CONFIG.ITEMS.tree.cols,
+      ITEMS.tree.cols,
       5, // Total rows in sheet
-      3  // 4th row index
+      3, // 4th row index
     );
 
-    const groundUnit = CONFIG.ITEMS.ground.unit;
+    const groundUnit = ITEMS.ground.unit;
     this.groundTextures = {
       top: new Texture({
         source: groundSheet.source,
@@ -94,7 +77,7 @@ export class Game {
       }),
     };
 
-    const grassUnit = CONFIG.ITEMS.grass.unit;
+    const grassUnit = ITEMS.grass.unit;
     this.grassTextures = {
       top: new Texture({
         source: grassSheet.source,
@@ -115,7 +98,7 @@ export class Game {
     baseTexture: Texture,
     cols: number,
     rows: number = 1,
-    rowIdx: number = 0
+    rowIdx: number = 0,
   ): Texture[] {
     const frames: Texture[] = [];
     const frameW = baseTexture.width / cols;
@@ -132,65 +115,48 @@ export class Game {
   }
 
   showMenuScene() {
-    this.cleanupCurrentScene();
-
-    const menuScene = new MenuScene((playerCount, distance) => {
-      const names = Array.from(
-        { length: playerCount },
-        (_, i) => `Racer ${i + 1}`
-      );
-      this.showRaceScene(names, distance);
-    });
-
-    this.currentScene = menuScene;
-    this.app.stage.addChild(menuScene);
-    this.onResize();
-
-    this.updateFn = (ticker: Ticker) => {
-      menuScene.update(ticker.deltaTime);
-    };
-    this.app.ticker.add(this.updateFn);
+    this.setScene(
+      new MenuScene((playerCount, distance) => {
+        const names = Array.from(
+          { length: playerCount },
+          (_, i) => `Racer ${i + 1}`,
+        );
+        this.showRaceScene(names, distance);
+      }),
+    );
   }
 
   showRaceScene(playerNames: string[], distance: number) {
-    this.cleanupCurrentScene();
+    if (!this.bearAnimations || !this.groundTextures || !this.grassTextures)
+      return;
 
-    if (!this.bearAnimations || !this.groundTextures || !this.grassTextures) return;
-
-    const raceScene = new RaceScene(
-      playerNames,
-      distance,
-      this.bearAnimations,
-      this.treeAnimation,
-      this.groundTextures,
-      this.grassTextures,
-      (results) => {
-        this.showResultScene(results);
-      }
+    this.setScene(
+      new RaceScene(
+        playerNames,
+        distance,
+        this.bearAnimations,
+        this.treeAnimation,
+        this.groundTextures,
+        this.grassTextures,
+        (results) => this.showResultScene(results),
+      ),
     );
-    this.currentScene = raceScene;
-    this.app.stage.addChild(raceScene);
-    this.onResize();
-
-    this.updateFn = (ticker: Ticker) => {
-      raceScene.update(ticker.deltaTime);
-    };
-    this.app.ticker.add(this.updateFn);
   }
 
   showResultScene(results: Racer[]) {
-    this.cleanupCurrentScene();
+    this.setScene(new ResultScene(results, () => this.showMenuScene()));
+  }
 
-    const resultScene = new ResultScene(results, () => {
-      this.showMenuScene();
-    });
-    this.currentScene = resultScene;
-    this.app.stage.addChild(resultScene);
+  // ── helpers ─────────────────────────────────────────────────────────────
+
+  /** Mount a new scene, tearing down the previous one. */
+  private setScene(scene: Container & Scene) {
+    this.cleanupCurrentScene();
+    this.currentScene = scene;
+    this.app.stage.addChild(scene);
     this.onResize();
 
-    this.updateFn = (ticker: Ticker) => {
-      resultScene.update(ticker.deltaTime);
-    };
+    this.updateFn = (ticker: Ticker) => scene.update(ticker.deltaTime);
     this.app.ticker.add(this.updateFn);
   }
 
