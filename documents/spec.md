@@ -10,7 +10,7 @@
 - **Framework:** TypeScript + Vite
 - **Pattern: Strategy:** AI behavior is encapsulated in `StrategyBehavior` implementations (Aggressive, Pacer, Conservative, Closer), controlling stamina management and sprint triggers.
 - **Pattern: Factory:** `RacerFactory` handles randomized stat generation, character assignment, and strategy selection.
-- **Scene Lifecycle:** Managed by `Game.ts`, implementing a unified `Scene` interface for Menu, Race, and Results.
+- **Scene Lifecycle:** Managed by `Game.ts`, implementing a unified `Scene` interface for Menu, Character Selection, Race, and Results.
 
 ## 3. The Core Stat Trifecta
 
@@ -53,8 +53,12 @@ To ensure races aren't purely mathematical, several "Drama" mechanics are inject
 - **Stumble:** Random momentary slowdowns. Leaders have a 1.4x higher chance to stumble.
 - **Second Wind:** Deeply trailing racers (bottom 25%) gain a massive +45% speed burst for 2.5 seconds after trailing for 6 seconds.
 
-## 6. The "Climax Phase" (Final 20%)
+## 6. The Entrance & Climax Phases
 
+### A. Pre-Race Entrance
+Racers walk from the left off-screen to the start line before the countdown begins, transitioning from walk to idle animations once in position.
+
+### B. The Climax Phase (Final 20%)
 Triggered when any racer enters the final 20% of the track:
 - **Enhanced Recovery:** All racers get a 1.5x recovery multiplier.
 - **Overdrive:** Top 25% of chasers within a specific range of the leader gain a +4% speed boost.
@@ -71,6 +75,7 @@ Triggered when any racer enters the final 20% of the track:
 
 ## 8. Visual Design & UI
 
-- **Theme:** Nature-themed racing with farm-sim inspired UI.
+- **Theme:** Clean nature-themed racing with solid green backgrounds.
 - **Responsive Layout:** Sidebar leaderboard on desktop, bottom-docked on mobile.
-- **Aesthetics:** Dark oak wood backgrounds, gold/silver rank cards, animated pixel-art characters.
+- **HUD:** Large real-time "Remaining Distance" indicator at top center.
+- **Aesthetics:** Dark oak wood backgrounds, gold/silver rank cards, unified white racer names, animated pixel-art characters.

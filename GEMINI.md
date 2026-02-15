@@ -20,12 +20,12 @@ A dynamic web-based racing game built with **Pixi.js v8**, **TypeScript**, and *
   - `RacerFactory.ts`: `createRacers()` factory — encapsulates random stat generation, character shuffling, colour assignment, and strategy selection. Used by `RaceScene`.
 - `src/scenes/`:
   - `MenuScene.ts`: Entry screen for selecting racer count and track distance. Persists settings to localStorage.
-  - `RaceScene.ts`: Main game loop with responsive track, dynamic camera, countdown, and real-time standings sidebar.
+  - `CharacterSelectionScene.ts`: Interactive screen for picking specific characters. Features a 1.5x scaled lineup and neutral wooden aesthetic.
+  - `RaceScene.ts`: Main game loop with randomized tracks, pre-race walk entrance, and real-time distance HUD.
   - `ResultScene.ts`: Post-race results with farming-themed leaderboard sidebar and restart button.
 - `src/ui/`: Reusable UI components.
   - `LeaderboardSidebar.ts`: Farm-themed leaderboard panel with wood background, gold/silver rank cards, animal icons, grass & daisy decorations.
   - `WoodenButton.ts`: Shared wooden-textured button factory (`createWoodenButton`).
-  - `HillBackground.ts`: Shared grassy hill background renderer (`drawHillBackground`).
 - `src/assets/`:
   - `characters/`: Character sprite sheets (idle + walk) for bear, cat, fox, mouse, panda, rabbit, sheep, turtle.
   - `item/`: Environment sprites (trees, ground tiles, grass tiles).

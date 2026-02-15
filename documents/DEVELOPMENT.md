@@ -17,8 +17,8 @@ Every racer isn't just a set of stats; they have a **Personality**. By using the
 - **Closers** create late-game "come-from-behind" victories.
 - This variety ensures that every race tells a different story.
 
-### C. The Cozy Aesthetic
-We consciously paired a high-performance **WebGPU/Pixi.js** engine with a low-fidelity, cozy "Farming-Sim" aesthetic. This creates a disarming, accessible atmosphere that contrasts with the intense, mathematical "Comeback Engine" running under the hood.
+### C. The Minimalist Aesthetic
+Weconsciously paired a high-performance **WebGPU/Pixi.js** engine with a clean, high-contrast solid green aesthetic. This removes visual clutter, ensuring players can focus on the intense, mathematical "Comeback Engine" running under the hood.
 
 ---
 
@@ -31,12 +31,12 @@ The `Racer` class knows *how* to move, but it doesn't know *why* it should sprin
 - **Benefit:** We can add "Cowardly," "Random," or "Expert" AI without ever touching the `Racer.ts` file.
 
 #### 2. Factory Pattern (`src/factories/`)
-Creating a racer involves picking names, shuffling character skins, generating Gaussian-random stats, and assigning colors. The `RacerFactory` encapsulates this complexity.
-- **Benefit:** Scenes stay clean. `RaceScene` simply asks for `createRacers(count)` and receives a ready-to-race array.
+Creating a racer involves generating Gaussian-random stats, assigning characters, and determining strategy. The `RacerFactory` encapsulates this complexity.
+- **Benefit:** Scenes stay clean. `RaceScene` simply asks for `createRacers(selectedKeys)` and receives a ready-to-race array.
 
 #### 3. Scene Lifecycle (`src/core/`)
 The game follows a strict `Scene` interface (`update`, `resize`, `destroy`). The `Game` class acts as a central orchestrator.
-- **Benefit:** Memory management is simplified. When switching from `Race` to `Result`, the old scene is destroyed, preventing WebGL context leaks.
+- **Benefit:** Switching between `Menu`, `CharacterSelection`, `Race`, and `Result` scenes is handled uniformly, ensuring efficient memory management and asset loading.
 
 ### Game Design Theory
 
