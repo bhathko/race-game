@@ -79,4 +79,4 @@ Triggered when any racer enters the final 20% of the track:
 - **Design System:** Utilizes a centralized `PALETTE` token system in `config.ts` to manage all hex values, ensuring project-wide consistency and easy theme swapping.
 - **Responsive Layout:** Sidebar leaderboard on desktop, bottom-docked on mobile.
 - **HUD:** Large real-time "Remaining Distance" indicator at top center.
-- **Aesthetics:** Refreshed lighter oak wood style for better vibrancy, gold/silver rank cards, unified white racer names with brown strokes, animated pixel-art characters.
+- **Aesthetics:** Refreshed lighter oak wood style for better vibrancy, **podium-style leaderboard** for top 3 winners, gold/silver/bronze pedestal borders, unified white racer names with brown strokes, animated pixel-art characters.
