@@ -29,43 +29,43 @@ export const TRACK = {
 export const CHARACTERS = {
   bear: {
     name: "Bear",
-    idle: { path: "src/assets/characters/bear/bear-idle.png", frames: 6 },
-    walk: { path: "src/assets/characters/bear/bear-walk.png", frames: 8 },
+    idle: { path: "assets/characters/bear/bear-idle.png", frames: 6 },
+    walk: { path: "assets/characters/bear/bear-walk.png", frames: 8 },
   },
   cat: {
     name: "Cat",
-    idle: { path: "src/assets/characters/cat/cat-idle.png", frames: 6 },
-    walk: { path: "src/assets/characters/cat/cat-walk.png", frames: 8 },
+    idle: { path: "assets/characters/cat/cat-idle.png", frames: 6 },
+    walk: { path: "assets/characters/cat/cat-walk.png", frames: 8 },
   },
   fox: {
     name: "Fox",
-    idle: { path: "src/assets/characters/fox/fox-idle.png", frames: 6 },
-    walk: { path: "src/assets/characters/fox/fox-walk.png", frames: 8 },
+    idle: { path: "assets/characters/fox/fox-idle.png", frames: 6 },
+    walk: { path: "assets/characters/fox/fox-walk.png", frames: 8 },
   },
   mouse: {
     name: "Mouse",
-    idle: { path: "src/assets/characters/mouse/mouse-idle.png", frames: 6 },
-    walk: { path: "src/assets/characters/mouse/mouse-walk.png", frames: 8 },
+    idle: { path: "assets/characters/mouse/mouse-idle.png", frames: 6 },
+    walk: { path: "assets/characters/mouse/mouse-walk.png", frames: 8 },
   },
   panda: {
     name: "Panda",
-    idle: { path: "src/assets/characters/panda/panda-idle.png", frames: 6 },
-    walk: { path: "src/assets/characters/panda/panda-walk.png", frames: 8 },
+    idle: { path: "assets/characters/panda/panda-idle.png", frames: 6 },
+    walk: { path: "assets/characters/panda/panda-walk.png", frames: 8 },
   },
   rabbit: {
     name: "Rabbit",
-    idle: { path: "src/assets/characters/rabbit/rabbit-idle.png", frames: 6 },
-    walk: { path: "src/assets/characters/rabbit/rabbit-walk.png", frames: 8 },
+    idle: { path: "assets/characters/rabbit/rabbit-idle.png", frames: 6 },
+    walk: { path: "assets/characters/rabbit/rabbit-walk.png", frames: 8 },
   },
   sheep: {
     name: "Sheep",
-    idle: { path: "src/assets/characters/sheep/sheep-idle.png", frames: 6 },
-    walk: { path: "src/assets/characters/sheep/sheep-walk.png", frames: 8 },
+    idle: { path: "assets/characters/sheep/sheep-idle.png", frames: 6 },
+    walk: { path: "assets/characters/sheep/sheep-walk.png", frames: 8 },
   },
   turtle: {
     name: "Turtle",
-    idle: { path: "src/assets/characters/turtle/turtle-idle.png", frames: 6 },
-    walk: { path: "src/assets/characters/turtle/turtle-walk.png", frames: 8 },
+    idle: { path: "assets/characters/turtle/turtle-idle.png", frames: 6 },
+    walk: { path: "assets/characters/turtle/turtle-walk.png", frames: 8 },
   },
 } as const;
 
@@ -73,25 +73,25 @@ export const CHARACTERS = {
 
 export const ITEMS = {
   tree: {
-    path: "src/assets/item/tree-idle.png",
+    path: "assets/item/tree-idle.png",
     cols: 12,
     rows: 4,
     width: 48,
     height: 48,
   },
   trophy: {
-    path: "src/assets/item/gold-trophy.png",
+    path: "assets/item/gold-trophy.png",
   },
   ground: {
-    path: "src/assets/item/ground.png",
+    path: "assets/item/ground.png",
     unit: 16,
   },
   grass: {
-    path: "src/assets/item/grass.png",
+    path: "assets/item/grass.png",
     unit: 16,
   },
   sound: {
-    path: "src/assets/sound/sound.mp3",
+    path: "assets/sound/sound.mp3",
   },
 } as const;
 
