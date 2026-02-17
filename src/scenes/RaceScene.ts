@@ -531,12 +531,18 @@ export class RaceScene extends Container implements Scene {
       if (this.currentMusicVolume !== this.targetMusicVolume) {
         const step = delta * 0.015; // Fade speed
         if (this.currentMusicVolume < this.targetMusicVolume) {
-          this.currentMusicVolume = Math.min(this.targetMusicVolume, this.currentMusicVolume + step);
+          this.currentMusicVolume = Math.min(
+            this.targetMusicVolume,
+            this.currentMusicVolume + step,
+          );
         } else {
-          this.currentMusicVolume = Math.max(this.targetMusicVolume, this.currentMusicVolume - step);
+          this.currentMusicVolume = Math.max(
+            this.targetMusicVolume,
+            this.currentMusicVolume - step,
+          );
         }
         this.musicInstance.volume = this.currentMusicVolume;
-        
+
         // Fully stop if fading out and reached 0
         if (this.raceEnded && this.currentMusicVolume <= 0) {
           this.musicInstance.stop();
@@ -565,9 +571,20 @@ export class RaceScene extends Container implements Scene {
       this.countdownTimer -= delta / 60;
       if (this.countdownTimer <= 0) {
         this.raceStarted = true;
-        
+
         // Start background music with a fade-in
-        this.musicInstance = sound.play("sound", { loop: true, volume: 0 });
+        const musicPromise = sound.play("sound", { loop: true, volume: 0 });
+        if (musicPromise instanceof Promise) {
+          musicPromise.then((instance: IMediaInstance) => {
+            this.musicInstance = instance;
+            this.targetMusicVolume = 1;
+            this.currentMusicVolume = 0;
+          });
+        } else {
+          this.musicInstance = musicPromise;
+          this.targetMusicVolume = 1;
+          this.currentMusicVolume = 0;
+        }
         this.targetMusicVolume = 1;
         this.currentMusicVolume = 0;
 
@@ -636,7 +653,9 @@ export class RaceScene extends Container implements Scene {
     if (this.remainingDistanceText) {
       const leader = ranked[0] || this.racers[0];
       const distToFinishPx = Math.max(0, this.finishLineX - leader.x);
-      const distToFinishM = Math.ceil((distToFinishPx / totalDistPx) * this.distance);
+      const distToFinishM = Math.ceil(
+        (distToFinishPx / totalDistPx) * this.distance,
+      );
       this.remainingDistanceText.text = `${distToFinishM}m`;
     }
 
@@ -664,10 +683,14 @@ export class RaceScene extends Container implements Scene {
 
   private updateLeaderboard(delta: number) {
     this.leaderboardUpdateTimer += delta;
-    if (this.leaderboardUpdateTimer >= this.LEADERBOARD_THROTTLE || this.sortedRacersCache.length === 0) {
+    if (
+      this.leaderboardUpdateTimer >= this.LEADERBOARD_THROTTLE ||
+      this.sortedRacersCache.length === 0
+    ) {
       this.leaderboardUpdateTimer = 0;
       this.sortedRacersCache = [...this.racers].sort((a, b) => {
-        if (a.isFinished() && b.isFinished()) return a.finishTime - b.finishTime;
+        if (a.isFinished() && b.isFinished())
+          return a.finishTime - b.finishTime;
         if (a.isFinished()) return -1;
         if (b.isFinished()) return 1;
         return b.x - a.x;
@@ -743,7 +766,7 @@ export class RaceScene extends Container implements Scene {
 
   private endRace() {
     this.raceEnded = true;
-    
+
     // Start music fade-out
     this.targetMusicVolume = 0;
 

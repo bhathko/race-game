@@ -261,10 +261,10 @@ export class LeaderboardSidebar extends Container {
         style: new TextStyle({
           fill: COL.TEXT_WHITE,
           fontSize: rankIdx === 1 ? 32 : 24,
-          fontWeight: "900",
-          alpha: 0.5
+          fontWeight: "900"
         })
       });
+      rankText.alpha = 0.5;
       rankText.anchor.set(0.5);
       rankText.y = -h / 2;
       column.addChild(rankText);
