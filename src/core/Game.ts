@@ -56,6 +56,7 @@ export class Game {
     const treeSheet = await Assets.load(ITEMS.tree.path);
     const groundSheet = await Assets.load(ITEMS.ground.path);
     const grassSheet = await Assets.load(ITEMS.grass.path);
+    await Assets.load(ITEMS.trophy.path);
     await Assets.load(ITEMS.sound.path);
 
     // Create tree animation from the 4th row (index 3)
@@ -135,17 +136,21 @@ export class Game {
         this.characterAnimations,
         (selectedKeys, dist) => {
           const names = selectedKeys.map((key) => {
-             const char = CHARACTERS[key as keyof typeof CHARACTERS];
-             return `The ${char.name}`;
+            const char = CHARACTERS[key as keyof typeof CHARACTERS];
+            return `The ${char.name}`;
           });
           this.showRaceScene(names, dist, selectedKeys);
         },
-        () => this.showMenuScene()
-      )
+        () => this.showMenuScene(),
+      ),
     );
   }
 
-  showRaceScene(playerNames: string[], distance: number, selectedKeys?: string[]) {
+  showRaceScene(
+    playerNames: string[],
+    distance: number,
+    selectedKeys?: string[],
+  ) {
     if (!this.groundTextures || !this.grassTextures) return;
 
     this.setScene(

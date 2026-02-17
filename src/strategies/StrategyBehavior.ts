@@ -132,13 +132,14 @@ const closerStrategy: StrategyBehavior = {
  * Central registry — look up a strategy by name, or pick one at random.
  * To add a new strategy, simply add it here.
  */
-const STRATEGY_REGISTRY: ReadonlyMap<RacerStrategy, StrategyBehavior> =
-  new Map([
+const STRATEGY_REGISTRY: ReadonlyMap<RacerStrategy, StrategyBehavior> = new Map(
+  [
     ["aggressive", aggressiveStrategy],
     ["pacer", pacerStrategy],
     ["conservative", conservativeStrategy],
     ["closer", closerStrategy],
-  ]);
+  ],
+);
 
 /** All available strategy names. */
 export const STRATEGY_NAMES: readonly RacerStrategy[] = [

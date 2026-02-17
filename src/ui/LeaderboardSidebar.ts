@@ -1,5 +1,12 @@
-import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
-import { COLORS, PALETTE, RACER } from "../config";
+import {
+  Container,
+  Graphics,
+  Text,
+  TextStyle,
+  AnimatedSprite,
+  Sprite,
+} from "pixi.js";
+import { PALETTE, ITEMS } from "../config";
 import type { RacerAnimations } from "../core/types";
 
 /**
@@ -66,10 +73,11 @@ function ordinalSuffix(n: number): string {
 
 export class LeaderboardSidebar extends Container {
   private bg: Graphics;
-  private decorations: Container;
   private podiumContainer: Container;
   private listContainer: Container;
+  private titleContainer: Container;
   private titleText: Text;
+  private trophySprite: Sprite;
   private entries: RankEntry[];
   private sidebarW: number;
   private sidebarH: number;
@@ -94,11 +102,15 @@ export class LeaderboardSidebar extends Container {
     this.bg = new Graphics();
     this.addChild(this.bg);
 
-    // ── decorations layer (grass, daisies) ──────────────────────────────────
-    this.decorations = new Container();
-    this.addChild(this.decorations);
-
     // ── title ───────────────────────────────────────────────────────────────
+    this.titleContainer = new Container();
+    this.addChild(this.titleContainer);
+
+    this.trophySprite = Sprite.from(ITEMS.trophy.path);
+    this.trophySprite.anchor.set(0.5);
+    this.trophySprite.scale.set(1.5);
+    this.titleContainer.addChild(this.trophySprite);
+
     const titleStyle = new TextStyle({
       fill: COL.TEXT_WHITE,
       fontSize: 28,
@@ -114,9 +126,9 @@ export class LeaderboardSidebar extends Container {
         distance: 4,
       },
     });
-    this.titleText = new Text({ text: "🏆 Ranking", style: titleStyle });
-    this.titleText.anchor.set(0.5, 0);
-    this.addChild(this.titleText);
+    this.titleText = new Text({ text: "Ranking", style: titleStyle });
+    this.titleText.anchor.set(0, 0.5);
+    this.titleContainer.addChild(this.titleText);
 
     // ── podium ──────────────────────────────────────────────────────────────
     this.podiumContainer = new Container();
@@ -132,15 +144,12 @@ export class LeaderboardSidebar extends Container {
 
   private refresh() {
     this.bg.clear();
-    this.decorations.removeChildren();
     this.podiumContainer.removeChildren();
     this.listContainer.removeChildren();
     this.daisies = [];
     this.glowGraphics = [];
 
     this.drawBackground();
-    this.drawGrassAccents();
-    this.drawDaisies();
     this.buildPodium();
     this.buildList();
     this.layout();
@@ -173,51 +182,6 @@ export class LeaderboardSidebar extends Container {
     g.roundRect(0, 0, w, h, r).stroke({ color: COL.OAK_MID, width: 3.5 });
   }
 
-  private drawGrassAccents() {
-    const g = new Graphics();
-    const w = this.sidebarW;
-    const h = this.sidebarH;
-    const grassY = h - 38;
-    g.beginPath();
-    g.moveTo(12, h - 12);
-    for (let x = 12; x < w - 12; x += 6) {
-      const wave = Math.sin(x * 0.08) * 5 + Math.cos(x * 0.14) * 3;
-      g.lineTo(x, grassY + wave);
-    }
-    g.lineTo(w - 12, h - 12);
-    g.closePath();
-    g.fill({ color: COL.GRASS_MID, alpha: 0.55 });
-    this.decorations.addChild(g);
-  }
-
-  private drawDaisies() {
-    const positions = [
-      { x: 30, y: this.sidebarH - 44, s: 0.7 },
-      { x: 70, y: this.sidebarH - 50, s: 0.9 },
-      { x: this.sidebarW - 30, y: this.sidebarH - 44, s: 0.7 },
-    ];
-    for (const p of positions) {
-      const daisy = new Graphics();
-      this.drawSingleDaisy(daisy, 0, 0, p.s);
-      daisy.x = p.x;
-      daisy.y = p.y;
-      this.decorations.addChild(daisy);
-      this.daisies.push({ g: daisy, baseY: p.y });
-    }
-  }
-
-  private drawSingleDaisy(g: Graphics, cx: number, cy: number, scale: number) {
-    const petalLen = 6 * scale;
-    const petals = 6;
-    for (let i = 0; i < petals; i++) {
-      const angle = (i / petals) * Math.PI * 2;
-      const px = cx + Math.cos(angle) * petalLen;
-      const py = cy + Math.sin(angle) * petalLen;
-      g.circle(px, py, 3.5 * scale).fill({ color: COL.DAISY_PETAL, alpha: 0.92 });
-    }
-    g.circle(cx, cy, 2.8 * scale).fill(COL.DAISY_CENTER);
-  }
-
   // ════════════════════════════════════════════════════════════════════════════
   //  PODIUM (Top 3)
   // ════════════════════════════════════════════════════════════════════════════
@@ -231,11 +195,11 @@ export class LeaderboardSidebar extends Container {
     const baseY = 160;
 
     // Pedestal heights
-    const heights = { 1: 80, 2: 60, 3: 40 };
+    const heights = { 1: 90, 2: 70, 3: 50 };
     const order = [2, 1, 3]; // Layout order: 2nd, 1st, 3rd
 
     order.forEach((rankIdx, i) => {
-      const entry = top3.find(e => e.rank === rankIdx);
+      const entry = top3.find((e) => e.rank === rankIdx);
       if (!entry) return;
 
       const column = new Container();
@@ -245,34 +209,104 @@ export class LeaderboardSidebar extends Container {
 
       const h = heights[rankIdx as keyof typeof heights];
       const pedestal = new Graphics();
-      
-      let borderColor = rankIdx === 1 ? COL.GOLD : rankIdx === 2 ? COL.SILVER : COL.BRONZE;
-      let bodyColor = rankIdx === 1 ? PALETTE.WOOD_LIGHT : rankIdx === 2 ? PALETTE.WOOD_MID : PALETTE.WOOD_DARK;
 
-      // Draw Pedestal
-      pedestal.roundRect(-columnW / 2 + 4, -h, columnW - 8, h, 8)
-        .fill(bodyColor)
-        .stroke({ color: borderColor, width: rankIdx === 1 ? 4 : 2 });
+      let borderColor =
+        rankIdx === 1 ? COL.GOLD : rankIdx === 2 ? COL.SILVER : COL.BRONZE;
+      let bodyColor =
+        rankIdx === 1
+          ? PALETTE.WOOD_LIGHT
+          : rankIdx === 2
+            ? PALETTE.WOOD_MID
+            : PALETTE.WOOD_DARK;
+
+      const px = -columnW / 2 + 6;
+      const pw = columnW - 12;
+
+      // 1. Draw Pedestal Shadow (Behind)
+      pedestal
+        .roundRect(px + 4, -h + 4, pw, h, 6)
+        .fill({ color: PALETTE.BLACK, alpha: 0.25 });
+
+      // 2. Main Body (Wooden Planks)
+      pedestal.roundRect(px, -h, pw, h, 6).fill(bodyColor);
+
+      // Plank lines (Vertical)
+      const plankCount = 3;
+      const plankW = pw / plankCount;
+      for (let p = 1; p < plankCount; p++) {
+        pedestal
+          .rect(px + p * plankW - 0.5, -h + 2, 1, h - 4)
+          .fill({ color: COL.OAK_PLANK_LINE, alpha: 0.3 });
+      }
+
+      // 3. Highlight & Depth
+      // Left highlight
+      pedestal
+        .rect(px + 1, -h + 2, 2, h - 4)
+        .fill({ color: PALETTE.WHITE, alpha: 0.15 });
+      // Right shadow
+      pedestal
+        .rect(px + pw - 3, -h + 2, 2, h - 4)
+        .fill({ color: PALETTE.BLACK, alpha: 0.15 });
+
+      // 4. Substantial Top "Floor" (The Rank Block)
+      const capH = 14;
+      const capY = -h - 6;
+      const capX = px - 4;
+      const capW = pw + 8;
+
+      // Bottom shadow of the cap
+      pedestal
+        .roundRect(capX + 2, capY + 4, capW, capH, 4)
+        .fill({ color: PALETTE.BLACK, alpha: 0.3 });
+
+      // Main metallic block
+      pedestal
+        .roundRect(capX, capY, capW, capH, 4)
+        .fill(borderColor)
+        .stroke({
+          color: rankIdx === 1 ? COL.GOLD_DARK : PALETTE.BLACK,
+          width: 1.5,
+          alpha: 0.5,
+        });
+
+      // Top shine on the metallic block
+      pedestal
+        .roundRect(capX + 2, capY + 1, capW - 4, 4, 2)
+        .fill({ color: PALETTE.WHITE, alpha: 0.4 });
+
+      // 5. Wood Grain (Subtle horizontal scratches)
+      for (let s = 0; s < 8; s++) {
+        const sx = px + Math.random() * (pw - 12);
+        const sy = -h + Math.random() * (h - 5);
+        const sw = 4 + Math.random() * 12;
+        pedestal
+          .rect(sx, sy, sw, 1)
+          .fill({ color: PALETTE.BLACK, alpha: 0.08 });
+      }
+
       column.addChild(pedestal);
 
-      // Rank Number on pedestal
+      // Rank Number on pedestal (Painted white look)
       const rankText = new Text({
         text: rankIdx.toString(),
         style: new TextStyle({
           fill: COL.TEXT_WHITE,
-          fontSize: rankIdx === 1 ? 32 : 24,
-          fontWeight: "900"
-        })
+          fontSize: rankIdx === 1 ? 36 : 28,
+          fontWeight: "900",
+        }),
       });
       rankText.alpha = 0.5;
       rankText.anchor.set(0.5);
       rankText.y = -h / 2;
       column.addChild(rankText);
 
-      // Character Icon
+      // Character Icon - Adjusted to stand ON the new cap
       const icon = this.createIcon(entry.character);
-      icon.scale.set(1.2); // Constant 1.2x scale for all top 3
-      icon.y = -h - 25;
+      icon.scale.set(1.2);
+      // Character is 80x80 base, scaled to 96. Half height is 48.
+      // Top of cap is at capY. So icon center should be capY - 48.
+      icon.y = capY - 44; // slight overlap looks better
       column.addChild(icon);
 
       // Name Text
@@ -281,17 +315,22 @@ export class LeaderboardSidebar extends Container {
         fontSize: 14,
         fontWeight: "900",
         stroke: { color: COL.TEXT_SHADOW, width: 3 },
-        align: "center"
+        align: "center",
       });
-      const name = new Text({ text: entry.name.split(" ")[1] || entry.name, style: nameStyle });
+      const name = new Text({
+        text: entry.name.split(" ")[1] || entry.name,
+        style: nameStyle,
+      });
       name.anchor.set(0.5, 0);
-      name.y = -h - 65;
+      name.y = capY - 84;
       column.addChild(name);
 
       if (rankIdx === 1) {
         // Glow for 1st
         const glow = new Graphics();
-        glow.circle(0, -h - 25, 40).fill({ color: COL.GOLD_GLOW, alpha: 0.15 });
+        glow
+          .circle(0, capY - 44, 45)
+          .fill({ color: COL.GOLD_GLOW, alpha: 0.12 });
         column.addChildAt(glow, 0);
         this.glowGraphics.push(glow);
       }
@@ -315,7 +354,8 @@ export class LeaderboardSidebar extends Container {
       this.listContainer.addChild(card);
 
       const body = new Graphics();
-      body.roundRect(0, 0, cardW, cardH, 6)
+      body
+        .roundRect(0, 0, cardW, cardH, 6)
         .fill({ color: COL.CARD_BG, alpha: 0.6 })
         .stroke({ color: COL.OAK_LIGHT, width: 1 });
       card.addChild(body);
@@ -359,8 +399,19 @@ export class LeaderboardSidebar extends Container {
   }
 
   private layout() {
-    this.titleText.x = this.sidebarW / 2;
-    this.titleText.y = 22;
+    const trophyW = this.trophySprite.width * this.trophySprite.scale.x;
+    const gap = 10;
+    const totalW = trophyW + gap + this.titleText.width;
+    const startX = (this.sidebarW - totalW) / 2;
+
+    this.trophySprite.x = startX + trophyW / 2;
+    this.trophySprite.y = 0;
+
+    this.titleText.x = startX + trophyW + gap;
+    this.titleText.y = 0;
+
+    this.titleContainer.x = 0;
+    this.titleContainer.y = 35;
 
     this.podiumContainer.x = 20;
     this.podiumContainer.y = 70;

@@ -79,6 +79,9 @@ export const ITEMS = {
     width: 48,
     height: 48,
   },
+  trophy: {
+    path: "src/assets/item/gold-trophy.png",
+  },
   ground: {
     path: "src/assets/item/ground.png",
     unit: 16,
@@ -269,30 +272,30 @@ export const PALETTE = {
   WOOD_LIGHT: 0x6d4c41,
   WOOD_PALE: 0x795548,
   WOOD_EXTRA_PALE: 0x8d6e63,
-  
+
   // Nature
   GRASS_LIGHT: 0x81c784,
   GRASS_MID: 0x66bb6a,
   GRASS_DARK: 0x388e3c,
-  
+
   // UI States & Actions
   SUCCESS: 0x2e7d32,
   DANGER: 0xc62828,
   WARNING: 0xffeb3b,
   INFO: 0x2196f3,
-  
+
   // Medals & Rankings
   GOLD: 0xffd700,
   SILVER: 0xc0c0c0,
   BRONZE: 0xcd7f32,
-  
+
   // Neutral / Base
   BLACK: 0x000000,
   WHITE: 0xffffff,
   GREY_DARK: 0x1a1a1a,
   GREY_MID: 0x333333,
   GREY_LIGHT: 0x444444,
-  
+
   // String Hex Codes (for CSS/TextStyle)
   STR_WHITE: "#ffffff",
   STR_BLACK: "#000000",

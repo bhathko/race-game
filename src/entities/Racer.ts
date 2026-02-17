@@ -1,7 +1,10 @@
 import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
 import { RACER, TRACK, COLORS, GAMEPLAY } from "../config";
 import type { RacerAnimations } from "../core/types";
-import type { StrategyBehavior, RacerStrategy } from "../strategies/StrategyBehavior";
+import type {
+  StrategyBehavior,
+  RacerStrategy,
+} from "../strategies/StrategyBehavior";
 
 // Re-export so external modules can reference the types.
 export type { RacerAnimations, RacerStrategy };
@@ -300,7 +303,7 @@ export class Racer extends Container {
     const inSprintZone = distToFinish < PHYSICS.SPRINT_DISTANCE;
     const staminaPct = (this.stamina / this.maxStamina) * 100;
     const raceProgress = 1 - distToFinish / totalDistance;
-    
+
     let shouldSprint = this.strategyBehavior.shouldSprint({
       staminaPct,
       raceProgress,
@@ -309,13 +312,18 @@ export class Racer extends Container {
     });
 
     // Engine Rule 1: Cannot START a sprint if below threshold
-    if (!this.isSprinting && shouldSprint && staminaPct < PHYSICS.MIN_SPRINT_START_THRESHOLD) {
+    if (
+      !this.isSprinting &&
+      shouldSprint &&
+      staminaPct < PHYSICS.MIN_SPRINT_START_THRESHOLD
+    ) {
       shouldSprint = false;
     }
 
     // Engine Rule 2: If already sprinting, must use at least MIN_SPRINT_USAGE % unless at 0
     if (this.isSprinting && !shouldSprint && this.stamina > 0) {
-      const usageSoFar = ((this.staminaAtSprintStart - this.stamina) / this.maxStamina) * 100;
+      const usageSoFar =
+        ((this.staminaAtSprintStart - this.stamina) / this.maxStamina) * 100;
       if (usageSoFar < PHYSICS.MIN_SPRINT_USAGE) {
         shouldSprint = true; // Force continued sprint
       }
@@ -328,7 +336,7 @@ export class Racer extends Container {
     this.isSprinting = shouldSprint;
 
     // ── Passive stamina drain (always ticking, endurance-scaled) ───────
-    const passiveDrain = (PHYSICS.PASSIVE_STAMINA_DRAIN / this.endurance);
+    const passiveDrain = PHYSICS.PASSIVE_STAMINA_DRAIN / this.endurance;
 
     // ── §2  Depletion Rule — Recovery State (V_max × tiredFactor until threshold) ──
     if (this.isTired) {
@@ -345,7 +353,7 @@ export class Racer extends Container {
         this.strategyBehavior.tiredExitThreshold(this.maxStamina)
       ) {
         this.isTired = false;
-        this.isSprinting = false; 
+        this.isSprinting = false;
       }
     } else {
       if (shouldSprint) {
