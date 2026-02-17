@@ -1,6 +1,10 @@
 import { BaseCharacterSelectionScene } from "./BaseCharacterSelectionScene";
+import type { SelectionContext } from "../../core";
 
 export class DesktopSelectionScene extends BaseCharacterSelectionScene {
+  constructor(ctx: SelectionContext, initialSelectedKeys: string[] = []) {
+    super(ctx, initialSelectedKeys);
+  }
   protected getLineupScale(): number {
     return 1.5;
   }

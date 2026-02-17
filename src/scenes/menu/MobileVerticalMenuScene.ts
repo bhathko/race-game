@@ -1,7 +1,11 @@
 import { BaseMenuScene } from "./BaseMenuScene";
 import { PALETTE } from "../../config";
+import type { MenuContext } from "../../core";
 
 export class MobileVerticalMenuScene extends BaseMenuScene {
+  constructor(ctx: MenuContext) {
+    super(ctx);
+  }
   public resize(width: number, height: number) {
     const centerX = width / 2;
 

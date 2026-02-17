@@ -9,8 +9,8 @@ import {
 } from "pixi.js";
 import { sound } from "@pixi/sound";
 import type { IMediaInstance } from "@pixi/sound";
-import { Racer } from "../../entities/Racer";
-import { createRacers } from "../../factories/RacerFactory";
+import { Racer } from "../../entities";
+import { createRacers } from "../../factories";
 import {
   CANVAS,
   RACER,
@@ -21,12 +21,13 @@ import {
   COLORS,
   PALETTE,
 } from "../../config";
-import type { Scene } from "../../core/Scene";
 import type {
+  Scene,
+  RaceContext,
   RacerAnimations,
   GroundTextures,
   GrassTextures,
-} from "../../core/types";
+} from "../../core";
 
 /** Track-line color palette. */
 export const TRACK_COLORS = {
@@ -75,6 +76,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
   protected raceEnded: boolean = false;
   protected trackWidth: number = 0;
   protected finishLineX: number = 0;
+  
   protected onFinished: (results: Racer[]) => void;
   protected distance: number;
   protected characterAnimations: Map<string, RacerAnimations>;
@@ -100,24 +102,14 @@ export abstract class BaseRaceScene extends Container implements Scene {
   protected targetMusicVolume: number = 0;
   protected currentMusicVolume: number = 0;
 
-  constructor(
-    playerNames: string[],
-    distance: number,
-    characterAnimations: Map<string, RacerAnimations>,
-    treeAnimation: Texture[],
-    groundTextures: GroundTextures,
-    grassTextures: GrassTextures,
-    onFinished: (results: Racer[]) => void,
-    selectedKeys?: string[],
-    existingState?: RaceState
-  ) {
+  constructor(ctx: RaceContext, existingState?: RaceState) {
     super();
-    this.onFinished = onFinished;
-    this.distance = distance;
-    this.characterAnimations = characterAnimations;
-    this.treeAnimation = treeAnimation;
-    this.groundTextures = groundTextures;
-    this.grassTextures = grassTextures;
+    this.onFinished = ctx.onFinished;
+    this.distance = ctx.distance;
+    this.characterAnimations = ctx.characterAnimations;
+    this.treeAnimation = ctx.treeAnimation;
+    this.groundTextures = ctx.groundTextures;
+    this.grassTextures = ctx.grassTextures;
 
     this.worldMask = new Graphics();
     this.addChild(this.worldMask);
@@ -181,7 +173,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
       // Re-add racers to new world
       this.racers.forEach(r => this.world.addChild(r));
     } else {
-      this.initNewRace(playerNames, selectedKeys);
+      this.initNewRace(ctx.playerNames, ctx.selectedKeys);
     }
 
     this.initLeaderboardUI();

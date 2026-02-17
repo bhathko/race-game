@@ -1,7 +1,7 @@
 import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
 import { CHARACTERS, COLORS, RACER, PALETTE } from "../../config";
-import { createWoodenButton } from "../../ui/WoodenButton";
-import type { RacerAnimations } from "../../core/types";
+import { createWoodenButton } from "../../ui";
+import type { RacerAnimations, SelectionContext } from "../../core/types";
 import type { Scene } from "../../core/Scene";
 
 /**
@@ -29,20 +29,13 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
   protected selectionSprites: Map<string, Container> = new Map();
   protected lineupSprites: Container[] = [];
 
-  constructor(
-    playerCount: number,
-    distance: number,
-    characterAnimations: Map<string, RacerAnimations>,
-    onStartRace: (characterKeys: string[], distance: number) => void,
-    onBack: () => void,
-    initialSelectedKeys: string[] = []
-  ) {
+  constructor(ctx: SelectionContext, initialSelectedKeys: string[] = []) {
     super();
-    this.playerCount = playerCount;
-    this.distance = distance;
-    this.characterAnimations = characterAnimations;
-    this.onStartRace = onStartRace;
-    this.onBack = onBack;
+    this.playerCount = ctx.playerCount;
+    this.distance = ctx.distance;
+    this.characterAnimations = ctx.characterAnimations;
+    this.onStartRace = ctx.onStartRace;
+    this.onBack = ctx.onBack;
     this.selectedKeys = [...initialSelectedKeys];
 
     this.bg = new Graphics();

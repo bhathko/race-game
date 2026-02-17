@@ -1,6 +1,6 @@
 import { Application } from "pixi.js";
 import { CANVAS, COLORS } from "./config";
-import { Game } from "./core/Game";
+import { Game } from "./core";
 
 async function init() {
   const app = new Application();

@@ -1,14 +1,17 @@
 import { Container } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import { BaseMenuScene } from "./menu/BaseMenuScene";
-import { DesktopMenuScene } from "./menu/DesktopMenuScene";
-import { MobileVerticalMenuScene } from "./menu/MobileVerticalMenuScene";
-import { MobileHorizontalMenuScene } from "./menu/MobileHorizontalMenuScene";
+import type { MenuContext } from "../core/types";
+import {
+  BaseMenuScene,
+  DesktopMenuScene,
+  MobileVerticalMenuScene,
+  MobileHorizontalMenuScene,
+} from "./menu";
 
 type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
 export class MenuScene extends Container implements Scene {
-  private onStartRace: (playerCount: number, distance: number) => void;
+  private context: MenuContext;
   private currentLayout: BaseMenuScene | null = null;
   private currentMode: LayoutMode | null = null;
 
@@ -18,7 +21,7 @@ export class MenuScene extends Container implements Scene {
 
   constructor(onStartRace: (playerCount: number, distance: number) => void) {
     super();
-    this.onStartRace = onStartRace;
+    this.context = { onStartRace };
   }
 
   public resize(width: number, height: number): void {
@@ -48,18 +51,17 @@ export class MenuScene extends Container implements Scene {
     }
 
     this.currentMode = mode;
-
-    const settings = { count: this.selectedCount, distance: this.selectedDistance };
+    this.context.initialSettings = { count: this.selectedCount, distance: this.selectedDistance };
 
     switch (mode) {
       case "desktop":
-        this.currentLayout = new DesktopMenuScene(this.onStartRace, settings);
+        this.currentLayout = new DesktopMenuScene(this.context);
         break;
       case "mobile-vertical":
-        this.currentLayout = new MobileVerticalMenuScene(this.onStartRace, settings);
+        this.currentLayout = new MobileVerticalMenuScene(this.context);
         break;
       case "mobile-horizontal":
-        this.currentLayout = new MobileHorizontalMenuScene(this.onStartRace, settings);
+        this.currentLayout = new MobileHorizontalMenuScene(this.context);
         break;
     }
 

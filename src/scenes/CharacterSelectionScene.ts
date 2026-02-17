@@ -1,10 +1,12 @@
 import { Container } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import type { RacerAnimations } from "../core/types";
-import { BaseCharacterSelectionScene } from "./selection/BaseCharacterSelectionScene";
-import { DesktopSelectionScene } from "./selection/DesktopSelectionScene";
-import { MobileVerticalSelectionScene } from "./selection/MobileVerticalSelectionScene";
-import { MobileHorizontalSelectionScene } from "./selection/MobileHorizontalSelectionScene";
+import type { RacerAnimations, SelectionContext } from "../core/types";
+import {
+  BaseCharacterSelectionScene,
+  DesktopSelectionScene,
+  MobileVerticalSelectionScene,
+  MobileHorizontalSelectionScene,
+} from "./selection";
 
 type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
@@ -13,12 +15,7 @@ type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
  * Preserves the selection state across layout transitions.
  */
 export class CharacterSelectionScene extends Container implements Scene {
-  private playerCount: number;
-  private distance: number;
-  private characterAnimations: Map<string, RacerAnimations>;
-  private onStartRace: (characterKeys: string[], distance: number) => void;
-  private onBack: () => void;
-
+  private context: SelectionContext;
   private currentLayout: BaseCharacterSelectionScene | null = null;
   private currentMode: LayoutMode | null = null;
   private selectedKeys: string[] = [];
@@ -31,11 +28,13 @@ export class CharacterSelectionScene extends Container implements Scene {
     onBack: () => void
   ) {
     super();
-    this.playerCount = playerCount;
-    this.distance = distance;
-    this.characterAnimations = characterAnimations;
-    this.onStartRace = onStartRace;
-    this.onBack = onBack;
+    this.context = {
+      playerCount,
+      distance,
+      characterAnimations,
+      onStartRace,
+      onBack
+    };
   }
 
   public resize(width: number, height: number): void {
@@ -69,34 +68,13 @@ export class CharacterSelectionScene extends Container implements Scene {
     // Factory for new layout
     switch (mode) {
       case "desktop":
-        this.currentLayout = new DesktopSelectionScene(
-          this.playerCount,
-          this.distance,
-          this.characterAnimations,
-          this.onStartRace,
-          this.onBack,
-          this.selectedKeys
-        );
+        this.currentLayout = new DesktopSelectionScene(this.context, this.selectedKeys);
         break;
       case "mobile-vertical":
-        this.currentLayout = new MobileVerticalSelectionScene(
-          this.playerCount,
-          this.distance,
-          this.characterAnimations,
-          this.onStartRace,
-          this.onBack,
-          this.selectedKeys
-        );
+        this.currentLayout = new MobileVerticalSelectionScene(this.context, this.selectedKeys);
         break;
       case "mobile-horizontal":
-        this.currentLayout = new MobileHorizontalSelectionScene(
-          this.playerCount,
-          this.distance,
-          this.characterAnimations,
-          this.onStartRace,
-          this.onBack,
-          this.selectedKeys
-        );
+        this.currentLayout = new MobileHorizontalSelectionScene(this.context, this.selectedKeys);
         break;
     }
 

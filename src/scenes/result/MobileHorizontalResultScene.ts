@@ -1,7 +1,11 @@
 import { BaseResultScene } from "./BaseResultScene";
 import { PALETTE } from "../../config";
+import type { ResultContext } from "../../core";
 
 export class MobileHorizontalResultScene extends BaseResultScene {
+  constructor(ctx: ResultContext) {
+    super(ctx);
+  }
   public resize(width: number, height: number) {
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 

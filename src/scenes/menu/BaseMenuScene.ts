@@ -1,6 +1,7 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { GAMEPLAY, COLORS, PALETTE } from "../../config";
-import { createWoodenButton } from "../../ui/WoodenButton";
+import { createWoodenButton } from "../../ui";
+import type { MenuContext } from "../../core";
 
 const STORAGE_KEY = "choice-race-settings";
 
@@ -24,13 +25,13 @@ export abstract class BaseMenuScene extends Container {
   protected distStepper: Container;
   protected startBtn: Container;
 
-  constructor(onStartRace: (playerCount: number, distance: number) => void, initialSettings?: { count: number, distance: number }) {
+  constructor(ctx: MenuContext) {
     super();
-    this.onStartRace = onStartRace;
+    this.onStartRace = ctx.onStartRace;
 
-    if (initialSettings) {
-      this.selectedCount = initialSettings.count;
-      this.selectedDistance = initialSettings.distance;
+    if (ctx.initialSettings) {
+      this.selectedCount = ctx.initialSettings.count;
+      this.selectedDistance = ctx.initialSettings.distance;
     } else {
       this.loadSettings();
     }

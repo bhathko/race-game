@@ -1,7 +1,11 @@
 import { BaseCharacterSelectionScene } from "./BaseCharacterSelectionScene";
 import { RACER } from "../../config";
+import type { SelectionContext } from "../../core";
 
 export class MobileVerticalSelectionScene extends BaseCharacterSelectionScene {
+  constructor(ctx: SelectionContext, initialSelectedKeys: string[] = []) {
+    super(ctx, initialSelectedKeys);
+  }
   protected getLineupScale(): number {
     return 0.7;
   }

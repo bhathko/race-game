@@ -1,10 +1,10 @@
 import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
 import { RACER, COLORS, GAMEPLAY } from "../config";
-import type { RacerAnimations } from "../core/types";
+import type { RacerAnimations } from "../core";
 import type {
   StrategyBehavior,
   RacerStrategy,
-} from "../strategies/StrategyBehavior";
+} from "../strategies";
 
 // Re-export so external modules can reference the types.
 export type { RacerAnimations, RacerStrategy };

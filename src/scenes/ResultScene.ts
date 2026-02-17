@@ -1,19 +1,18 @@
 import { Container } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import type { RacerAnimations } from "../core/types";
-import { Racer } from "../entities/Racer";
-import { BaseResultScene } from "./result/BaseResultScene";
-import { DesktopResultScene } from "./result/DesktopResultScene";
-import { MobileVerticalResultScene } from "./result/MobileVerticalResultScene";
-import { MobileHorizontalResultScene } from "./result/MobileHorizontalResultScene";
+import type { RacerAnimations, ResultContext } from "../core/types";
+import { Racer } from "../entities";
+import {
+  BaseResultScene,
+  DesktopResultScene,
+  MobileVerticalResultScene,
+  MobileHorizontalResultScene,
+} from "./result";
 
 type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
 export class ResultScene extends Container implements Scene {
-  private finishedRacers: Racer[];
-  private onRestart: () => void;
-  private characterAnimations: Map<string, RacerAnimations>;
-
+  private context: ResultContext;
   private currentLayout: BaseResultScene | null = null;
   private currentMode: LayoutMode | null = null;
 
@@ -23,9 +22,11 @@ export class ResultScene extends Container implements Scene {
     characterAnimations: Map<string, RacerAnimations>,
   ) {
     super();
-    this.finishedRacers = finishedRacers;
-    this.onRestart = onRestart;
-    this.characterAnimations = characterAnimations;
+    this.context = {
+      finishedRacers,
+      onRestart,
+      characterAnimations
+    };
   }
 
   public resize(width: number, height: number): void {
@@ -56,25 +57,13 @@ export class ResultScene extends Container implements Scene {
 
     switch (mode) {
       case "desktop":
-        this.currentLayout = new DesktopResultScene(
-          this.finishedRacers,
-          this.onRestart,
-          this.characterAnimations
-        );
+        this.currentLayout = new DesktopResultScene(this.context);
         break;
       case "mobile-vertical":
-        this.currentLayout = new MobileVerticalResultScene(
-          this.finishedRacers,
-          this.onRestart,
-          this.characterAnimations
-        );
+        this.currentLayout = new MobileVerticalResultScene(this.context);
         break;
       case "mobile-horizontal":
-        this.currentLayout = new MobileHorizontalResultScene(
-          this.finishedRacers,
-          this.onRestart,
-          this.characterAnimations
-        );
+        this.currentLayout = new MobileHorizontalResultScene(this.context);
         break;
     }
 

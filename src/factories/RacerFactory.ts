@@ -1,8 +1,8 @@
 import { GAMEPLAY, CHARACTERS, COLORS } from "../config";
-import { Racer } from "../entities/Racer";
-import type { RacerAnimations } from "../core/types";
-import { randomStrategy } from "../strategies/StrategyBehavior";
-import type { StrategyBehavior } from "../strategies/StrategyBehavior";
+import { Racer } from "../entities";
+import type { RacerAnimations } from "../core";
+import { randomStrategy } from "../strategies";
+import type { StrategyBehavior } from "../strategies";
 
 // ── Public types ────────────────────────────────────────────────────────────
 

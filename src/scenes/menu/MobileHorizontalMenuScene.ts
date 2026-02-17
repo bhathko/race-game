@@ -1,7 +1,11 @@
 import { BaseMenuScene } from "./BaseMenuScene";
 import { PALETTE } from "../../config";
+import type { MenuContext } from "../../core";
 
 export class MobileHorizontalMenuScene extends BaseMenuScene {
+  constructor(ctx: MenuContext) {
+    super(ctx);
+  }
   public resize(width: number, height: number) {
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 

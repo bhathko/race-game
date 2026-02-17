@@ -7,7 +7,7 @@ import {
   Sprite,
 } from "pixi.js";
 import { PALETTE, ITEMS } from "../config";
-import type { RacerAnimations } from "../core/types";
+import type { RacerAnimations } from "../core";
 
 /**
  * Farming-simulation leaderboard sidebar.

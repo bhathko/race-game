@@ -1,10 +1,8 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
-import { Racer } from "../../entities/Racer";
 import { COLORS, PALETTE } from "../../config";
-import { LeaderboardSidebar } from "../../ui/LeaderboardSidebar";
-import type { RankEntry } from "../../ui/LeaderboardSidebar";
-import { createWoodenButton } from "../../ui/WoodenButton";
-import type { RacerAnimations } from "../../core/types";
+import { LeaderboardSidebar, createWoodenButton } from "../../ui";
+import type { RankEntry } from "../../ui";
+import type { ResultContext } from "../../core";
 
 export abstract class BaseResultScene extends Container {
   protected onRestart: () => void;
@@ -13,18 +11,14 @@ export abstract class BaseResultScene extends Container {
   protected leaderboardSidebar: LeaderboardSidebar;
   protected restartBtn: Container;
 
-  constructor(
-    finishedRacers: Racer[],
-    onRestart: () => void,
-    characterAnimations: Map<string, RacerAnimations>,
-  ) {
+  constructor(ctx: ResultContext) {
     super();
-    this.onRestart = onRestart;
+    this.onRestart = ctx.onRestart;
 
     this.bg = new Graphics();
     this.addChild(this.bg);
 
-    const winner = finishedRacers[0];
+    const winner = ctx.finishedRacers[0];
 
     const titleStyle = new TextStyle({
       fill: PALETTE.STR_WHITE,
@@ -51,7 +45,7 @@ WINS!`,
     this.addChild(this.winnerText);
 
     // Build entries from finished racers
-    const entries: RankEntry[] = finishedRacers.map((racer, index) => ({
+    const entries: RankEntry[] = ctx.finishedRacers.map((racer, index) => ({
       rank: index + 1,
       name: racer.racerName,
       time: (racer.finishTime / 60).toFixed(2) + "s",
@@ -62,7 +56,7 @@ WINS!`,
       entries,
       300,
       480,
-      characterAnimations,
+      ctx.characterAnimations,
     );
     this.addChild(this.leaderboardSidebar);
 

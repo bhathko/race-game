@@ -1,26 +1,20 @@
 import { Container } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import type { RacerAnimations, GroundTextures, GrassTextures } from "../core/types";
-import { Racer } from "../entities/Racer";
+import type { RacerAnimations, GroundTextures, GrassTextures, RaceContext } from "../core/types";
+import { Racer } from "../entities";
 import { Texture } from "pixi.js";
-import { BaseRaceScene } from "./race/BaseRaceScene";
-import type { RaceState } from "./race/BaseRaceScene";
-import { DesktopRaceScene } from "./race/DesktopRaceScene";
-import { MobileVerticalRaceScene } from "./race/MobileVerticalRaceScene";
-import { MobileHorizontalRaceScene } from "./race/MobileHorizontalRaceScene";
+import {
+  BaseRaceScene,
+  DesktopRaceScene,
+  MobileVerticalRaceScene,
+  MobileHorizontalRaceScene,
+} from "./race";
+import type { RaceState } from "./race";
 
 type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
 export class RaceScene extends Container implements Scene {
-  private playerNames: string[];
-  private distance: number;
-  private characterAnimations: Map<string, RacerAnimations>;
-  private treeAnimation: Texture[];
-  private groundTextures: GroundTextures;
-  private grassTextures: GrassTextures;
-  private onFinished: (results: Racer[]) => void;
-  private selectedKeys?: string[];
-
+  private context: RaceContext;
   private currentLayout: BaseRaceScene | null = null;
   private currentMode: LayoutMode | null = null;
 
@@ -35,14 +29,16 @@ export class RaceScene extends Container implements Scene {
     selectedKeys?: string[],
   ) {
     super();
-    this.playerNames = playerNames;
-    this.distance = distance;
-    this.characterAnimations = characterAnimations;
-    this.treeAnimation = treeAnimation;
-    this.groundTextures = groundTextures;
-    this.grassTextures = grassTextures;
-    this.onFinished = onFinished;
-    this.selectedKeys = selectedKeys;
+    this.context = {
+      playerNames,
+      distance,
+      characterAnimations,
+      treeAnimation,
+      groundTextures,
+      grassTextures,
+      onFinished,
+      selectedKeys,
+    };
   }
 
   public resize(width: number, height: number): void {
@@ -75,27 +71,15 @@ export class RaceScene extends Container implements Scene {
 
     this.currentMode = mode;
 
-    const args: [string[], number, Map<string, RacerAnimations>, Texture[], GroundTextures, GrassTextures, (results: Racer[]) => void, string[] | undefined, RaceState | undefined] = [
-      this.playerNames,
-      this.distance,
-      this.characterAnimations,
-      this.treeAnimation,
-      this.groundTextures,
-      this.grassTextures,
-      this.onFinished,
-      this.selectedKeys,
-      existingState
-    ];
-
     switch (mode) {
       case "desktop":
-        this.currentLayout = new DesktopRaceScene(...args);
+        this.currentLayout = new DesktopRaceScene(this.context, existingState);
         break;
       case "mobile-vertical":
-        this.currentLayout = new MobileVerticalRaceScene(...args);
+        this.currentLayout = new MobileVerticalRaceScene(this.context, existingState);
         break;
       case "mobile-horizontal":
-        this.currentLayout = new MobileHorizontalRaceScene(...args);
+        this.currentLayout = new MobileHorizontalRaceScene(this.context, existingState);
         break;
     }
 

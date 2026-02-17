@@ -1,8 +1,13 @@
 import { BaseRaceScene } from "./BaseRaceScene";
+import type { RaceState } from "./BaseRaceScene";
 import { CANVAS, COLORS, PALETTE, VISUALS } from "../../config";
 import { Graphics } from "pixi.js";
+import type { RaceContext } from "../../core";
 
 export class MobileVerticalRaceScene extends BaseRaceScene {
+  constructor(ctx: RaceContext, existingState?: RaceState) {
+    super(ctx, existingState);
+  }
   public resize(width: number, height: number) {
     this.isPortrait = true;
     const availableH = height * 0.7;

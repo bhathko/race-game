@@ -6,11 +6,8 @@ import {
   Texture,
   Rectangle,
 } from "pixi.js";
-import { RaceScene } from "../scenes/RaceScene";
-import { MenuScene } from "../scenes/MenuScene";
-import { ResultScene } from "../scenes/ResultScene";
-import { CharacterSelectionScene } from "../scenes/CharacterSelectionScene";
-import { Racer } from "../entities/Racer";
+import { RaceScene, MenuScene, ResultScene, CharacterSelectionScene } from "../scenes";
+import { Racer } from "../entities";
 import { CHARACTERS, ITEMS } from "../config";
 import type { Scene } from "./Scene";
 import type { RacerAnimations, GroundTextures, GrassTextures } from "./types";
@@ -27,11 +24,21 @@ export class Game {
   constructor(app: Application) {
     this.app = app;
     window.addEventListener("resize", () => this.onResize());
+    window.addEventListener("orientationchange", () => {
+      // Orientation change often needs a small delay for dimensions to settle
+      setTimeout(() => this.onResize(), 200);
+    });
   }
 
   private onResize() {
     if (this.currentScene) {
-      this.currentScene.resize(this.app.screen.width, this.app.screen.height);
+      // Use requestAnimationFrame to ensure Pixi's 'resizeTo' logic 
+      // has updated app.screen before we read from it.
+      requestAnimationFrame(() => {
+        if (this.currentScene) {
+          this.currentScene.resize(this.app.screen.width, this.app.screen.height);
+        }
+      });
     }
   }
 

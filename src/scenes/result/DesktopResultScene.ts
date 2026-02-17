@@ -1,7 +1,11 @@
 import { BaseResultScene } from "./BaseResultScene";
 import { PALETTE } from "../../config";
+import type { ResultContext } from "../../core";
 
 export class DesktopResultScene extends BaseResultScene {
+  constructor(ctx: ResultContext) {
+    super(ctx);
+  }
   public resize(width: number, height: number) {
     const centerX = width / 2;
 
