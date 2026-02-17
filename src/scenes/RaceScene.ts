@@ -335,7 +335,8 @@ export class RaceScene extends Container implements Scene {
       icon.scale.set(1);
       icon.x = 25;
       icon.y = 18;
-      icon.stop(); // Just show first frame
+      icon.animationSpeed = 0.1;
+      icon.play(); // Play idle animation
       container.addChild(icon);
 
       const style = new TextStyle({

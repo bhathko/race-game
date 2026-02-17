@@ -271,7 +271,7 @@ export class LeaderboardSidebar extends Container {
 
       // Character Icon
       const icon = this.createIcon(entry.character);
-      icon.scale.set(rankIdx === 1 ? 1.2 : 0.9);
+      icon.scale.set(1.2); // Constant 1.2x scale for all top 3
       icon.y = -h - 25;
       column.addChild(icon);
 
@@ -349,7 +349,8 @@ export class LeaderboardSidebar extends Container {
       const sprite = new AnimatedSprite(anims.idle);
       sprite.anchor.set(0.5);
       sprite.scale.set(1);
-      sprite.stop();
+      sprite.animationSpeed = 0.1;
+      sprite.play(); // Play idle animation
       return sprite;
     }
     const g = new Graphics();
