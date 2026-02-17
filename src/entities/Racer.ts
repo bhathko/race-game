@@ -34,6 +34,8 @@ export class Racer extends Container {
   private stamina: number = 100;
   private maxStamina: number = 100;
   private isTired: boolean = false;
+  private isSprinting: boolean = false;
+  private staminaAtSprintStart: number = 0;
   private staminaBar: Graphics;
 
   // Drama — pace wave (unique per racer)
@@ -298,16 +300,35 @@ export class Racer extends Container {
     const inSprintZone = distToFinish < PHYSICS.SPRINT_DISTANCE;
     const staminaPct = (this.stamina / this.maxStamina) * 100;
     const raceProgress = 1 - distToFinish / totalDistance;
-    const shouldSprint = this.strategyBehavior.shouldSprint({
+    
+    let shouldSprint = this.strategyBehavior.shouldSprint({
       staminaPct,
       raceProgress,
       inClimaxPhase,
       inSprintZone,
     });
 
+    // Engine Rule 1: Cannot START a sprint if below threshold
+    if (!this.isSprinting && shouldSprint && staminaPct < PHYSICS.MIN_SPRINT_START_THRESHOLD) {
+      shouldSprint = false;
+    }
+
+    // Engine Rule 2: If already sprinting, must use at least MIN_SPRINT_USAGE % unless at 0
+    if (this.isSprinting && !shouldSprint && this.stamina > 0) {
+      const usageSoFar = ((this.staminaAtSprintStart - this.stamina) / this.maxStamina) * 100;
+      if (usageSoFar < PHYSICS.MIN_SPRINT_USAGE) {
+        shouldSprint = true; // Force continued sprint
+      }
+    }
+
+    // Track start of a new sprint
+    if (shouldSprint && !this.isSprinting) {
+      this.staminaAtSprintStart = this.stamina;
+    }
+    this.isSprinting = shouldSprint;
+
     // ── Passive stamina drain (always ticking, endurance-scaled) ───────
-    const passiveDrain =
-      (PHYSICS.PASSIVE_STAMINA_DRAIN / this.endurance) * delta;
+    const passiveDrain = (PHYSICS.PASSIVE_STAMINA_DRAIN / this.endurance);
 
     // ── §2  Depletion Rule — Recovery State (V_max × tiredFactor until threshold) ──
     if (this.isTired) {
@@ -315,22 +336,24 @@ export class Racer extends Container {
         PHYSICS.STAMINA_RECOVERY_RATE * this.endurance * recoveryMult;
       this.stamina = Math.min(
         this.maxStamina,
-        this.stamina + (recoveryRate - passiveDrain / delta) * delta,
+        this.stamina + recoveryRate * delta,
       );
       this.targetSpeed =
         effectiveTopSpeed * this.strategyBehavior.tiredSpeedFactor();
       if (
         this.stamina >=
         this.strategyBehavior.tiredExitThreshold(this.maxStamina)
-      )
+      ) {
         this.isTired = false;
+        this.isSprinting = false; 
+      }
     } else {
       if (shouldSprint) {
         this.targetSpeed = effectiveTopSpeed * PHYSICS.SPRINT_SPEED_FACTOR;
         const depletionRate = PHYSICS.STAMINA_DEPLETION_RATE / this.endurance;
         this.stamina = Math.max(
           0,
-          this.stamina - (depletionRate + passiveDrain / delta) * delta,
+          this.stamina - (depletionRate + passiveDrain) * delta,
         );
       } else {
         this.targetSpeed = effectiveTopSpeed * PHYSICS.CRUISING_SPEED_FACTOR;
@@ -338,12 +361,13 @@ export class Racer extends Container {
           PHYSICS.STAMINA_RECOVERY_RATE * this.endurance * recoveryMult;
         this.stamina = Math.min(
           this.maxStamina,
-          this.stamina + (recoveryRate - passiveDrain / delta) * delta,
+          this.stamina + recoveryRate * delta,
         );
       }
       if (this.stamina <= 0) {
         this.isTired = true;
         this.tiredCount++;
+        this.isSprinting = false;
       }
     }
 

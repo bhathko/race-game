@@ -185,6 +185,10 @@ export const GAMEPLAY = {
     ACCEL_SMOOTHING_FACTOR: 1.5,
     /** Random per-frame noise to avoid robotic movement. */
     SPEED_NOISE: 0.15,
+    /** Minimum stamina % that must be consumed once a sprint starts. */
+    MIN_SPRINT_USAGE: 10,
+    /** Minimum stamina % required to initiate a new sprint. */
+    MIN_SPRINT_START_THRESHOLD: 10,
   },
 
   /**
