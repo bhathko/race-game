@@ -224,10 +224,10 @@ export class CharacterSelectionScene extends Container implements Scene {
           style: new TextStyle({ 
             fill: PALETTE.STR_WHITE, 
             fontSize: 24, 
-            fontWeight: "bold",
-            alpha: 0.3
+            fontWeight: "bold"
           })
         });
+        posText.alpha = 0.3;
         posText.anchor.set(0.5);
         posText.y = -RACER.HEIGHT / 2;
         racerContainer.addChild(posText);

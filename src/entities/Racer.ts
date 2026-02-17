@@ -1,5 +1,5 @@
 import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
-import { RACER, TRACK, COLORS, GAMEPLAY } from "../config";
+import { RACER, COLORS, GAMEPLAY } from "../config";
 import type { RacerAnimations } from "../core/types";
 import type {
   StrategyBehavior,
@@ -63,7 +63,7 @@ export class Racer extends Container {
 
   constructor(
     name: string,
-    color: number,
+    _color: number,
     y: number,
     stats: RacerStats,
     animations: RacerAnimations,
