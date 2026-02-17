@@ -68,9 +68,9 @@ The interaction between `Endurance` (efficiency) and `Top Speed` (power) creates
 - **Concept:** A "Stable" or "Farm" where players can spend "Corn" (earned from races) to permanently upgrade character stats.
 - **Theory:** Implement a `SaveManager` using `localStorage` and update `RacerFactory` to accept "Upgrade Multipliers."
 
-### Phase 4: Audio & Juice
+### Phase 4: Audio & Juice [IN PROGRESS]
 - **Concept:** Sound effects for sprinting, panting when tired, and a "cheer" at the finish line.
-- **Implementation:** Integrate `pixi-sound` and add a `ParticleSystem` for dirt clouds behind racers.
+- **Implementation:** Integrated `@pixi/sound` for background music. Next: Add SFX for racer actions and a `ParticleSystem` for dirt clouds.
 
 ---
 

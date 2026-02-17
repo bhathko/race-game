@@ -56,6 +56,7 @@ export class Game {
     const treeSheet = await Assets.load(ITEMS.tree.path);
     const groundSheet = await Assets.load(ITEMS.ground.path);
     const grassSheet = await Assets.load(ITEMS.grass.path);
+    await Assets.load(ITEMS.sound.path);
 
     // Create tree animation from the 4th row (index 3)
     this.treeAnimation = this.createFrames(

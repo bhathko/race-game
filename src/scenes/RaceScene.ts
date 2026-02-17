@@ -7,6 +7,7 @@ import {
   Texture,
   TilingSprite,
 } from "pixi.js";
+import { sound } from "@pixi/sound";
 import { Racer } from "../entities/Racer";
 import { createRacers } from "../factories/RacerFactory";
 import {
@@ -538,6 +539,10 @@ export class RaceScene extends Container implements Scene {
       this.countdownTimer -= delta / 60;
       if (this.countdownTimer <= 0) {
         this.raceStarted = true;
+        
+        // Start background music
+        sound.play("sound", { loop: true });
+
         if (this.countdownText) {
           this.countdownText.text = "GO!";
           setTimeout(() => {
@@ -710,6 +715,10 @@ export class RaceScene extends Container implements Scene {
 
   private endRace() {
     this.raceEnded = true;
+    
+    // Stop background music
+    sound.stop("sound");
+
     setTimeout(() => {
       this.onFinished(this.finishedRacers);
     }, VISUALS.RESULT_DELAY);

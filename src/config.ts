@@ -87,6 +87,9 @@ export const ITEMS = {
     path: "src/assets/item/grass.png",
     unit: 16,
   },
+  sound: {
+    path: "src/assets/sound/sound.mp3",
+  },
 } as const;
 
 // ─── Gameplay ───────────────────────────────────────────────────────────────
