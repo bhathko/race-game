@@ -35,6 +35,7 @@ A dynamic web-based racing game built with **Pixi.js v8**, **TypeScript**, and *
 ### Strategy Pattern (`src/strategies/StrategyBehavior.ts`)
 
 Each racer receives a `StrategyBehavior` object that controls:
+
 - **Stat multipliers** — applied at creation time to bias speed/accel/endurance
 - **Sprint decision** — `shouldSprint(ctx)` determines when the racer pushes vs cruises
 - **Tired behaviour** — `tiredSpeedFactor()` and `tiredExitThreshold()` control recovery pacing
@@ -44,6 +45,7 @@ Four strategies are registered: `aggressive`, `pacer`, `conservative`, `closer`.
 ### Factory Pattern (`src/factories/RacerFactory.ts`)
 
 `createRacers(names, characterAnimations)` returns an array of fully-configured Racer entities. Encapsulates:
+
 - Fisher-Yates character key shuffling for non-repeating assignment
 - Random stat generation with strategy-specific multipliers
 - Colour palette cycling
@@ -54,7 +56,7 @@ Four strategies are registered: `aggressive`, `pacer`, `conservative`, `closer`.
 
 ## Key Features
 
-- **Nature-Themed Aesthetic:** Dirt racetrack with grass edges, animated pixel-art trees, and playful hill backgrounds.
+- **Nature-Themed Aesthetic:** Dirt racetrack with grass edges and animated pixel-art trees.
 - **Farming-Sim Leaderboard:** Story of Seasons–inspired result screen with dark oak wood background, gold vine border for 1st place, silver border for 2nd, grass/daisy decorations.
 - **Responsive Design (RWD):** Adapts to any screen size. On mobile/portrait, the leaderboard moves to the bottom; on desktop, it remains a sidebar.
 - **Dynamic AI Strategy:** Four distinct racing personalities create visible behavioural variety.

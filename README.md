@@ -19,8 +19,9 @@ npm run build
 ## How It Works
 
 1. **Menu** — pick 2–8 racers and a distance (50 m, 100 m, 200 m, or 400 m).
-2. **Race** — a 3-second countdown starts the race. Racers sprint, cruise, stumble, and recover based on their randomly-assigned stats and stamina strategy.
-3. **Results** — a farming-themed leaderboard shows final rankings with animated animal icons.
+2. **Character Selection** — pick the specific racers you want for the lineup.
+3. **Race** — a 3-second countdown starts the race. Racers sprint, cruise, stumble, and recover based on their randomly-assigned stats and stamina strategy.
+4. **Results** — a farming-themed leaderboard shows final rankings with animated animal icons.
 
 ## Project Structure
 
@@ -45,13 +46,13 @@ src/
 │
 ├── scenes/
 │   ├── MenuScene.ts        Menu screen (racer count / distance selection)
+│   ├── CharacterSelectionScene.ts Character picker with animated previews
 │   ├── RaceScene.ts        Main racing loop, camera, track, leaderboard
 │   └── ResultScene.ts      Post-race results with themed leaderboard
 │
 ├── ui/
 │   ├── WoodenButton.ts     Reusable wooden-textured button component
-│   ├── LeaderboardSidebar.ts Farm-themed leaderboard panel (daisies, vines, oak)
-│   └── HillBackground.ts   Shared grassy hill background renderer
+│   └── LeaderboardSidebar.ts Farm-themed leaderboard panel (daisies, vines, oak)
 │
 └── assets/
     ├── characters/          Sprite sheets per character (bear, cat, fox, …)
@@ -64,19 +65,19 @@ src/
 
 Each racer is assigned one of four **stamina strategies** that determine its racing personality:
 
-| Strategy       | Behaviour                                     | Stat Bias                            |
-|---------------|-----------------------------------------------|--------------------------------------|
-| **Aggressive** | Sprint hard, crash fast, recover, repeat       | +10 % speed, −25 % endurance         |
-| **Pacer**      | Rhythmic push-rest cycles above 50 % stamina   | Balanced stats, +10 % endurance      |
-| **Conservative** | Cruise most of the race, push in final 35 %  | −8 % speed, +25 % endurance          |
-| **Closer**     | Save everything for the climax phase           | +15 % accel, +5 % endurance          |
+| Strategy         | Behaviour                                    | Stat Bias                       |
+| ---------------- | -------------------------------------------- | ------------------------------- |
+| **Aggressive**   | Sprint hard, crash fast, recover, repeat     | +10 % speed, −25 % endurance    |
+| **Pacer**        | Rhythmic push-rest cycles above 50 % stamina | Balanced stats, +10 % endurance |
+| **Conservative** | Cruise most of the race, push in final 35 %  | −8 % speed, +25 % endurance     |
+| **Closer**       | Save everything for the climax phase         | +15 % accel, +5 % endurance     |
 
 Each strategy implements the `StrategyBehavior` interface:
 
 ```typescript
 interface StrategyBehavior {
   readonly name: RacerStrategy;
-  readonly statMultipliers: { speed, accel, endurance };
+  readonly statMultipliers: { speed; accel; endurance };
   shouldSprint(ctx: SprintContext): boolean;
   tiredSpeedFactor(): number;
   tiredExitThreshold(maxStamina: number): number;
@@ -135,16 +136,16 @@ When any racer enters the last 20 % of the track:
 
 All tuning knobs live in `src/config.ts` under clearly named constant groups:
 
-| Group      | Purpose                                         |
-|-----------|--------------------------------------------------|
-| `CANVAS`   | Viewport dimensions, sidebar width               |
-| `RACER`    | Sprite size, collision offset                     |
-| `TRACK`    | Start/finish line positions                       |
-| `CHARACTERS` | Sprite sheet paths and frame counts            |
-| `ITEMS`    | Environment asset paths                           |
-| `GAMEPLAY` | Stats, balance, drama, physics, strategies        |
-| `VISUALS`  | Camera smoothing, countdown, animation speeds     |
-| `COLORS`   | Full colour palette                               |
+| Group        | Purpose                                       |
+| ------------ | --------------------------------------------- |
+| `CANVAS`     | Viewport dimensions, sidebar width            |
+| `RACER`      | Sprite size, collision offset                 |
+| `TRACK`      | Start/finish line positions                   |
+| `CHARACTERS` | Sprite sheet paths and frame counts           |
+| `ITEMS`      | Environment asset paths                       |
+| `GAMEPLAY`   | Stats, balance, drama, physics, strategies    |
+| `VISUALS`    | Camera smoothing, countdown, animation speeds |
+| `COLORS`     | Full colour palette                           |
 
 ## Tech Stack
 
