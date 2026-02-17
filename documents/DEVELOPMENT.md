@@ -40,6 +40,13 @@ Creating a racer involves generating Gaussian-random stats, assigning characters
 The game follows a strict `Scene` interface (`update`, `resize`, `destroy`). The `Game` class acts as a central orchestrator.
 - **Benefit:** Switching between `Menu`, `CharacterSelection`, `Race`, and `Result` scenes is handled uniformly, ensuring efficient memory management and asset loading.
 
+#### 4. Responsive Controller Pattern (`src/scenes/`)
+To handle diverse form factors (Mobile Portrait vs. Landscape vs. Desktop) without spaghetti code, we use a **Controller-View** hybrid approach.
+- **Controller:** The main scene class (e.g., `RaceScene`) acts as a controller. It detects screen size changes and instantiates the correct layout subclass.
+- **Base Class:** A shared abstract base (e.g., `BaseRaceScene`) holds all game logic, state (racer positions, timers), and asset references.
+- **Layout Views:** Subclasses (e.g., `MobileVerticalRaceScene`) only implement the `resize()` method and specific UI positioning logic.
+- **State Injection:** When the controller swaps layouts (e.g., on device rotation), it extracts the running state from the old layout and injects it into the new one, ensuring a seamless player experience.
+
 ### Game Design Theory
 
 #### 1. Negative Feedback Loops
@@ -77,7 +84,7 @@ The interaction between `Endurance` (efficiency) and `Top Speed` (power) creates
 ## 4. How to Contribute
 
 1.  **Adding a Character:**
-    - Place spritesheets in `assets/characters/[name]/`.
+    - Place spritesheets in `public/assets/characters/[name]/`.
     - Update `CHARACTERS` in `src/config.ts`.
 2.  **Adjusting Balance:**
     - Do not hardcode numbers in `Racer.ts`.

@@ -1,93 +1,28 @@
-import {
-  Container,
-  Graphics,
-  Text,
-  TextStyle,
-  AnimatedSprite,
-  Texture,
-  TilingSprite,
-} from "pixi.js";
-import { sound } from "@pixi/sound";
-import type { IMediaInstance } from "@pixi/sound";
-import { Racer } from "../entities/Racer";
-import { createRacers } from "../factories/RacerFactory";
-import {
-  CANVAS,
-  RACER,
-  TRACK,
-  ITEMS,
-  GAMEPLAY,
-  VISUALS,
-  COLORS,
-  PALETTE,
-} from "../config";
+import { Container } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import type {
-  RacerAnimations,
-  GroundTextures,
-  GrassTextures,
-} from "../core/types";
+import type { RacerAnimations, GroundTextures, GrassTextures } from "../core/types";
+import { Racer } from "../entities/Racer";
+import { Texture } from "pixi.js";
+import { BaseRaceScene } from "./race/BaseRaceScene";
+import type { RaceState } from "./race/BaseRaceScene";
+import { DesktopRaceScene } from "./race/DesktopRaceScene";
+import { MobileVerticalRaceScene } from "./race/MobileVerticalRaceScene";
+import { MobileHorizontalRaceScene } from "./race/MobileHorizontalRaceScene";
 
-/** Track-line color palette (extracted from inline literals). */
-const TRACK_COLORS = {
-  CREAM: 0xfff9c4,
-  DARK_BROWN: COLORS.RANK_DEFAULT,
-  WARM_RED: 0xff8a65,
-} as const;
+type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
 export class RaceScene extends Container implements Scene {
-  private world: Container;
-  private worldMask: Graphics;
-  private ui: Container;
-  private racers: Racer[] = [];
-  private finishedRacers: Racer[] = [];
-  private trackGraphics: Graphics;
-
-  private groundContainer: Container;
-  private topEdge: TilingSprite;
-  private middleGround: TilingSprite;
-  private bottomEdge: TilingSprite;
-
-  private grassContainer: Container;
-  private topGrassEdge: TilingSprite;
-  private topGrassMiddle: TilingSprite;
-  private bottomGrassEdge: TilingSprite;
-  private bottomGrassMiddle: TilingSprite;
-
-  private leaderboardContainer: Container;
-  private sidebarBg: Graphics;
-  private leaderboardItems: Map<Racer, Container> = new Map();
-  private racerCharacters: Map<Racer, string> = new Map();
-  private elapsedTime: number = 0;
-  private raceEnded: boolean = false;
-  private trackWidth: number = 0;
-  private finishLineX: number = 0;
-  private onFinished: (results: Racer[]) => void;
+  private playerNames: string[];
   private distance: number;
   private characterAnimations: Map<string, RacerAnimations>;
   private treeAnimation: Texture[];
   private groundTextures: GroundTextures;
   private grassTextures: GrassTextures;
+  private onFinished: (results: Racer[]) => void;
+  private selectedKeys?: string[];
 
-  private gameViewW: number = 0;
-  private gameViewH: number = 0;
-  private isPortrait: boolean = false;
-
-  private entranceFinished: boolean = false;
-  private countdownTimer: number = VISUALS.COUNTDOWN_DURATION;
-  private countdownText: Text | null = null;
-  private remainingDistanceText: Text | null = null;
-  private raceStarted: boolean = false;
-
-  // Throttling for leaderboard sorting
-  private leaderboardUpdateTimer: number = 0;
-  private readonly LEADERBOARD_THROTTLE: number = 30; // frames
-  private sortedRacersCache: Racer[] = [];
-
-  // Music volume management
-  private musicInstance: IMediaInstance | null = null;
-  private targetMusicVolume: number = 0;
-  private currentMusicVolume: number = 0;
+  private currentLayout: BaseRaceScene | null = null;
+  private currentMode: LayoutMode | null = null;
 
   constructor(
     playerNames: string[],
@@ -100,682 +35,79 @@ export class RaceScene extends Container implements Scene {
     selectedKeys?: string[],
   ) {
     super();
-    this.onFinished = onFinished;
+    this.playerNames = playerNames;
     this.distance = distance;
     this.characterAnimations = characterAnimations;
     this.treeAnimation = treeAnimation;
     this.groundTextures = groundTextures;
     this.grassTextures = grassTextures;
-
-    this.worldMask = new Graphics();
-    this.addChild(this.worldMask);
-
-    this.world = new Container();
-    this.world.mask = this.worldMask;
-    this.addChild(this.world);
-
-    this.ui = new Container();
-    this.addChild(this.ui);
-
-    this.sidebarBg = new Graphics();
-    this.ui.addChild(this.sidebarBg);
-
-    this.leaderboardContainer = new Container();
-    this.ui.addChild(this.leaderboardContainer);
-
-    const titleStyle = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 24,
-      fontWeight: "900",
-      stroke: { color: PALETTE.STR_BLACK, width: 4 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 2,
-        blur: 0,
-        color: PALETTE.STR_BLACK,
-        distance: 4,
-      },
-    });
-    const title = new Text({ text: "RANKING", style: titleStyle });
-    title.label = "leaderboard-title";
-    this.leaderboardContainer.addChild(title);
-
-    // Grass Layers
-    this.grassContainer = new Container();
-    this.world.addChild(this.grassContainer);
-
-    this.topGrassMiddle = new TilingSprite({
-      texture: this.grassTextures.middle,
-    });
-    this.topGrassEdge = new TilingSprite({
-      texture: this.grassTextures.bottom,
-    });
-    this.bottomGrassMiddle = new TilingSprite({
-      texture: this.grassTextures.middle,
-    });
-    this.bottomGrassEdge = new TilingSprite({
-      texture: this.grassTextures.top,
-    });
-
-    this.grassContainer.addChild(this.topGrassMiddle);
-    this.grassContainer.addChild(this.topGrassEdge);
-    this.grassContainer.addChild(this.bottomGrassMiddle);
-    this.grassContainer.addChild(this.bottomGrassEdge);
-
-    // Ground Layers
-    this.groundContainer = new Container();
-    this.world.addChild(this.groundContainer);
-
-    this.middleGround = new TilingSprite({
-      texture: this.groundTextures.middle,
-      width: 0,
-      height: 0,
-    });
-    this.topEdge = new TilingSprite({
-      texture: this.groundTextures.top,
-      width: 0,
-      height: ITEMS.ground.unit,
-    });
-    this.bottomEdge = new TilingSprite({
-      texture: this.groundTextures.bottom,
-      width: 0,
-      height: ITEMS.ground.unit,
-    });
-
-    this.groundContainer.addChild(this.middleGround);
-    this.groundContainer.addChild(this.topEdge);
-    this.groundContainer.addChild(this.bottomEdge);
-
-    this.trackGraphics = new Graphics();
-    this.world.addChild(this.trackGraphics);
-
-    this.createRacers(playerNames, selectedKeys);
-    this.initLeaderboardUI();
-
-    this.initCountdownUI();
-    this.initDistanceUI();
+    this.onFinished = onFinished;
+    this.selectedKeys = selectedKeys;
   }
 
-  private initCountdownUI() {
-    const style = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 120,
-      fontWeight: "900",
-      stroke: { color: COLORS.TEXT_MARKER, width: 12 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 6,
-        blur: 0,
-        color: PALETTE.STR_BLACK,
-        distance: 8,
-      },
-    });
-    this.countdownText = new Text({
-      text: Math.ceil(this.countdownTimer).toString(),
-      style,
-    });
-    this.countdownText.anchor.set(0.5);
-    this.countdownText.visible = false;
-    this.ui.addChild(this.countdownText);
-  }
+  public resize(width: number, height: number): void {
+    const newMode = this.determineMode(width, height);
 
-  private initDistanceUI() {
-    const style = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 80,
-      fontWeight: "900",
-      stroke: { color: COLORS.TEXT_MARKER, width: 8 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 4,
-        blur: 4,
-        color: PALETTE.STR_BLACK,
-        distance: 6,
-      },
-    });
-    this.remainingDistanceText = new Text({
-      text: `${this.distance}m`,
-      style,
-    });
-    this.remainingDistanceText.anchor.set(0.5, 0);
-    this.ui.addChild(this.remainingDistanceText);
-  }
-
-  public resize(width: number, height: number) {
-    this.isPortrait = width < 600;
-
-    const availableH = this.isPortrait ? height * 0.7 : height;
-
-    this.gameViewH = availableH;
-    const yOffset = 0;
-
-    if (this.isPortrait) {
-      this.gameViewW = width;
-    } else {
-      this.gameViewW = width - CANVAS.UI_WIDTH;
-    }
-
-    this.world.y = yOffset;
-    this.worldMask
-      .clear()
-      .rect(0, yOffset, this.gameViewW, this.gameViewH)
-      .fill({ color: COLORS.MASK_FILL });
-
-    this.sidebarBg.clear();
-    const woodColor = COLORS.SIDEBAR_WOOD;
-    const bgColor = COLORS.SIDEBAR_BG;
-
-    if (this.isPortrait) {
-      this.sidebarBg
-        .rect(0, availableH, width, height - availableH)
-        .fill({ color: bgColor, alpha: 0.95 });
-
-      // Wooden Texture Lines
-      for (let y = availableH + 5; y < height; y += 10) {
-        this.sidebarBg
-          .rect(0, y, width, 2)
-          .fill({ color: woodColor, alpha: 0.3 });
-      }
-
-      this.leaderboardContainer.x = 20;
-      this.leaderboardContainer.y = availableH + 15;
-    } else {
-      this.sidebarBg
-        .rect(this.gameViewW, 0, CANVAS.UI_WIDTH, height)
-        .fill({ color: bgColor, alpha: 0.95 });
-
-      // Wooden Texture Lines
-      for (let x = this.gameViewW + 5; x < width; x += 15) {
-        this.sidebarBg
-          .rect(x, 0, 2, height)
-          .fill({ color: woodColor, alpha: 0.3 });
-      }
-
-      this.leaderboardContainer.x = this.gameViewW + 15;
-      this.leaderboardContainer.y = 20;
-    }
-
-    const title = this.leaderboardContainer.getChildByLabel("leaderboard-title");
-    if (title) {
-      title.x = 0;
-      title.y = 0;
-    }
-
-    const unitWidth = Math.max(this.gameViewW, CANVAS.MIN_UNIT_WIDTH);
-    const racePixels = (this.distance / 50) * unitWidth;
-
-    this.finishLineX = TRACK.START_LINE_X + racePixels;
-    this.trackWidth = this.finishLineX + 200;
-
-    this.setupTracks();
-    this.repositionRacers();
-    this.updateLeaderboard(60); // Snap positions on resize
-
-    if (this.countdownText) {
-      this.countdownText.x = this.gameViewW / 2;
-      this.countdownText.y = yOffset + this.gameViewH / 2;
-    }
-
-    if (this.remainingDistanceText) {
-      this.remainingDistanceText.x = this.gameViewW / 2;
-      this.remainingDistanceText.y = 20;
+    if (newMode !== this.currentMode) {
+      this.switchLayout(newMode, width, height);
+    } else if (this.currentLayout) {
+      this.currentLayout.resize(width, height);
     }
   }
 
-  private initLeaderboardUI() {
-    this.racers.forEach((racer) => {
-      const container = new Container();
+  private determineMode(width: number, height: number): LayoutMode {
+    const isMobile = width < 600 || height < 500;
+    const isPortrait = height > width;
 
-      const bg = new Graphics();
-      bg.label = "item-bg";
-      container.addChild(bg);
-
-      // Animal Icon
-      const charKey = this.racerCharacters.get(racer) || "bear";
-      const anims = this.characterAnimations.get(charKey)!;
-      const icon = new AnimatedSprite(anims.idle);
-      icon.label = "item-icon";
-      icon.anchor.set(0.5);
-      icon.scale.set(1);
-      icon.x = 25;
-      icon.y = 18;
-      icon.animationSpeed = 0.1;
-      icon.play(); // Play idle animation
-      container.addChild(icon);
-
-      const style = new TextStyle({
-        fill: PALETTE.STR_WHITE,
-        fontSize: 16,
-        fontWeight: "900",
-        stroke: { color: PALETTE.STR_BLACK, width: 3 },
-      });
-      const text = new Text({ text: racer.racerName, style });
-      text.label = "item-text";
-      text.x = 50;
-      text.y = 18;
-      text.anchor.set(0, 0.5);
-      container.addChild(text);
-
-      this.leaderboardContainer.addChild(container);
-      this.leaderboardItems.set(racer, container);
-    });
+    if (!isMobile) return "desktop";
+    return isPortrait ? "mobile-vertical" : "mobile-horizontal";
   }
 
-  private setupTracks() {
-    const count = this.racers.length;
-    const unit = ITEMS.ground.unit;
-    const grassStripH = unit * 4; // 64px grass on top/bottom to accommodate 48px trees
-    const dirtH = this.gameViewH - grassStripH * 2;
-    const trackHeight = dirtH / count;
+  private switchLayout(mode: LayoutMode, width: number, height: number): void {
+    let existingState: RaceState | undefined;
 
-    // Update Grass Tiling Sprites
-    this.topGrassMiddle.width = this.trackWidth;
-    this.topGrassMiddle.height = grassStripH - unit;
-    this.topGrassMiddle.y = 0;
-
-    this.topGrassEdge.width = this.trackWidth;
-    this.topGrassEdge.height = unit;
-    this.topGrassEdge.y = grassStripH - unit;
-
-    this.bottomGrassEdge.width = this.trackWidth;
-    this.bottomGrassEdge.height = unit;
-    this.bottomGrassEdge.y = this.gameViewH - grassStripH;
-
-    this.bottomGrassMiddle.width = this.trackWidth;
-    this.bottomGrassMiddle.height = grassStripH - unit;
-    this.bottomGrassMiddle.y = this.gameViewH - grassStripH + unit;
-
-    // Update ground tiling sprites (Dirt Track)
-    this.topEdge.width = this.trackWidth;
-    this.topEdge.y = grassStripH;
-
-    this.bottomEdge.width = this.trackWidth;
-    this.bottomEdge.y = this.gameViewH - grassStripH - unit;
-
-    this.middleGround.width = this.trackWidth;
-    this.middleGround.height = dirtH - unit * 2;
-    this.middleGround.y = grassStripH + unit;
-
-    this.trackGraphics.clear();
-
-    const {
-      CREAM: colorLight,
-      DARK_BROWN: colorDark,
-      WARM_RED: colorRed,
-    } = TRACK_COLORS;
-
-    // Solid Pixel Track Dividers (8x8 blocks)
-    const dividerSize = 8;
-    const dividerGap = 16;
-    const dividerRadius = 2;
-    for (let i = 1; i < count; i++) {
-      const y = Math.floor(grassStripH + i * trackHeight - dividerSize / 2);
-      for (let x = 0; x < this.trackWidth; x += dividerSize + dividerGap) {
-        this.trackGraphics
-          .roundRect(x, y, dividerSize, dividerSize, dividerRadius)
-          .fill({ color: colorDark, alpha: 0.3 });
-      }
+    if (this.currentLayout) {
+      existingState = this.currentLayout.getState();
+      this.removeChild(this.currentLayout);
+      // We don't destroy children because we want to preserve racers
+      this.currentLayout.destroy({ children: false });
     }
 
-    // Large Solid Start Line (16x16 blocks) - Only on Dirt
-    const startBlockSize = 16;
-    const blockRadius = 4;
-    for (
-      let y = grassStripH;
-      y <= this.gameViewH - grassStripH - startBlockSize;
-      y += startBlockSize
-    ) {
-      this.trackGraphics
-        .roundRect(
-          TRACK.START_LINE_X - startBlockSize,
-          y,
-          startBlockSize,
-          startBlockSize,
-          blockRadius,
-        )
-        .fill({ color: colorLight })
-        .roundRect(
-          TRACK.START_LINE_X,
-          y,
-          startBlockSize,
-          startBlockSize,
-          blockRadius,
-        )
-        .fill({ color: colorRed });
+    this.currentMode = mode;
+
+    const args: [string[], number, Map<string, RacerAnimations>, Texture[], GroundTextures, GrassTextures, (results: Racer[]) => void, string[] | undefined, RaceState | undefined] = [
+      this.playerNames,
+      this.distance,
+      this.characterAnimations,
+      this.treeAnimation,
+      this.groundTextures,
+      this.grassTextures,
+      this.onFinished,
+      this.selectedKeys,
+      existingState
+    ];
+
+    switch (mode) {
+      case "desktop":
+        this.currentLayout = new DesktopRaceScene(...args);
+        break;
+      case "mobile-vertical":
+        this.currentLayout = new MobileVerticalRaceScene(...args);
+        break;
+      case "mobile-horizontal":
+        this.currentLayout = new MobileHorizontalRaceScene(...args);
+        break;
     }
 
-    // Large Solid Finish Line (16x16 checkered blocks) - Only on Dirt
-    const finishBlockSize = 16;
-    for (let col = 0; col < 2; col++) {
-      const x = this.finishLineX + col * finishBlockSize;
-      for (
-        let row = 0;
-        row * finishBlockSize <= dirtH - finishBlockSize;
-        row++
-      ) {
-        const y = grassStripH + row * finishBlockSize;
-        const color = (row + col) % 2 === 0 ? colorLight : colorDark;
-        this.trackGraphics
-          .roundRect(x, y, finishBlockSize, finishBlockSize, blockRadius)
-          .fill({ color });
-      }
-    }
-
-    // Clean old markers and trees
-    this.world.children
-      .filter(
-        (c) =>
-          (c instanceof Text &&
-            (c.text.includes("m") || c.label === "start-label")) ||
-          (c instanceof AnimatedSprite && c.label === "distance-tree"),
-      )
-      .forEach((c) => this.world.removeChild(c));
-
-    const unitWidth = Math.max(this.gameViewW, CANVAS.MIN_UNIT_WIDTH);
-    for (let m = 10; m <= this.distance; m += 10) {
-      const x = TRACK.START_LINE_X + (m / 50) * unitWidth;
-
-      // Bottom Tree (On Grass)
-      const treeBottom = new AnimatedSprite(this.treeAnimation);
-      treeBottom.label = "distance-tree";
-      treeBottom.anchor.set(0.5, 1);
-      treeBottom.width = ITEMS.tree.width;
-      treeBottom.height = ITEMS.tree.height;
-      treeBottom.x = x;
-      treeBottom.y = this.gameViewH - (grassStripH - ITEMS.tree.height) / 2;
-      treeBottom.animationSpeed = 0.1;
-      treeBottom.play();
-      this.world.addChild(treeBottom);
-
-      // Top Tree (On Grass)
-      const treeTop = new AnimatedSprite(this.treeAnimation);
-      treeTop.label = "distance-tree";
-      treeTop.anchor.set(0.5, 0);
-      treeTop.width = ITEMS.tree.width;
-      treeTop.height = ITEMS.tree.height;
-      treeTop.x = x;
-      treeTop.y = (grassStripH - ITEMS.tree.height) / 2;
-      treeTop.animationSpeed = 0.1;
-      treeTop.play();
-      this.world.addChild(treeTop);
+    if (this.currentLayout) {
+      this.addChild(this.currentLayout);
+      this.currentLayout.resize(width, height);
     }
   }
 
-  private createRacers(names: string[], selectedKeys?: string[]) {
-    const results = createRacers(names, this.characterAnimations, selectedKeys);
-
-    // Shuffle results so track assignment is random (spec §3)
-    for (let i = results.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [results[i], results[j]] = [results[j], results[i]];
+  update(delta: number): void {
+    if (this.currentLayout) {
+      this.currentLayout.update(delta);
     }
-
-    results.forEach(({ racer, characterKey }) => {
-      this.racers.push(racer);
-      this.racerCharacters.set(racer, characterKey);
-      this.world.addChild(racer);
-    });
-  }
-
-  private repositionRacers() {
-    const unit = ITEMS.ground.unit;
-    const grassStripH = unit * 4;
-    const dirtH = this.gameViewH - grassStripH * 2;
-    const trackHeight = dirtH / this.racers.length;
-
-    this.racers.forEach((racer, i) => {
-      // Offset by top grass strip height, then center in lane
-      racer.y = grassStripH + (i + 0.5) * trackHeight + RACER.HEIGHT / 2;
-    });
-  }
-
-  update(delta: number) {
-    // Handle background music volume transitions
-    if (this.musicInstance) {
-      if (this.currentMusicVolume !== this.targetMusicVolume) {
-        const step = delta * 0.015; // Fade speed
-        if (this.currentMusicVolume < this.targetMusicVolume) {
-          this.currentMusicVolume = Math.min(
-            this.targetMusicVolume,
-            this.currentMusicVolume + step,
-          );
-        } else {
-          this.currentMusicVolume = Math.max(
-            this.targetMusicVolume,
-            this.currentMusicVolume - step,
-          );
-        }
-        this.musicInstance.volume = this.currentMusicVolume;
-
-        // Fully stop if fading out and reached 0
-        if (this.raceEnded && this.currentMusicVolume <= 0) {
-          this.musicInstance.stop();
-          this.musicInstance = null;
-        }
-      }
-    }
-
-    if (this.raceEnded) return;
-
-    if (!this.entranceFinished) {
-      let allAtStart = true;
-      this.racers.forEach((racer) => {
-        if (!racer.walkEntrance(TRACK.START_LINE_X, delta)) {
-          allAtStart = false;
-        }
-      });
-      if (allAtStart) {
-        this.entranceFinished = true;
-        if (this.countdownText) this.countdownText.visible = true;
-      }
-      return;
-    }
-
-    if (!this.raceStarted) {
-      this.countdownTimer -= delta / 60;
-      if (this.countdownTimer <= 0) {
-        this.raceStarted = true;
-
-        // Start background music with a fade-in
-        const musicPromise = sound.play("sound", { loop: true, volume: 0 });
-        if (musicPromise instanceof Promise) {
-          musicPromise.then((instance: IMediaInstance) => {
-            this.musicInstance = instance;
-            this.targetMusicVolume = 1;
-            this.currentMusicVolume = 0;
-          });
-        } else {
-          this.musicInstance = musicPromise;
-          this.targetMusicVolume = 1;
-          this.currentMusicVolume = 0;
-        }
-        this.targetMusicVolume = 1;
-        this.currentMusicVolume = 0;
-
-        if (this.countdownText) {
-          this.countdownText.text = "GO!";
-          setTimeout(() => {
-            if (this.countdownText) this.countdownText.visible = false;
-          }, 1000);
-        }
-      } else {
-        if (this.countdownText) {
-          this.countdownText.text = Math.ceil(this.countdownTimer).toString();
-        }
-        return;
-      }
-    }
-
-    this.elapsedTime += delta;
-    let allFinished = true;
-    let leaderX = 0;
-    this.racers.forEach((r) => {
-      if (!r.isFinished() && r.x > leaderX) leaderX = r.x;
-    });
-
-    // Compute per-frame rank for every active racer (spec §3)
-    const activeRacers = this.racers.filter((r) => !r.isFinished());
-    const ranked = [...activeRacers].sort((a, b) => b.x - a.x);
-    const rankMap = new Map<Racer, number>();
-    ranked.forEach((r, i) => rankMap.set(r, i + 1));
-
-    // Total race distance in pixels (used for climax & overdrive range)
-    const totalDistPx = this.finishLineX - TRACK.START_LINE_X;
-
-    // Climax Phase — any racer in the final 20 % of the track? (spec §4)
-    const climaxThreshold =
-      this.finishLineX - totalDistPx * GAMEPLAY.BALANCE.CLIMAX_THRESHOLD;
-    const inClimaxPhase = activeRacers.some((r) => r.x >= climaxThreshold);
-
-    this.racers.forEach((racer) => {
-      if (!racer.isFinished()) {
-        allFinished = false;
-        const rank = rankMap.get(racer) ?? 1;
-        racer.update(
-          delta,
-          this.elapsedTime,
-          leaderX,
-          this.finishLineX,
-          rank,
-          totalDistPx,
-          inClimaxPhase,
-          activeRacers.length,
-        );
-
-        if (
-          racer.x >=
-          this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET
-        ) {
-          racer.x = this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET;
-          racer.setFinished(this.elapsedTime);
-          this.finishedRacers.push(racer);
-        }
-      }
-    });
-
-    // Update remaining distance UI based on the current leader
-    if (this.remainingDistanceText) {
-      const leader = ranked[0] || this.racers[0];
-      const distToFinishPx = Math.max(0, this.finishLineX - leader.x);
-      const distToFinishM = Math.ceil(
-        (distToFinishPx / totalDistPx) * this.distance,
-      );
-      this.remainingDistanceText.text = `${distToFinishM}m`;
-    }
-
-    this.updateLeaderboard(delta);
-
-    let activeLeaderX = 0;
-    let hasActiveRacers = false;
-
-    this.racers.forEach((r) => {
-      if (!r.isFinished()) {
-        hasActiveRacers = true;
-        if (r.x > activeLeaderX) activeLeaderX = r.x;
-      }
-    });
-
-    if (!hasActiveRacers) {
-      this.racers.forEach((r) => {
-        if (r.x > activeLeaderX) activeLeaderX = r.x;
-      });
-    }
-
-    this.updateCamera(activeLeaderX, delta);
-    if (allFinished) this.endRace();
-  }
-
-  private updateLeaderboard(delta: number) {
-    this.leaderboardUpdateTimer += delta;
-    if (
-      this.leaderboardUpdateTimer >= this.LEADERBOARD_THROTTLE ||
-      this.sortedRacersCache.length === 0
-    ) {
-      this.leaderboardUpdateTimer = 0;
-      this.sortedRacersCache = [...this.racers].sort((a, b) => {
-        if (a.isFinished() && b.isFinished())
-          return a.finishTime - b.finishTime;
-        if (a.isFinished()) return -1;
-        if (b.isFinished()) return 1;
-        return b.x - a.x;
-      });
-    }
-
-    this.sortedRacersCache.forEach((racer, index) => {
-      const container = this.leaderboardItems.get(racer);
-      if (container) {
-        let targetY, targetX;
-
-        if (this.isPortrait) {
-          const count = this.racers.length;
-          const totalW = this.gameViewW - 40;
-          const w = totalW / count;
-          targetX = index * w;
-          targetY = 40;
-        } else {
-          targetX = 0;
-          targetY = 40 + index * 42;
-        }
-
-        const smoothing =
-          1 - Math.pow(1 - VISUALS.LEADERBOARD_ANIMATION_SPEED, delta);
-        container.x += (targetX - container.x) * smoothing;
-        container.y += (targetY - container.y) * smoothing;
-
-        const bg = container.getChildByLabel("item-bg") as Graphics;
-        const text = container.getChildByLabel("item-text") as Text;
-
-        if (bg) {
-          const w = this.isPortrait
-            ? (this.gameViewW - 40) / this.racers.length - 5
-            : CANVAS.UI_WIDTH - 30;
-          const h = 36;
-
-          let borderColor: number = COLORS.RANK_DEFAULT;
-          if (index === 0) borderColor = COLORS.RANK_GOLD;
-          else if (index === 1) borderColor = COLORS.RANK_SILVER;
-          else if (index === 2) borderColor = COLORS.RANK_BRONZE;
-
-          bg.clear();
-          // Main card body (semi-transparent dark)
-          bg.roundRect(0, 0, w, h, 4)
-            .fill({ color: PALETTE.BLACK, alpha: 0.5 })
-            .stroke({ color: borderColor, width: index < 3 ? 3 : 1 });
-        }
-
-        if (text) {
-          const rank = index + 1;
-          const suffix =
-            rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
-          text.text = `${rank}${suffix}: ${racer.racerName.split(" ")[1]}`;
-          text.style.fill = PALETTE.STR_WHITE;
-          text.style.fontWeight = "900";
-          if (this.isPortrait) text.style.fontSize = 12;
-          else text.style.fontSize = 14;
-        }
-      }
-    });
-  }
-
-  private updateCamera(leaderX: number, delta: number) {
-    let targetX = leaderX - this.gameViewW / 2;
-    const minX = 0;
-    const maxX = this.trackWidth - this.gameViewW;
-    targetX = Math.max(minX, Math.min(targetX, maxX));
-    const smoothing = 1 - Math.pow(1 - VISUALS.CAMERA_SMOOTHING, delta);
-    const currentX = -this.world.x;
-    const newX = currentX + (targetX - currentX) * smoothing;
-    this.world.x = -newX;
-  }
-
-  private endRace() {
-    this.raceEnded = true;
-
-    // Start music fade-out
-    this.targetMusicVolume = 0;
-
-    setTimeout(() => {
-      this.onFinished(this.finishedRacers);
-    }, VISUALS.RESULT_DELAY);
   }
 }

@@ -40,6 +40,8 @@ export class Racer extends Container {
   private isSprinting: boolean = false;
   private staminaAtSprintStart: number = 0;
   private staminaBar: Graphics;
+  private staminaBarBg: Graphics;
+  private labelText: Text;
 
   // Drama — pace wave (unique per racer)
   private paceFrequency: number;
@@ -96,10 +98,10 @@ export class Racer extends Container {
     this.sprite.play();
     this.addChild(this.sprite);
 
-    const barBg = new Graphics();
-    barBg.rect(-RACER.WIDTH / 2, 5, RACER.WIDTH, 5);
-    barBg.fill({ color: COLORS.STAMINA_BG });
-    this.addChild(barBg);
+    this.staminaBarBg = new Graphics();
+    this.staminaBarBg.rect(-RACER.WIDTH / 2, 5, RACER.WIDTH, 5);
+    this.staminaBarBg.fill({ color: COLORS.STAMINA_BG });
+    this.addChild(this.staminaBarBg);
 
     this.staminaBar = new Graphics();
     this.updateStaminaBar();
@@ -117,13 +119,20 @@ export class Racer extends Container {
         distance: 2,
       },
     });
-    const label = new Text({ text: name, style: labelStyle });
-    label.anchor.set(0.5);
-    label.y = -RACER.HEIGHT - 10;
-    this.addChild(label);
+    this.labelText = new Text({ text: name, style: labelStyle });
+    this.labelText.anchor.set(0.5);
+    this.labelText.y = -RACER.HEIGHT - 10;
+    this.addChild(this.labelText);
 
     this.x = -100; // Start off-screen for entrance
     this.y = y + RACER.HEIGHT; // Offset for anchor at bottom
+  }
+
+  /** Hide specific UI elements for mobile view. */
+  public setMobileMode(isMobile: boolean) {
+    this.staminaBar.visible = !isMobile;
+    this.staminaBarBg.visible = !isMobile;
+    this.labelText.visible = !isMobile;
   }
 
   /**

@@ -85,6 +85,7 @@ export class LeaderboardSidebar extends Container {
   private daisies: { g: Graphics; baseY: number }[] = [];
   private glowGraphics: Graphics[] = [];
   private animations: Map<string, RacerAnimations> | null = null;
+  private showList = true;
 
   constructor(
     entries: RankEntry[],
@@ -151,7 +152,9 @@ export class LeaderboardSidebar extends Container {
 
     this.drawBackground();
     this.buildPodium();
-    this.buildList();
+    if (this.showList) {
+      this.buildList();
+    }
     this.layout();
   }
 
@@ -414,10 +417,14 @@ export class LeaderboardSidebar extends Container {
     this.titleContainer.y = 35;
 
     this.podiumContainer.x = 20;
-    this.podiumContainer.y = 70;
-
-    this.listContainer.x = 18;
-    this.listContainer.y = 250;
+    if (this.showList) {
+      this.podiumContainer.y = 70;
+      this.listContainer.x = 18;
+      this.listContainer.y = 250;
+    } else {
+      // Center podium vertically if no list
+      this.podiumContainer.y = (this.sidebarH - 70) / 2 + 40;
+    }
   }
 
   update(delta: number) {
@@ -439,6 +446,11 @@ export class LeaderboardSidebar extends Container {
 
   public setEntries(entries: RankEntry[]) {
     this.entries = entries;
+    this.refresh();
+  }
+
+  public setShowList(val: boolean) {
+    this.showList = val;
     this.refresh();
   }
 }

@@ -8,6 +8,7 @@
 
 - **Engine:** Pixi.js v8 (WebGPU/WebGL)
 - **Framework:** TypeScript + Vite
+- **Pattern: Responsive Controller:** Scenes are implemented as "Controllers" that detect device orientation/size and swap between specialized "Layout" subclasses (Desktop, MobileVertical, MobileHorizontal) while preserving game state.
 - **Pattern: Strategy:** AI behavior is encapsulated in `StrategyBehavior` implementations (Aggressive, Pacer, Conservative, Closer), controlling stamina management and sprint triggers.
 - **Pattern: Factory:** `RacerFactory` handles randomized stat generation, character assignment, and strategy selection.
 - **Scene Lifecycle:** Managed by `Game.ts`, implementing a unified `Scene` interface for Menu, Character Selection, Race, and Results.
@@ -75,8 +76,11 @@ Triggered when any racer enters the final 20% of the track:
 
 ## 8. Visual Design & UI
 
-- **Theme:** Clean nature-themed racing with solid green backgrounds.
-- **Design System:** Utilizes a centralized `PALETTE` token system in `config.ts` to manage all hex values, ensuring project-wide consistency and easy theme swapping.
-- **Responsive Layout:** Sidebar leaderboard on desktop, bottom-docked on mobile.
+- **Theme:** Clean nature-themed racing with solid green backgrounds and lighter wood UI.
+- **Design System:** Utilizes a centralized `PALETTE` token system in `config.ts`.
+- **Responsive Layouts:**
+    - **Desktop:** Sidebar leaderboard, full race view.
+    - **Mobile Portrait:** Bottom-docked leaderboard, vertical scrolling.
+    - **Mobile Landscape:** Compact sidebar or split-screen result view, optimized for vertical space.
 - **HUD:** Large real-time "Remaining Distance" indicator at top center.
-- **Aesthetics:** Refreshed lighter oak wood style for better vibrancy, **podium-style leaderboard** for top 3 winners, gold/silver/bronze pedestal borders, unified white racer names with brown strokes, animated pixel-art characters.
+- **Aesthetics:** **Podium-style leaderboard** for top 3 winners, gold/silver/bronze pedestal borders, unified white racer names with brown strokes, animated pixel-art characters.
