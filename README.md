@@ -2,7 +2,7 @@
 
 A dynamic, fully responsive web-based racing game built with **Pixi.js v8**, **TypeScript**, and **Vite**. Players choose a racer count and distance, then watch animal characters race with randomized stats, stamina management, and a competitive "Comeback Engine" that keeps every race exciting until the finish line.
 
-The game features a **Responsive Architecture** that seamlessly adapts gameplay and UI across Desktop, Mobile Portrait, and Mobile Landscape modes.
+The game features a **Responsive Architecture** that seamlessly adapts gameplay and UI across Desktop, Mobile Portrait, and Mobile Landscape modes with robust state preservation during device rotation.
 
 For a detailed technical breakdown of the balancing logic and architecture, see the [Design Spec](documents/spec.md) and the [Development & Design Guide](documents/DEVELOPMENT.md).
 
@@ -17,6 +17,9 @@ npm run dev
 
 # Production build
 npm run build
+
+# Deploy to Firebase
+npm run deploy
 ```
 
 ## How It Works
@@ -24,121 +27,96 @@ npm run build
 1. **Menu** — pick 2–8 racers and a distance (50 m, 100 m, 200 m, or 400 m).
 2. **Character Selection** — pick the specific racers you want for the lineup.
 3. **Race** — a 3-second countdown starts the race. Racers sprint, cruise, stumble, and recover based on their randomly-assigned stats and stamina strategy.
-4. **Results** — a farming-themed leaderboard shows final rankings with animated animal icons.
+4. **Results** — a farming-themed leaderboard shows final rankings with animated animal icons and a podium for the winners.
 
 ## Project Structure
 
+The project utilizes the **Barrel Pattern** (`index.ts` files) to simplify imports across modules.
+
 ```
 src/
-├── main.ts                 Entry point — creates the Pixi Application
-├── config.ts               All tuning constants (canvas, gameplay, visuals, colours)
+├── main.ts                 Entry point — creates Pixi App and Game controller
+├── config.ts               Central tuning constants (balance, visuals, colors)
 │
-├── core/
-│   ├── Game.ts             Scene lifecycle, asset loading, resize handling
+├── core/                   Core engine components
+│   ├── index.ts            Barrel for core
+│   ├── Game.ts             Scene lifecycle & orientation handling
 │   ├── Scene.ts            Scene interface (update / resize)
-│   └── types.ts            Shared types (RacerAnimations, TileTextures)
+│   └── types.ts            Shared types & SceneContext definitions
 │
-├── entities/
-│   └── Racer.ts            Racer entity — physics, stamina, animation, rendering
+├── entities/               Game entities (Racer)
+│   ├── index.ts            Barrel for entities
+│   └── Racer.ts            Physics, stamina, and animation logic
 │
-├── strategies/
-│   └── StrategyBehavior.ts Strategy Pattern — defines racer AI behaviours
+├── strategies/             AI Strategy Pattern implementations
+│   ├── index.ts            Barrel for strategies
+│   └── StrategyBehavior.ts Behavior definitions & registry
 │
-├── factories/
-│   └── RacerFactory.ts     Factory Pattern — creates racers with random stats
+├── factories/              Factory Pattern for racer creation
+│   ├── index.ts            Barrel for factories
+│   └── RacerFactory.ts     Gaussian stat generation & character assignment
 │
 ├── scenes/                 Responsive Controller Pattern
-│   ├── CharacterSelectionScene.ts  (Controller)
-│   ├── MenuScene.ts                (Controller)
-│   ├── RaceScene.ts                (Controller)
-│   ├── ResultScene.ts              (Controller)
+│   ├── index.ts            Barrel for main scenes
+│   ├── MenuScene.ts        Menu controller
+│   ├── CharacterSelectionScene.ts Selection controller
+│   ├── RaceScene.ts        Race controller
+│   ├── ResultScene.ts      Result controller
 │   │
-│   ├── menu/               Menu Layouts
-│   │   ├── BaseMenuScene.ts
-│   │   ├── DesktopMenuScene.ts
-│   │   ├── MobileHorizontalMenuScene.ts
-│   │   └── MobileVerticalMenuScene.ts
-│   │
-│   ├── race/               Race Layouts & State
-│   │   ├── BaseRaceScene.ts
-│   │   ├── DesktopRaceScene.ts
-│   │   ├── MobileHorizontalRaceScene.ts
-│   │   └── MobileVerticalRaceScene.ts
-│   │
-│   ├── result/             Result Layouts
-│   │   ├── BaseResultScene.ts
-│   │   ├── DesktopResultScene.ts
-│   │   ├── MobileHorizontalResultScene.ts
-│   │   └── MobileVerticalResultScene.ts
-│   │
-│   └── selection/          Selection Layouts
-│       ├── BaseCharacterSelectionScene.ts
-│       ├── DesktopSelectionScene.ts
-│       ├── MobileHorizontalSelectionScene.ts
-│       └── MobileVerticalSelectionScene.ts
+│   ├── menu/               Specialized Menu Layouts
+│   ├── race/               Specialized Race Layouts & RaceState
+│   ├── result/             Specialized Result Layouts
+│   └── selection/          Specialized Selection Layouts
 │
-├── ui/
-│   ├── WoodenButton.ts     Reusable wooden-textured button component
-│   └── LeaderboardSidebar.ts Farm-themed leaderboard panel
+├── ui/                     Reusable UI Components
+│   ├── index.ts            Barrel for UI
+│   ├── WoodenButton.ts     Themed button factory
+│   └── LeaderboardSidebar.ts Podium-style leaderboard
 │
 └── ...
 public/
-└── assets/                 Static assets (characters, items, sounds)
+└── assets/                 Optimized static assets (served via root)
 ```
 
 ## Architecture & Design Patterns
 
 ### Responsive Controller Pattern
 
-To support Desktop, Mobile Portrait, and Mobile Landscape seamlessly, each main scene (e.g., `RaceScene`) acts as a **Controller**. It detects the screen dimensions and orientation, then instantiates the appropriate **Layout Subclass** (e.g., `DesktopRaceScene`, `MobileVerticalRaceScene`).
+Each main scene acts as a **Controller** that manages specialized layout subclasses for Desktop, Mobile Portrait, and Mobile Landscape.
 
-- **Base Classes** (`BaseRaceScene`) contain the core logic, state, and asset references.
-- **Layout Classes** (`MobileVerticalRaceScene`) handle specific positioning, scaling, and UI arrangements.
-- **State Preservation**: When switching layouts (e.g., rotating a phone), the Controller extracts the state (racer positions, time, etc.) from the old layout and injects it into the new one, ensuring the game continues uninterrupted.
+- **Dependency Grouping**: Uses **Scene Contexts** (e.g., `RaceContext`) to clean up constructors and group related dependencies (animations, textures, callbacks).
+- **State Preservation**: Controllers extract state objects (e.g., `RaceState`) from active layouts during orientation changes and inject them into new instances, ensuring zero progress loss.
+- **Orientation Stability**: The `Game` class uses `requestAnimationFrame` and listeners for both `resize` and `orientationchange` to ensure Pixi's dimensions are fully settled before rerendering layouts.
 
-### Strategy Pattern — `strategies/StrategyBehavior.ts`
+### Strategy Pattern
 
-Each racer is assigned one of four **stamina strategies** that determine its racing personality:
+Each racer is assigned one of four **stamina strategies** (Aggressive, Pacer, Conservative, Closer) that determine its racing personality, stat multipliers, and sprint thresholds.
 
-| Strategy         | Behaviour                                    | Stat Bias                       |
-| ---------------- | -------------------------------------------- | ------------------------------- |
-| **Aggressive**   | Sprint hard, crash fast, recover, repeat     | +10 % speed, −25 % endurance    |
-| **Pacer**        | Rhythmic push-rest cycles above 50 % stamina | Balanced stats, +10 % endurance |
-| **Conservative** | Cruise most of the race, push in final 35 %  | −8 % speed, +25 % endurance     |
-| **Closer**       | Save everything for the climax phase         | +15 % accel, +5 % endurance     |
+### Factory Pattern
 
-### Factory Pattern — `factories/RacerFactory.ts`
-
-The `createRacers()` factory encapsulates character shuffling, random stat generation, and strategy assignment.
-
-### Scene Lifecycle — `core/Game.ts`
-
-`Game` acts as a **scene manager** using a simple `setScene()` method that handles cleanup, stage mounting, and resizing triggers.
+The `RacerFactory` centralizes the complex process of character shuffling, random stat generation using Gaussian distribution, and strategy assignment.
 
 ## Gameplay Systems
 
 ### The Comeback Engine (Dynamic Balancing)
 
-Prevents the leader from pulling away unchallenged:
+Prevents the leader from pulling away unchallenged using continuous normalized rank scaling:
 
-- **Slingshot** — trailing racers gain up to +56 % acceleration
-- **Slipstream** — chasers get a higher max-speed ceiling (up to 1.25×)
-- **Respite** — trailing racers recover stamina up to 2.5× faster
-- **Rubber-band** — speed boost proportional to distance behind the leader
-- **Second Wind** — deeply trailing racers get a burst after sustained poor rank
+- **Slingshot** — Trailing racers gain up to +56 % acceleration.
+- **Slipstream** — Chasers gain a higher max-speed ceiling (up to 1.25×).
+- **Respite** — Trailing racers recover stamina up to 2.5× faster.
+- **Rubber-band** — Speed boost proportional to distance behind the leader.
+- **Second Wind** — Massive burst for deeply trailing racers (bottom 25 %).
 
 ### Drama Mechanics
 
-- **Climax Phase** — Final 20% of the track triggers double recovery and sprint bonuses.
-- **Pace Wave** — sinusoidal speed oscillation unique to each racer.
-- **Stumble** — random momentary slowdowns (leaders stumble more often).
-
-## Configuration
-
-All tuning knobs live in `src/config.ts` under clearly named constant groups like `CANVAS`, `GAMEPLAY`, `VISUALS`, and `COLORS`.
+- **Climax Phase** — Final 20 % of the track triggers double recovery and sprint bonuses.
+- **Pace Wave** — Sinusoidal speed oscillation unique to each racer.
+- **Stumble** — Random momentary slowdowns (leaders stumble more often).
 
 ## Tech Stack
 
 - **Pixi.js v8** — 2D rendering (WebGL / WebGPU)
-- **TypeScript** — strict typing
-- **Vite** — dev server + production bundler
+- **TypeScript** — strict typing with verbatim module syntax
+- **Vite** — development server and production bundler
+- **Firebase** — automated hosting and deployment

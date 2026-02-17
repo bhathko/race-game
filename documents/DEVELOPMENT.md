@@ -36,16 +36,17 @@ The `Racer` class knows *how* to move, but it doesn't know *why* it should sprin
 Creating a racer involves generating Gaussian-random stats, assigning characters, and determining strategy. The `RacerFactory` encapsulates this complexity.
 - **Benefit:** Scenes stay clean. `RaceScene` simply asks for `createRacers(selectedKeys)` and receives a ready-to-race array.
 
-#### 3. Scene Lifecycle (`src/core/`)
-The game follows a strict `Scene` interface (`update`, `resize`, `destroy`). The `Game` class acts as a central orchestrator.
-- **Benefit:** Switching between `Menu`, `CharacterSelection`, `Race`, and `Result` scenes is handled uniformly, ensuring efficient memory management and asset loading.
-
-#### 4. Responsive Controller Pattern (`src/scenes/`)
+#### 3. Responsive Controller Pattern (`src/scenes/`)
 To handle diverse form factors (Mobile Portrait vs. Landscape vs. Desktop) without spaghetti code, we use a **Controller-View** hybrid approach.
 - **Controller:** The main scene class (e.g., `RaceScene`) acts as a controller. It detects screen size changes and instantiates the correct layout subclass.
 - **Base Class:** A shared abstract base (e.g., `BaseRaceScene`) holds all game logic, state (racer positions, timers), and asset references.
 - **Layout Views:** Subclasses (e.g., `MobileVerticalRaceScene`) only implement the `resize()` method and specific UI positioning logic.
+- **Scene Contexts:** Dependency grouping interfaces (e.g., `RaceContext`) unify constructor arguments, reducing parameter bloat.
 - **State Injection:** When the controller swaps layouts (e.g., on device rotation), it extracts the running state from the old layout and injects it into the new one, ensuring a seamless player experience.
+
+#### 4. Barrel Pattern (`index.ts`)
+Each major module directory contains an `index.ts` file that re-exports its contents.
+- **Benefit:** Simplifies imports (e.g., `import { Racer } from "../entities"`) and provides a single public API for each directory, improving maintainability and reducing import noise.
 
 ### Game Design Theory
 
