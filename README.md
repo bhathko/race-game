@@ -24,10 +24,11 @@ npm run deploy
 
 ## How It Works
 
-1. **Menu** — pick 2–8 racers and a distance (50 m, 100 m, 200 m, or 400 m).
-2. **Character Selection** — pick the specific racers you want for the lineup.
-3. **Race** — a 3-second countdown starts the race. Racers sprint, cruise, stumble, and recover based on their randomly-assigned stats and stamina strategy.
-4. **Results** — a farming-themed leaderboard shows final rankings with animated animal icons and a podium for the winners.
+1. **Loading** — asset loading progress is displayed to ensure a smooth transition.
+2. **Menu** — pick 2–8 racers and a distance (50 m, 100 m, 200 m, or 400 m).
+3. **Character Selection** — pick the specific racers you want for the lineup.
+4. **Race** — a 3-second countdown starts the race. Racers sprint, cruise, stumble, and recover based on their randomly-assigned stats and stamina strategy.
+5. **Results** — a farming-themed leaderboard shows final rankings with animated animal icons and a podium for the winners.
 
 ## Project Structure
 
@@ -58,6 +59,7 @@ src/
 │
 ├── scenes/                 Responsive Controller Pattern
 │   ├── index.ts            Barrel for main scenes
+│   ├── LoadingScene.ts     Initial asset loading scene
 │   ├── MenuScene.ts        Menu controller
 │   ├── CharacterSelectionScene.ts Selection controller
 │   ├── RaceScene.ts        Race controller

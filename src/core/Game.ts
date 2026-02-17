@@ -6,7 +6,7 @@ import {
   Texture,
   Rectangle,
 } from "pixi.js";
-import { RaceScene, MenuScene, ResultScene, CharacterSelectionScene } from "../scenes";
+import { RaceScene, MenuScene, ResultScene, CharacterSelectionScene, LoadingScene } from "../scenes";
 import { Racer } from "../entities";
 import { CHARACTERS, ITEMS } from "../config";
 import type { Scene } from "./Scene";
@@ -43,15 +43,33 @@ export class Game {
   }
 
   async start() {
-    await this.loadAssets();
+    const loadingScene = new LoadingScene();
+    this.setScene(loadingScene);
+
+    await this.loadAssets((progress) => {
+      loadingScene.setProgress(progress);
+    });
+
     this.showMenuScene();
   }
 
-  private async loadAssets() {
+  private async loadAssets(onProgress: (progress: number) => void) {
+    const charKeys = Object.keys(CHARACTERS);
+    const totalAssets = charKeys.length * 2 + 5; // idle/walk for each + 5 items
+    let loadedCount = 0;
+
+    const reportProgress = () => {
+      loadedCount++;
+      onProgress(loadedCount / totalAssets);
+    };
+
     // Load character animations
-    for (const [key, char] of Object.entries(CHARACTERS)) {
+    for (const key of charKeys) {
+      const char = CHARACTERS[key as keyof typeof CHARACTERS];
       const idleSheet = await Assets.load(char.idle.path);
+      reportProgress();
       const walkSheet = await Assets.load(char.walk.path);
+      reportProgress();
 
       this.characterAnimations.set(key, {
         idle: this.createFrames(idleSheet, char.idle.frames, 1, 0),
@@ -61,10 +79,15 @@ export class Game {
 
     // Load other images
     const treeSheet = await Assets.load(ITEMS.tree.path);
+    reportProgress();
     const groundSheet = await Assets.load(ITEMS.ground.path);
+    reportProgress();
     const grassSheet = await Assets.load(ITEMS.grass.path);
+    reportProgress();
     await Assets.load(ITEMS.trophy.path);
+    reportProgress();
     await Assets.load(ITEMS.sound.path);
+    reportProgress();
 
     // Create tree animation from the 4th row (index 3)
     this.treeAnimation = this.createFrames(

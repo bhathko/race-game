@@ -15,6 +15,7 @@ The project utilizes the **Barrel Pattern** (`index.ts` files) to centralize mod
 - `src/factories/`: Factory Pattern implementations (includes `index.ts`).
 - `src/scenes/`: Responsive Controller Pattern.
   - Controllers (`MenuScene`, etc.) manage switching between specialized layout subclasses.
+  - `LoadingScene.ts`: Initial scene displaying asset loading progress.
   - Subdirectories (`menu/`, `race/`, `result/`, `selection/`) contain `Base` classes and layout views for `Desktop`, `MobileVertical`, and `MobileHorizontal`.
 - `src/ui/`: Reusable UI components (includes `index.ts`).
 - `public/assets/`: Static assets (characters, items, sound).
@@ -44,6 +45,7 @@ Major directories use barrel files to simplify imports (e.g., `import { Racer } 
 
 - **Nature-Themed Aesthetic:** Dirt racetrack with grass edges and animated pixel-art trees.
 - **Farming-Sim UI:** Story of Seasons–inspired podium leaderboard and wooden buttons.
+- **Loading Progress:** Real-time visual feedback while large assets (characters, music) are loading.
 - **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations without progress loss.
 - **Comeback Engine:** Continuous rank-based multipliers keep races competitive through the finish.
 
