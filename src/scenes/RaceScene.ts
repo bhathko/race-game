@@ -8,6 +8,7 @@ import {
   TilingSprite,
 } from "pixi.js";
 import { sound } from "@pixi/sound";
+import type { IMediaInstance } from "@pixi/sound";
 import { Racer } from "../entities/Racer";
 import { createRacers } from "../factories/RacerFactory";
 import {
@@ -82,6 +83,11 @@ export class RaceScene extends Container implements Scene {
   private leaderboardUpdateTimer: number = 0;
   private readonly LEADERBOARD_THROTTLE: number = 30; // frames
   private sortedRacersCache: Racer[] = [];
+
+  // Music volume management
+  private musicInstance: IMediaInstance | null = null;
+  private targetMusicVolume: number = 0;
+  private currentMusicVolume: number = 0;
 
   constructor(
     playerNames: string[],
@@ -519,6 +525,25 @@ export class RaceScene extends Container implements Scene {
   }
 
   update(delta: number) {
+    // Handle background music volume transitions
+    if (this.musicInstance) {
+      if (this.currentMusicVolume !== this.targetMusicVolume) {
+        const step = delta * 0.015; // Fade speed
+        if (this.currentMusicVolume < this.targetMusicVolume) {
+          this.currentMusicVolume = Math.min(this.targetMusicVolume, this.currentMusicVolume + step);
+        } else {
+          this.currentMusicVolume = Math.max(this.targetMusicVolume, this.currentMusicVolume - step);
+        }
+        this.musicInstance.volume = this.currentMusicVolume;
+        
+        // Fully stop if fading out and reached 0
+        if (this.raceEnded && this.currentMusicVolume <= 0) {
+          this.musicInstance.stop();
+          this.musicInstance = null;
+        }
+      }
+    }
+
     if (this.raceEnded) return;
 
     if (!this.entranceFinished) {
@@ -540,8 +565,10 @@ export class RaceScene extends Container implements Scene {
       if (this.countdownTimer <= 0) {
         this.raceStarted = true;
         
-        // Start background music
-        sound.play("sound", { loop: true });
+        // Start background music with a fade-in
+        this.musicInstance = sound.play("sound", { loop: true, volume: 0 });
+        this.targetMusicVolume = 1;
+        this.currentMusicVolume = 0;
 
         if (this.countdownText) {
           this.countdownText.text = "GO!";
@@ -716,8 +743,8 @@ export class RaceScene extends Container implements Scene {
   private endRace() {
     this.raceEnded = true;
     
-    // Stop background music
-    sound.stop("sound");
+    // Start music fade-out
+    this.targetMusicVolume = 0;
 
     setTimeout(() => {
       this.onFinished(this.finishedRacers);
