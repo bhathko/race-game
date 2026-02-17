@@ -121,7 +121,7 @@ export class MenuScene extends Container {
     const centerX = width / 2;
 
     // Draw solid background
-    this.bg.clear().rect(0, 0, width, height).fill(PALETTE.GRASS_LIGHT);
+    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
     this.title.x = centerX;
     this.title.y = height * 0.15;

@@ -98,7 +98,7 @@ export class Racer extends Container {
 
     const barBg = new Graphics();
     barBg.rect(-RACER.WIDTH / 2, 5, RACER.WIDTH, 5);
-    barBg.fill(COLORS.STAMINA_BG);
+    barBg.fill({ color: COLORS.STAMINA_BG });
     this.addChild(barBg);
 
     this.staminaBar = new Graphics();
@@ -152,7 +152,7 @@ export class Racer extends Container {
     const width = (this.stamina / this.maxStamina) * RACER.WIDTH;
     const color = this.isTired ? COLORS.STAMINA_TIRED : COLORS.STAMINA_GOOD;
     this.staminaBar.rect(-RACER.WIDTH / 2, 5, width, 5);
-    this.staminaBar.fill(color);
+    this.staminaBar.fill({ color });
   }
 
   private setAnimation(key: keyof RacerAnimations) {

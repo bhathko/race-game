@@ -110,7 +110,7 @@ export class CharacterSelectionScene extends Container implements Scene {
       item.cursor = "pointer";
 
       const bg = new Graphics();
-      bg.roundRect(-50, -50, 100, 100, 10).fill(PALETTE.BLACK, 0.3).stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
+      bg.roundRect(-50, -50, 100, 100, 10).fill({ color: PALETTE.BLACK, alpha: 0.3 }).stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
       item.addChild(bg);
 
       const sprite = new AnimatedSprite(anims.idle);
@@ -164,7 +164,7 @@ export class CharacterSelectionScene extends Container implements Scene {
       const strokeWidth = isSelected ? 4 : 2;
 
       bg.roundRect(-50, -50, 100, 100, 12)
-        .fill(bgColor, 0.9)
+        .fill({ color: bgColor, alpha: 0.9 })
         .stroke({ 
           color: strokeColor, 
           width: strokeWidth,
@@ -200,7 +200,7 @@ export class CharacterSelectionScene extends Container implements Scene {
         // Character background card in lineup
         const card = new Graphics();
         card.roundRect(-RACER.WIDTH / 2 - 5, -RACER.HEIGHT - 5, RACER.WIDTH + 10, RACER.HEIGHT + 15, 8)
-          .fill(COLORS.SIDEBAR_BG, 0.9)
+          .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.9 })
           .stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
         racerContainer.addChild(card);
 
@@ -215,7 +215,7 @@ export class CharacterSelectionScene extends Container implements Scene {
         // Placeholder "wooden box"
         const box = new Graphics();
         box.roundRect(-RACER.WIDTH / 2, -RACER.HEIGHT, RACER.WIDTH, RACER.HEIGHT, 8)
-          .fill(PALETTE.WOOD_DARK, 0.6)
+          .fill({ color: PALETTE.WOOD_DARK, alpha: 0.6 })
           .stroke({ color: PALETTE.WOOD_PALE, width: 2, alpha: 0.5 });
         racerContainer.addChild(box);
         
@@ -268,7 +268,7 @@ export class CharacterSelectionScene extends Container implements Scene {
     const centerX = width / 2;
     
     // Draw solid background
-    this.bg.clear().rect(0, 0, width, height).fill(PALETTE.GRASS_LIGHT);
+    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
     this.title.x = centerX;
     this.title.y = height * 0.08;

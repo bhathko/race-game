@@ -137,7 +137,7 @@ export class RaceScene extends Container implements Scene {
       },
     });
     const title = new Text({ text: "RANKING", style: titleStyle });
-    title.name = "leaderboard-title";
+    title.label = "leaderboard-title";
     this.leaderboardContainer.addChild(title);
 
     // Grass Layers
@@ -259,7 +259,7 @@ export class RaceScene extends Container implements Scene {
     this.worldMask
       .clear()
       .rect(0, yOffset, this.gameViewW, this.gameViewH)
-      .fill(COLORS.MASK_FILL);
+      .fill({ color: COLORS.MASK_FILL });
 
     this.sidebarBg.clear();
     const woodColor = COLORS.SIDEBAR_WOOD;
@@ -268,11 +268,13 @@ export class RaceScene extends Container implements Scene {
     if (this.isPortrait) {
       this.sidebarBg
         .rect(0, availableH, width, height - availableH)
-        .fill(bgColor, 0.95);
+        .fill({ color: bgColor, alpha: 0.95 });
 
       // Wooden Texture Lines
       for (let y = availableH + 5; y < height; y += 10) {
-        this.sidebarBg.rect(0, y, width, 2).fill(woodColor, 0.3);
+        this.sidebarBg
+          .rect(0, y, width, 2)
+          .fill({ color: woodColor, alpha: 0.3 });
       }
 
       this.leaderboardContainer.x = 20;
@@ -280,18 +282,20 @@ export class RaceScene extends Container implements Scene {
     } else {
       this.sidebarBg
         .rect(this.gameViewW, 0, CANVAS.UI_WIDTH, height)
-        .fill(bgColor, 0.95);
+        .fill({ color: bgColor, alpha: 0.95 });
 
       // Wooden Texture Lines
       for (let x = this.gameViewW + 5; x < width; x += 15) {
-        this.sidebarBg.rect(x, 0, 2, height).fill(woodColor, 0.3);
+        this.sidebarBg
+          .rect(x, 0, 2, height)
+          .fill({ color: woodColor, alpha: 0.3 });
       }
 
       this.leaderboardContainer.x = this.gameViewW + 15;
       this.leaderboardContainer.y = 20;
     }
 
-    const title = this.leaderboardContainer.getChildByName("leaderboard-title");
+    const title = this.leaderboardContainer.getChildByLabel("leaderboard-title");
     if (title) {
       title.x = 0;
       title.y = 0;
@@ -323,14 +327,14 @@ export class RaceScene extends Container implements Scene {
       const container = new Container();
 
       const bg = new Graphics();
-      bg.name = "item-bg";
+      bg.label = "item-bg";
       container.addChild(bg);
 
       // Animal Icon
       const charKey = this.racerCharacters.get(racer) || "bear";
       const anims = this.characterAnimations.get(charKey)!;
       const icon = new AnimatedSprite(anims.idle);
-      icon.name = "item-icon";
+      icon.label = "item-icon";
       icon.anchor.set(0.5);
       icon.scale.set(1);
       icon.x = 25;
@@ -346,7 +350,7 @@ export class RaceScene extends Container implements Scene {
         stroke: { color: PALETTE.STR_BLACK, width: 3 },
       });
       const text = new Text({ text: racer.racerName, style });
-      text.name = "item-text";
+      text.label = "item-text";
       text.x = 50;
       text.y = 18;
       text.anchor.set(0, 0.5);
@@ -429,7 +433,7 @@ export class RaceScene extends Container implements Scene {
           startBlockSize,
           blockRadius,
         )
-        .fill(colorLight)
+        .fill({ color: colorLight })
         .roundRect(
           TRACK.START_LINE_X,
           y,
@@ -437,7 +441,7 @@ export class RaceScene extends Container implements Scene {
           startBlockSize,
           blockRadius,
         )
-        .fill(colorRed);
+        .fill({ color: colorRed });
     }
 
     // Large Solid Finish Line (16x16 checkered blocks) - Only on Dirt
@@ -453,7 +457,7 @@ export class RaceScene extends Container implements Scene {
         const color = (row + col) % 2 === 0 ? colorLight : colorDark;
         this.trackGraphics
           .roundRect(x, y, finishBlockSize, finishBlockSize, blockRadius)
-          .fill(color);
+          .fill({ color });
       }
     }
 
@@ -462,8 +466,8 @@ export class RaceScene extends Container implements Scene {
       .filter(
         (c) =>
           (c instanceof Text &&
-            (c.text.includes("m") || c.name === "start-label")) ||
-          (c instanceof AnimatedSprite && c.name === "distance-tree"),
+            (c.text.includes("m") || c.label === "start-label")) ||
+          (c instanceof AnimatedSprite && c.label === "distance-tree"),
       )
       .forEach((c) => this.world.removeChild(c));
 
@@ -473,7 +477,7 @@ export class RaceScene extends Container implements Scene {
 
       // Bottom Tree (On Grass)
       const treeBottom = new AnimatedSprite(this.treeAnimation);
-      treeBottom.name = "distance-tree";
+      treeBottom.label = "distance-tree";
       treeBottom.anchor.set(0.5, 1);
       treeBottom.width = ITEMS.tree.width;
       treeBottom.height = ITEMS.tree.height;
@@ -485,7 +489,7 @@ export class RaceScene extends Container implements Scene {
 
       // Top Tree (On Grass)
       const treeTop = new AnimatedSprite(this.treeAnimation);
-      treeTop.name = "distance-tree";
+      treeTop.label = "distance-tree";
       treeTop.anchor.set(0.5, 0);
       treeTop.width = ITEMS.tree.width;
       treeTop.height = ITEMS.tree.height;
@@ -718,8 +722,8 @@ export class RaceScene extends Container implements Scene {
         container.x += (targetX - container.x) * smoothing;
         container.y += (targetY - container.y) * smoothing;
 
-        const bg = container.getChildByName("item-bg") as Graphics;
-        const text = container.getChildByName("item-text") as Text;
+        const bg = container.getChildByLabel("item-bg") as Graphics;
+        const text = container.getChildByLabel("item-text") as Text;
 
         if (bg) {
           const w = this.isPortrait
@@ -735,7 +739,7 @@ export class RaceScene extends Container implements Scene {
           bg.clear();
           // Main card body (semi-transparent dark)
           bg.roundRect(0, 0, w, h, 4)
-            .fill(PALETTE.BLACK, 0.5)
+            .fill({ color: PALETTE.BLACK, alpha: 0.5 })
             .stroke({ color: borderColor, width: index < 3 ? 3 : 1 });
         }
 

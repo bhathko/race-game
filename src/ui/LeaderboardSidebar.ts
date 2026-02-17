@@ -228,7 +228,7 @@ export class LeaderboardSidebar extends Container {
         .fill({ color: PALETTE.BLACK, alpha: 0.25 });
 
       // 2. Main Body (Wooden Planks)
-      pedestal.roundRect(px, -h, pw, h, 6).fill(bodyColor);
+      pedestal.roundRect(px, -h, pw, h, 6).fill({ color: bodyColor });
 
       // Plank lines (Vertical)
       const plankCount = 3;

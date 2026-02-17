@@ -79,7 +79,7 @@ export class ResultScene extends Container {
     const isSmall = width < 600 || height < 500;
 
     // Draw solid background
-    this.bg.clear().rect(0, 0, width, height).fill(PALETTE.GRASS_LIGHT);
+    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
     this.winnerText.x = centerX;
     this.winnerText.y = height * 0.12;

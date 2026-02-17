@@ -31,14 +31,20 @@ export function createWoodenButton(opts: WoodenButtonOptions): Container {
   // ── background ──────────────────────────────────────────────────────────
   const bg = new Graphics();
   // Drop shadow
-  bg.roundRect(-width / 2, -h / 2 + 6, width, h, 8).fill(PALETTE.BLACK, 0.4);
+  bg.roundRect(-width / 2, -h / 2 + 6, width, h, 8).fill({
+    color: PALETTE.BLACK,
+    alpha: 0.4,
+  });
   // Main body
   bg.roundRect(-width / 2, -h / 2, width, h, 8)
-    .fill(color)
+    .fill({ color })
     .stroke({ color: PALETTE.WOOD_DARK, width: 4 });
   // Wood grain lines
   for (let i = -h / 2 + 10; i < h / 2; i += 15) {
-    bg.rect(-width / 2 + 10, i, width - 20, 2).fill(PALETTE.BLACK, 0.1);
+    bg.rect(-width / 2 + 10, i, width - 20, 2).fill({
+      color: PALETTE.BLACK,
+      alpha: 0.1,
+    });
   }
   btn.addChild(bg);
 
