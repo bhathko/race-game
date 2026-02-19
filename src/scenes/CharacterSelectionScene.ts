@@ -25,7 +25,8 @@ export class CharacterSelectionScene extends Container implements Scene {
     distance: number,
     characterAnimations: Map<string, RacerAnimations>,
     onStartRace: (characterKeys: string[], distance: number) => void,
-    onBack: () => void
+    onBack: () => void,
+    isFunnyMode?: boolean,
   ) {
     super();
     this.context = {
@@ -33,7 +34,8 @@ export class CharacterSelectionScene extends Container implements Scene {
       distance,
       characterAnimations,
       onStartRace,
-      onBack
+      onBack,
+      isFunnyMode,
     };
   }
 

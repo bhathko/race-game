@@ -9,8 +9,9 @@ import {
 } from "pixi.js";
 import { sound } from "@pixi/sound";
 import type { IMediaInstance } from "@pixi/sound";
-import { Racer } from "../../entities";
+import { Racer, Hole } from "../../entities";
 import { createRacers } from "../../factories";
+import { createWoodenButton } from "../../ui";
 import {
   CANVAS,
   RACER,
@@ -102,6 +103,16 @@ export abstract class BaseRaceScene extends Container implements Scene {
   protected targetMusicVolume: number = 0;
   protected currentMusicVolume: number = 0;
 
+  // Funny Mode State
+  protected isFunnyMode: boolean = false;
+  protected setupPhase: boolean = false;
+  protected currentSetupPlayerIndex: number = 0;
+  protected holes: import("../../entities").Hole[] = []; // Use import type or ensure Hole is imported
+  protected setupInstructionText: Text | null = null;
+  protected startMatchBtn: Container | null = null;
+  protected laneLabels: Container[] = [];
+  protected previewHole: Hole | null = null;
+
   constructor(ctx: RaceContext, existingState?: RaceState) {
     super();
     this.onFinished = ctx.onFinished;
@@ -110,6 +121,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.treeAnimation = ctx.treeAnimation;
     this.groundTextures = ctx.groundTextures;
     this.grassTextures = ctx.grassTextures;
+    this.isFunnyMode = !!ctx.isFunnyMode;
 
     this.worldMask = new Graphics();
     this.addChild(this.worldMask);
@@ -179,6 +191,11 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.initLeaderboardUI();
     this.initCountdownUI();
     this.initDistanceUI();
+
+    if (this.isFunnyMode && !existingState) {
+        // We will trigger setup in update() after entrance
+        if (this.countdownText) this.countdownText.visible = false; 
+    }
   }
 
   private initNewRace(playerNames: string[], selectedKeys?: string[]) {
@@ -342,6 +359,259 @@ export abstract class BaseRaceScene extends Container implements Scene {
     }
   }
 
+  protected skipBtn: Container | null = null;
+
+  protected setupFunnyModeInteraction() {
+    this.setupPhase = true;
+    this.currentSetupPlayerIndex = 0;
+    
+    // Create UI overlay for setup
+    const style = new TextStyle({
+      fill: PALETTE.STR_WHITE,
+      fontSize: 36,
+      fontWeight: "900",
+      stroke: { color: PALETTE.STR_BLACK, width: 6 },
+      dropShadow: { alpha: 0.5, blur: 4, distance: 4 }
+    });
+    this.setupInstructionText = new Text({ text: "", style });
+    this.setupInstructionText.anchor.set(0.5);
+    this.setupInstructionText.x = this.gameViewW / 2;
+    this.setupInstructionText.y = 60;
+    this.ui.addChild(this.setupInstructionText);
+
+    this.updateSetupInstruction();
+
+    // Enable click on track
+    this.world.eventMode = "static";
+    this.world.cursor = "crosshair";
+    this.world.on("pointerdown", (e) => this.handleSetupClick(e));
+
+    // Create Skip Button
+    this.skipBtn = createWoodenButton({
+      label: "SKIP",
+      color: COLORS.BUTTON_NEUTRAL,
+      onClick: () => this.handleSkipPlacement(),
+      width: 140,
+      height: 50,
+      fontSize: 20
+    });
+    this.skipBtn.x = this.gameViewW / 2;
+    this.skipBtn.y = 130;
+    this.ui.addChild(this.skipBtn);
+
+    // Create Start Match Button (Hidden initially)
+    this.startMatchBtn = createWoodenButton({
+      label: "START MATCH",
+      color: COLORS.BUTTON_SUCCESS,
+      onClick: () => this.finishSetupPhase(),
+      width: 280,
+      height: 70,
+      fontSize: 28
+    });
+    this.startMatchBtn.visible = false;
+    this.ui.addChild(this.startMatchBtn);
+
+    this.showLaneLabels();
+
+    // Create Preview Hole
+    this.previewHole = new Hole();
+    this.previewHole.alpha = 0.5;
+    this.previewHole.visible = false;
+    this.world.addChild(this.previewHole);
+
+    this.world.on("pointermove", (e) => this.handleSetupHover(e));
+  }
+
+  protected handleSkipPlacement() {
+    if (!this.setupPhase || this.currentSetupPlayerIndex >= this.racers.length) return;
+    this.currentSetupPlayerIndex++;
+    this.updateSetupInstruction();
+
+    if (this.currentSetupPlayerIndex >= this.racers.length) {
+      if (this.startMatchBtn) {
+        this.startMatchBtn.visible = true;
+        this.startMatchBtn.x = this.gameViewW / 2;
+        this.startMatchBtn.y = this.gameViewH / 2;
+      }
+      if (this.skipBtn) this.skipBtn.visible = false;
+      if (this.previewHole) this.previewHole.visible = false;
+    }
+  }
+
+  protected getNearestLaneY(localY: number): number | null {
+    const unit = ITEMS.ground.unit;
+    const grassStripH = unit * 4;
+    const dirtH = this.gameViewH - grassStripH * 2;
+    const trackHeight = dirtH / this.racers.length;
+
+    // Check if within track bounds (with some buffer)
+    if (localY < grassStripH || localY > this.gameViewH - grassStripH) return null;
+
+    // Find nearest lane center
+    let minDist = Infinity;
+    let bestY = -1;
+
+    for (let i = 0; i < this.racers.length; i++) {
+        const laneCenterY = grassStripH + (i + 0.5) * trackHeight;
+        const dist = Math.abs(localY - laneCenterY);
+        if (dist < minDist) {
+            minDist = dist;
+            bestY = laneCenterY;
+        }
+    }
+    
+    return bestY;
+  }
+
+
+  /** Get the actual racer Y for a given lane index */
+  protected getLaneRacerY(laneIndex: number): number {
+    const unit = ITEMS.ground.unit;
+    const grassStripH = unit * 4;
+    const dirtH = this.gameViewH - grassStripH * 2;
+    const trackHeight = dirtH / this.racers.length;
+    return grassStripH + (laneIndex + 0.5) * trackHeight + RACER.HEIGHT / 2;
+  }
+
+  protected getNearestLaneIndex(localY: number): number | null {
+    const unit = ITEMS.ground.unit;
+    const grassStripH = unit * 4;
+    if (localY < grassStripH || localY > this.gameViewH - grassStripH) return null;
+
+    const dirtH = this.gameViewH - grassStripH * 2;
+    const trackHeight = dirtH / this.racers.length;
+    let minDist = Infinity;
+    let bestIdx = -1;
+    for (let i = 0; i < this.racers.length; i++) {
+      const laneCenterY = grassStripH + (i + 0.5) * trackHeight;
+      const dist = Math.abs(localY - laneCenterY);
+      if (dist < minDist) { minDist = dist; bestIdx = i; }
+    }
+    return bestIdx;
+  }
+
+  protected handleSetupHover(e: any) {
+    if (!this.setupPhase || !this.previewHole) return;
+
+    const localPos = this.world.toLocal(e.global);
+    const laneIdx = this.getNearestLaneIndex(localPos.y);
+
+    if (laneIdx !== null && localPos.x >= TRACK.START_LINE_X + 100 && localPos.x <= this.finishLineX - 50) {
+        const racerY = this.getLaneRacerY(laneIdx);
+        this.previewHole.visible = true;
+        this.previewHole.x = localPos.x;
+        this.previewHole.y = racerY;
+        this.world.setChildIndex(this.previewHole, this.world.children.length - 1);
+    } else {
+        this.previewHole.visible = false;
+    }
+  }
+
+  protected showLaneLabels() {
+    this.racers.forEach((racer) => {
+      const label = new Container();
+      
+      const bg = new Graphics();
+      bg.roundRect(0, 0, 140, 40, 20).fill({ color: PALETTE.BLACK, alpha: 0.6 });
+      label.addChild(bg);
+
+      const text = new Text({
+        text: racer.racerName,
+        style: new TextStyle({
+          fill: PALETTE.STR_WHITE,
+          fontSize: 18,
+          fontWeight: "bold",
+        })
+      });
+      text.anchor.set(0.5);
+      text.x = 70;
+      text.y = 20;
+      label.addChild(text);
+
+      // Position relative to racer
+      label.x = TRACK.START_LINE_X - 160; 
+      label.y = racer.y - 20;
+      
+      this.world.addChild(label);
+      this.laneLabels.push(label);
+    });
+  }
+
+  protected updateSetupInstruction() {
+    if (!this.setupInstructionText) return;
+    
+    if (this.currentSetupPlayerIndex < this.racers.length) {
+      const racer = this.racers[this.currentSetupPlayerIndex];
+      this.setupInstructionText.text = `${racer.racerName}: Place a Trap!`;
+      this.setupInstructionText.style.fill = PALETTE.STR_WHITE;
+    } else {
+      this.setupInstructionText.text = "All Traps Placed!";
+      this.setupInstructionText.style.fill = PALETTE.STR_SUCCESS;
+    }
+  }
+
+  protected handleSetupClick(e: any) {
+    if (!this.setupPhase || this.currentSetupPlayerIndex >= this.racers.length) return;
+
+    const localPos = this.world.toLocal(e.global);
+    
+    // Bounds check
+    if (localPos.x < TRACK.START_LINE_X + 100 || localPos.x > this.finishLineX - 50) return;
+    
+    const laneIdx = this.getNearestLaneIndex(localPos.y);
+    if (laneIdx === null) return;
+
+    // Place hole at the racer's actual Y position (includes RACER.HEIGHT offset)
+    const racerY = this.getLaneRacerY(laneIdx);
+
+    const hole = new Hole();
+    hole.x = localPos.x;
+    hole.y = racerY;
+    this.world.addChild(hole);
+    this.world.setChildIndex(hole, this.world.getChildIndex(this.trackGraphics) + 1);
+    this.holes.push(hole);
+
+    this.currentSetupPlayerIndex++;
+    this.updateSetupInstruction();
+
+    if (this.currentSetupPlayerIndex >= this.racers.length) {
+      if (this.startMatchBtn) {
+        this.startMatchBtn.visible = true;
+        this.startMatchBtn.x = this.gameViewW / 2;
+        this.startMatchBtn.y = this.gameViewH / 2;
+      }
+      if (this.skipBtn) this.skipBtn.visible = false;
+      if (this.previewHole) this.previewHole.visible = false;
+    }
+  }
+
+  protected finishSetupPhase() {
+    this.setupPhase = false;
+    this.world.eventMode = "none";
+    this.world.cursor = "default";
+    
+    if (this.setupInstructionText) this.setupInstructionText.visible = false;
+    if (this.startMatchBtn) this.startMatchBtn.visible = false;
+    if (this.skipBtn) { this.skipBtn.destroy(); this.skipBtn = null; }
+    
+    this.laneLabels.forEach(l => l.destroy());
+    this.laneLabels = [];
+
+    if (this.previewHole) {
+        this.previewHole.destroy();
+        this.previewHole = null;
+    }
+    this.world.off("pointermove");
+
+    // Start Countdown
+    this.countdownTimer = VISUALS.COUNTDOWN_DURATION;
+    if (this.countdownText) {
+      this.countdownText.visible = true;
+      this.countdownText.text = Math.ceil(this.countdownTimer).toString();
+    }
+    this.raceStarted = false;
+  }
+
   protected repositionRacers() {
     const unit = ITEMS.ground.unit;
     const grassStripH = unit * 4;
@@ -370,6 +640,10 @@ export abstract class BaseRaceScene extends Container implements Scene {
       }
     }
 
+    if (this.setupPhase) {
+      return; 
+    }
+
     if (this.raceEnded) return;
 
     if (!this.entranceFinished) {
@@ -377,9 +651,20 @@ export abstract class BaseRaceScene extends Container implements Scene {
       this.racers.forEach(r => { if (!r.walkEntrance(TRACK.START_LINE_X, delta)) allAtStart = false; });
       if (allAtStart) {
         this.entranceFinished = true;
-        if (this.countdownText) this.countdownText.visible = true;
+        if (this.isFunnyMode && !this.setupPhase && this.currentSetupPlayerIndex === 0 && !this.raceStarted) {
+          this.setupFunnyModeInteraction();
+          return;
+        }
+        if (!this.setupPhase && this.countdownText && !this.raceStarted) {
+          this.countdownText.visible = true;
+        }
       }
       return;
+    }
+    
+    // Funny Mode Setup Phase
+    if (this.setupPhase) {
+        return; // Pause game loop
     }
 
     if (!this.raceStarted) {
@@ -407,6 +692,24 @@ export abstract class BaseRaceScene extends Container implements Scene {
 
     this.elapsedTime += delta;
     const activeRacers = this.racers.filter(r => !r.isFinished());
+    
+    // Check Hole Collisions — only check X proximity since holes are placed at racer Y
+    if (this.isFunnyMode && this.holes.length > 0) {
+        for (let i = this.holes.length - 1; i >= 0; i--) {
+            const hole = this.holes[i];
+            for (const racer of activeRacers) {
+                const dx = Math.abs(racer.x - hole.x);
+                const dy = Math.abs(racer.y - hole.y);
+                if (dx < 50 && dy < RACER.HEIGHT) {
+                    racer.applyHoleEffect();
+                    this.world.removeChild(hole);
+                    this.holes.splice(i, 1);
+                    break;
+                }
+            }
+        }
+    }
+
     const ranked = [...activeRacers].sort((a, b) => b.x - a.x);
     const rankMap = new Map<Racer, number>();
     ranked.forEach((r, i) => rankMap.set(r, i + 1));

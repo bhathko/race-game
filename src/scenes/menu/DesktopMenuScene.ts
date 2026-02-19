@@ -15,8 +15,8 @@ export class DesktopMenuScene extends BaseMenuScene {
     this.title.y = height * 0.15;
     this.title.style.fontSize = 64;
 
-    const labelY1 = height * 0.3;
-    const valueY1 = height * 0.42;
+    const labelY1 = height * 0.28;
+    const valueY1 = height * 0.38;
     this.countLabel.x = centerX;
     this.countLabel.y = labelY1;
     this.countValue.x = centerX;
@@ -24,8 +24,8 @@ export class DesktopMenuScene extends BaseMenuScene {
     this.countStepper.x = centerX;
     this.countStepper.y = valueY1;
 
-    const labelY2 = height * 0.55;
-    const valueY2 = height * 0.67;
+    const labelY2 = height * 0.50;
+    const valueY2 = height * 0.60;
     this.distLabel.x = centerX;
     this.distLabel.y = labelY2;
     this.distValue.x = centerX;
@@ -33,8 +33,14 @@ export class DesktopMenuScene extends BaseMenuScene {
     this.distStepper.x = centerX;
     this.distStepper.y = valueY2;
 
+    this.funnyBtn.x = centerX;
+    this.funnyBtn.y = height * 0.73;
+
     this.startBtn.x = centerX;
-    this.startBtn.y = height * 0.82;
+    this.startBtn.y = height * 0.86;
     this.startBtn.scale.set(1.0);
+
+    this.versionText.x = width - 20;
+    this.versionText.y = height - 20;
   }
 }

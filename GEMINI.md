@@ -25,6 +25,7 @@ The project utilizes the **Barrel Pattern** (`index.ts` files) to centralize mod
 ### Responsive Controller Pattern (`src/scenes/`)
 
 Scenes are implemented as controllers that manage specialized layout views:
+
 - **Dependency Grouping**: Constructors use **Scene Context** objects (e.g., `SelectionContext`) to group dependencies.
 - **State Preservation**: Controllers extract and inject state (e.g., `RaceState`) during orientation changes.
 - **Orientation Stability**: Managed by the `Game` class using `requestAnimationFrame` to ensure settled dimensions before layout updates.
@@ -48,6 +49,7 @@ Major directories use barrel files to simplify imports (e.g., `import { Racer } 
 - **Loading Progress:** Real-time visual feedback while large assets (characters, music) are loading.
 - **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations without progress loss.
 - **Comeback Engine:** Continuous rank-based multipliers keep races competitive through the finish.
+- **Funny Mode:** Optional trap-placement phase where players place Holes on the track before the race. Racers that hit a Hole are stunned for ~1 second. Supports 2–8 players with skip option.
 
 ## Building and Running
 

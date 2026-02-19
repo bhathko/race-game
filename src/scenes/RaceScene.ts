@@ -27,6 +27,7 @@ export class RaceScene extends Container implements Scene {
     grassTextures: GrassTextures,
     onFinished: (results: Racer[]) => void,
     selectedKeys?: string[],
+    isFunnyMode?: boolean,
   ) {
     super();
     this.context = {
@@ -38,6 +39,7 @@ export class RaceScene extends Container implements Scene {
       grassTextures,
       onFinished,
       selectedKeys,
+      isFunnyMode,
     };
   }
 

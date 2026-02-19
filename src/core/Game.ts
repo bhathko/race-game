@@ -152,13 +152,13 @@ export class Game {
 
   showMenuScene() {
     this.setScene(
-      new MenuScene((playerCount, distance) => {
-        this.showCharacterSelectionScene(playerCount, distance);
+      new MenuScene((playerCount, distance, isFunnyMode) => {
+        this.showCharacterSelectionScene(playerCount, distance, isFunnyMode);
       }),
     );
   }
 
-  showCharacterSelectionScene(playerCount: number, distance: number) {
+  showCharacterSelectionScene(playerCount: number, distance: number, isFunnyMode?: boolean) {
     this.setScene(
       new CharacterSelectionScene(
         playerCount,
@@ -169,9 +169,10 @@ export class Game {
             const char = CHARACTERS[key as keyof typeof CHARACTERS];
             return `The ${char.name}`;
           });
-          this.showRaceScene(names, dist, selectedKeys);
+          this.showRaceScene(names, dist, selectedKeys, isFunnyMode);
         },
         () => this.showMenuScene(),
+        isFunnyMode // Pass to constructor
       ),
     );
   }
@@ -180,6 +181,7 @@ export class Game {
     playerNames: string[],
     distance: number,
     selectedKeys?: string[],
+    isFunnyMode?: boolean,
   ) {
     if (!this.groundTextures || !this.grassTextures) return;
 
@@ -193,6 +195,7 @@ export class Game {
         this.grassTextures,
         (results) => this.showResultScene(results),
         selectedKeys,
+        isFunnyMode,
       ),
     );
   }

@@ -15,13 +15,17 @@ export class MenuScene extends Container implements Scene {
   private currentLayout: BaseMenuScene | null = null;
   private currentMode: LayoutMode | null = null;
 
-  // Track state to preserve across layout switches
+  // State to preserve when switching layouts
   private selectedCount: number = 2;
   private selectedDistance: number = 50;
+  private isFunnyMode: boolean = false;
 
-  constructor(onStartRace: (playerCount: number, distance: number) => void) {
+  constructor(
+    onStartRace: (playerCount: number, distance: number, isFunnyMode?: boolean) => void,
+    initialSettings?: { count: number; distance: number },
+  ) {
     super();
-    this.context = { onStartRace };
+    this.context = { onStartRace, initialSettings };
   }
 
   public resize(width: number, height: number): void {
@@ -46,12 +50,15 @@ export class MenuScene extends Container implements Scene {
     if (this.currentLayout) {
       this.selectedCount = this.currentLayout.selectedCount;
       this.selectedDistance = this.currentLayout.selectedDistance;
+      this.isFunnyMode = this.currentLayout.isFunnyMode;
       this.removeChild(this.currentLayout);
       this.currentLayout.destroy({ children: true });
     }
 
     this.currentMode = mode;
     this.context.initialSettings = { count: this.selectedCount, distance: this.selectedDistance };
+    // We need to pass isFunnyMode to the new layout somehow? 
+    // BaseMenuScene defaults to false. We might need to set it after creation.
 
     switch (mode) {
       case "desktop":
@@ -66,6 +73,9 @@ export class MenuScene extends Container implements Scene {
     }
 
     if (this.currentLayout) {
+      this.currentLayout.selectedCount = this.selectedCount;
+      this.currentLayout.selectedDistance = this.selectedDistance;
+      this.currentLayout.isFunnyMode = this.isFunnyMode;
       this.addChild(this.currentLayout);
       this.currentLayout.resize(width, height);
     }

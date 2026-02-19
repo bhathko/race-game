@@ -49,6 +49,10 @@ export class Racer extends Container {
 
   // Drama — stumble
   private stumbleTimer: number = 0;
+  
+  // Funny Mode — Hole Effect
+  private holeStunTimer: number = 0;
+  private holeImmunityTimer: number = 0;
 
   // Second Wind — burst for deeply trailing racers
   private trailingFrames: number = 0;
@@ -202,6 +206,14 @@ export class Racer extends Container {
     }
 
     this.elapsedFrames += delta;
+
+    if (this.holeImmunityTimer > 0) this.holeImmunityTimer -= delta;
+
+    if (this.holeStunTimer > 0) {
+      this.holeStunTimer -= delta;
+      this.setAnimation("idle");
+      return; // Skip movement logic while stunned
+    }
 
     const { BALANCE, PHYSICS, DRAMA } = GAMEPLAY;
 
@@ -428,5 +440,20 @@ export class Racer extends Container {
 
   isFinished() {
     return this.finished;
+  }
+
+  /**
+   * Applies the "Hole" effect: Full stop and temporary stun.
+   */
+  public applyHoleEffect() {
+    if (this.holeImmunityTimer > 0 || this.finished) return;
+
+    this.currentSpeed = 0;
+    this.targetSpeed = 0;
+    this.holeStunTimer = 60; // ~1 second stun at 60fps
+    this.holeImmunityTimer = 180; // ~3 seconds immunity to avoid double hits
+    
+    // Visual feedback could go here (e.g. sweat animation)
+    this.setAnimation("idle");
   }
 }

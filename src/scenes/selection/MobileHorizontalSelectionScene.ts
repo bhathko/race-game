@@ -41,16 +41,23 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
     const spacingY = cardSize + 10;
     const cols = 5;
     
-    const gridWidth = (Math.min(cols, this.selectionSprites.size) - 1) * spacingX;
+    // const gridWidth = (Math.min(cols, this.selectionSprites.size) - 1) * spacingX;
 
     let i = 0;
-    this.selectionSprites.forEach((item) => {
-      const row = Math.floor(i / cols);
-      const col = i % cols;
-      item.x = col * spacingX - gridWidth / 2;
-      item.y = row * spacingY;
-      i++;
-    });
+    const totalItems = this.selectionSprites.size;
+    const itemsArray = Array.from(this.selectionSprites.values());
+    
+    for (let row = 0; i < totalItems; row++) {
+      const itemsInRow = Math.min(cols, totalItems - row * cols);
+      const rowWidth = (itemsInRow - 1) * spacingX;
+      
+      for (let col = 0; col < itemsInRow; col++) {
+        const item = itemsArray[i];
+        item.x = col * spacingX - rowWidth / 2;
+        item.y = row * spacingY;
+        i++;
+      }
+    }
 
     this.gridContainer.x = centerX;
     this.gridContainer.y = 75; // More breathing room from the title

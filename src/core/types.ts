@@ -28,6 +28,7 @@ export interface RaceContext {
   grassTextures: GrassTextures;
   onFinished: (results: Racer[]) => void;
   selectedKeys?: string[];
+  isFunnyMode?: boolean;
 }
 
 /** Dependency context for Character Selection layouts. */
@@ -37,11 +38,12 @@ export interface SelectionContext {
   characterAnimations: Map<string, RacerAnimations>;
   onStartRace: (characterKeys: string[], distance: number) => void;
   onBack: () => void;
+  isFunnyMode?: boolean;
 }
 
 /** Dependency context for Menu layouts. */
 export interface MenuContext {
-  onStartRace: (playerCount: number, distance: number) => void;
+  onStartRace: (playerCount: number, distance: number, isFunnyMode?: boolean) => void;
   initialSettings?: { count: number; distance: number };
 }
 
