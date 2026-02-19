@@ -106,10 +106,13 @@ export abstract class BaseRaceScene extends Container implements Scene {
   // Funny Mode State
   protected isFunnyMode: boolean = false;
   protected setupPhase: boolean = false;
+  protected setupFinished: boolean = false;
   protected currentSetupPlayerIndex: number = 0;
-  protected holes: import("../../entities").Hole[] = []; // Use import type or ensure Hole is imported
+  protected holes: Hole[] = [];
   protected setupInstructionText: Text | null = null;
   protected startMatchBtn: Container | null = null;
+  protected scrollLeftBtn: Container | null = null;
+  protected scrollRightBtn: Container | null = null;
   protected laneLabels: Container[] = [];
   protected previewHole: Hole | null = null;
 
@@ -182,6 +185,8 @@ export abstract class BaseRaceScene extends Container implements Scene {
       this.currentMusicVolume = existingState.currentMusicVolume;
       this.targetMusicVolume = existingState.targetMusicVolume;
 
+      this.setupFinished = true;
+
       // Re-add racers to new world
       this.racers.forEach(r => this.world.addChild(r));
     } else {
@@ -193,22 +198,33 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.initDistanceUI();
 
     if (this.isFunnyMode && !existingState) {
-        // We will trigger setup in update() after entrance
         if (this.countdownText) this.countdownText.visible = false; 
     }
   }
 
   private initNewRace(playerNames: string[], selectedKeys?: string[]) {
     const results = createRacers(playerNames, this.characterAnimations, selectedKeys);
-    for (let i = results.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [results[i], results[j]] = [results[j], results[i]];
-    }
+    
+    // Maintain selection order in array
     results.forEach(({ racer, characterKey }) => {
       this.racers.push(racer);
       this.racerCharacters.set(racer, characterKey);
-      this.world.addChild(racer);
+      
+      if (!this.isFunnyMode) {
+        // Lane assignment will happen in repositionRacers
+        this.world.addChild(racer);
+      }
     });
+
+    if (!this.isFunnyMode) {
+        // Randomly assign lanes initially for non-funny mode
+        const laneIndices = this.racers.map((_, i) => i);
+        for (let i = laneIndices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [laneIndices[i], laneIndices[j]] = [laneIndices[j], laneIndices[i]];
+        }
+        this.racers.forEach((r, i) => r.laneIndex = laneIndices[i]);
+    }
   }
 
   public getState(): RaceState {
@@ -342,6 +358,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.world.children.filter(c => (c instanceof Text && (c.text.includes("m") || c.label === "start-label")) || (c instanceof AnimatedSprite && c.label === "distance-tree"))
       .forEach(c => this.world.removeChild(c));
 
+    const totalDistPx = this.finishLineX - TRACK.START_LINE_X;
     const unitWidth = Math.max(this.gameViewW, CANVAS.MIN_UNIT_WIDTH);
     for (let m = 10; m <= this.distance; m += 10) {
       const x = TRACK.START_LINE_X + (m / 50) * unitWidth;
@@ -357,6 +374,29 @@ export abstract class BaseRaceScene extends Container implements Scene {
         this.world.addChild(tree);
       });
     }
+
+    // Place Obstacles (Holes)
+    if (!this.isFunnyMode) {
+      this.holes.forEach(h => this.world.removeChild(h));
+      this.holes = [];
+      for (let i = 0; i < count; i++) {
+        const laneY = grassStripH + (i + 0.5) * trackHeight;
+        const x = TRACK.START_LINE_X + (0.2 + Math.random() * 0.6) * totalDistPx;
+        const hole = new Hole();
+        hole.x = x;
+        hole.y = laneY;
+        hole.laneIndex = i;
+        this.holes.push(hole);
+        this.world.addChild(hole);
+        this.world.setChildIndex(hole, this.world.getChildIndex(this.trackGraphics) + 1);
+      }
+    } else {
+      this.holes.forEach(hole => {
+        if (hole.laneIndex !== -1) {
+          hole.y = this.getLaneRacerY(hole.laneIndex);
+        }
+      });
+    }
   }
 
   protected skipBtn: Container | null = null;
@@ -365,7 +405,6 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.setupPhase = true;
     this.currentSetupPlayerIndex = 0;
     
-    // Create UI overlay for setup
     const style = new TextStyle({
       fill: PALETTE.STR_WHITE,
       fontSize: 36,
@@ -381,12 +420,12 @@ export abstract class BaseRaceScene extends Container implements Scene {
 
     this.updateSetupInstruction();
 
-    // Enable click on track
+    if (this.remainingDistanceText) this.remainingDistanceText.visible = false;
+
     this.world.eventMode = "static";
     this.world.cursor = "crosshair";
     this.world.on("pointerdown", (e) => this.handleSetupClick(e));
 
-    // Create Skip Button
     this.skipBtn = createWoodenButton({
       label: "SKIP",
       color: COLORS.BUTTON_NEUTRAL,
@@ -399,7 +438,6 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.skipBtn.y = 130;
     this.ui.addChild(this.skipBtn);
 
-    // Create Start Match Button (Hidden initially)
     this.startMatchBtn = createWoodenButton({
       label: "START MATCH",
       color: COLORS.BUTTON_SUCCESS,
@@ -411,15 +449,36 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.startMatchBtn.visible = false;
     this.ui.addChild(this.startMatchBtn);
 
-    this.showLaneLabels();
-
-    // Create Preview Hole
     this.previewHole = new Hole();
     this.previewHole.alpha = 0.5;
     this.previewHole.visible = false;
     this.world.addChild(this.previewHole);
 
     this.world.on("pointermove", (e) => this.handleSetupHover(e));
+
+    if (this.trackWidth > this.gameViewW) {
+      this.scrollLeftBtn = createWoodenButton({
+        label: "<", color: COLORS.BUTTON_PRIMARY, onClick: () => this.handleScrollSetup("left"), width: 60, height: 60, fontSize: 32
+      });
+      this.scrollLeftBtn.x = 50;
+      this.scrollLeftBtn.y = this.gameViewH / 2;
+      this.ui.addChild(this.scrollLeftBtn);
+
+      this.scrollRightBtn = createWoodenButton({
+        label: ">", color: COLORS.BUTTON_PRIMARY, onClick: () => this.handleScrollSetup("right"), width: 60, height: 60, fontSize: 32
+      });
+      this.scrollRightBtn.x = this.gameViewW - 50;
+      this.scrollRightBtn.y = this.gameViewH / 2;
+      this.ui.addChild(this.scrollRightBtn);
+    }
+  }
+
+  protected handleScrollSetup(direction: "left" | "right") {
+    const scrollAmount = 300;
+    let targetX = this.world.x + (direction === "left" ? scrollAmount : -scrollAmount);
+    const minX = -(this.trackWidth - this.gameViewW);
+    const maxX = 0;
+    this.world.x = Math.max(minX, Math.min(maxX, targetX));
   }
 
   protected handleSkipPlacement() {
@@ -438,39 +497,13 @@ export abstract class BaseRaceScene extends Container implements Scene {
     }
   }
 
-  protected getNearestLaneY(localY: number): number | null {
-    const unit = ITEMS.ground.unit;
-    const grassStripH = unit * 4;
-    const dirtH = this.gameViewH - grassStripH * 2;
-    const trackHeight = dirtH / this.racers.length;
-
-    // Check if within track bounds (with some buffer)
-    if (localY < grassStripH || localY > this.gameViewH - grassStripH) return null;
-
-    // Find nearest lane center
-    let minDist = Infinity;
-    let bestY = -1;
-
-    for (let i = 0; i < this.racers.length; i++) {
-        const laneCenterY = grassStripH + (i + 0.5) * trackHeight;
-        const dist = Math.abs(localY - laneCenterY);
-        if (dist < minDist) {
-            minDist = dist;
-            bestY = laneCenterY;
-        }
-    }
-    
-    return bestY;
-  }
-
-
   /** Get the actual racer Y for a given lane index */
   protected getLaneRacerY(laneIndex: number): number {
     const unit = ITEMS.ground.unit;
     const grassStripH = unit * 4;
     const dirtH = this.gameViewH - grassStripH * 2;
     const trackHeight = dirtH / this.racers.length;
-    return grassStripH + (laneIndex + 0.5) * trackHeight + RACER.HEIGHT / 2;
+    return grassStripH + (laneIndex + 0.5) * trackHeight;
   }
 
   protected getNearestLaneIndex(localY: number): number | null {
@@ -491,7 +524,10 @@ export abstract class BaseRaceScene extends Container implements Scene {
   }
 
   protected handleSetupHover(e: any) {
-    if (!this.setupPhase || !this.previewHole) return;
+    if (!this.setupPhase || !this.previewHole || this.currentSetupPlayerIndex >= this.racers.length) {
+        if (this.previewHole) this.previewHole.visible = false;
+        return;
+    }
 
     const localPos = this.world.toLocal(e.global);
     const laneIdx = this.getNearestLaneIndex(localPos.y);
@@ -501,48 +537,17 @@ export abstract class BaseRaceScene extends Container implements Scene {
         this.previewHole.visible = true;
         this.previewHole.x = localPos.x;
         this.previewHole.y = racerY;
+        this.previewHole.laneIndex = laneIdx;
         this.world.setChildIndex(this.previewHole, this.world.children.length - 1);
     } else {
         this.previewHole.visible = false;
     }
   }
 
-  protected showLaneLabels() {
-    this.racers.forEach((racer) => {
-      const label = new Container();
-      
-      const bg = new Graphics();
-      bg.roundRect(0, 0, 140, 40, 20).fill({ color: PALETTE.BLACK, alpha: 0.6 });
-      label.addChild(bg);
-
-      const text = new Text({
-        text: racer.racerName,
-        style: new TextStyle({
-          fill: PALETTE.STR_WHITE,
-          fontSize: 18,
-          fontWeight: "bold",
-        })
-      });
-      text.anchor.set(0.5);
-      text.x = 70;
-      text.y = 20;
-      label.addChild(text);
-
-      // Position relative to racer
-      label.x = TRACK.START_LINE_X - 160; 
-      label.y = racer.y - 20;
-      
-      this.world.addChild(label);
-      this.laneLabels.push(label);
-    });
-  }
-
   protected updateSetupInstruction() {
     if (!this.setupInstructionText) return;
-    
     if (this.currentSetupPlayerIndex < this.racers.length) {
-      const racer = this.racers[this.currentSetupPlayerIndex];
-      this.setupInstructionText.text = `${racer.racerName}: Place a Trap!`;
+      this.setupInstructionText.text = `Player ${this.currentSetupPlayerIndex + 1}: Place a Trap!`;
       this.setupInstructionText.style.fill = PALETTE.STR_WHITE;
     } else {
       this.setupInstructionText.text = "All Traps Placed!";
@@ -554,19 +559,16 @@ export abstract class BaseRaceScene extends Container implements Scene {
     if (!this.setupPhase || this.currentSetupPlayerIndex >= this.racers.length) return;
 
     const localPos = this.world.toLocal(e.global);
-    
-    // Bounds check
     if (localPos.x < TRACK.START_LINE_X + 100 || localPos.x > this.finishLineX - 50) return;
     
     const laneIdx = this.getNearestLaneIndex(localPos.y);
     if (laneIdx === null) return;
 
-    // Place hole at the racer's actual Y position (includes RACER.HEIGHT offset)
     const racerY = this.getLaneRacerY(laneIdx);
-
     const hole = new Hole();
     hole.x = localPos.x;
     hole.y = racerY;
+    hole.laneIndex = laneIdx;
     this.world.addChild(hole);
     this.world.setChildIndex(hole, this.world.getChildIndex(this.trackGraphics) + 1);
     this.holes.push(hole);
@@ -587,28 +589,38 @@ export abstract class BaseRaceScene extends Container implements Scene {
 
   protected finishSetupPhase() {
     this.setupPhase = false;
+    this.setupFinished = true;
     this.world.eventMode = "none";
     this.world.cursor = "default";
     
     if (this.setupInstructionText) this.setupInstructionText.visible = false;
     if (this.startMatchBtn) this.startMatchBtn.visible = false;
     if (this.skipBtn) { this.skipBtn.destroy(); this.skipBtn = null; }
+    if (this.scrollLeftBtn) { this.scrollLeftBtn.destroy(); this.scrollLeftBtn = null; }
+    if (this.scrollRightBtn) { this.scrollRightBtn.destroy(); this.scrollRightBtn = null; }
     
-    this.laneLabels.forEach(l => l.destroy());
-    this.laneLabels = [];
-
     if (this.previewHole) {
         this.previewHole.destroy();
         this.previewHole = null;
     }
     this.world.off("pointermove");
 
-    // Start Countdown
-    this.countdownTimer = VISUALS.COUNTDOWN_DURATION;
-    if (this.countdownText) {
-      this.countdownText.visible = true;
-      this.countdownText.text = Math.ceil(this.countdownTimer).toString();
+    if (this.remainingDistanceText) this.remainingDistanceText.visible = true;
+
+    const laneIndices = this.racers.map((_, i) => i);
+    for (let i = laneIndices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [laneIndices[i], laneIndices[j]] = [laneIndices[j], laneIndices[i]];
     }
+
+    this.racers.forEach((racer, i) => {
+        racer.laneIndex = laneIndices[i];
+        racer.x = -100;
+        this.world.addChild(racer);
+    });
+    this.repositionRacers();
+
+    this.entranceFinished = false;
     this.raceStarted = false;
   }
 
@@ -617,8 +629,8 @@ export abstract class BaseRaceScene extends Container implements Scene {
     const grassStripH = unit * 4;
     const dirtH = this.gameViewH - grassStripH * 2;
     const trackHeight = dirtH / this.racers.length;
-    this.racers.forEach((racer, i) => {
-      racer.y = grassStripH + (i + 0.5) * trackHeight + RACER.HEIGHT / 2;
+    this.racers.forEach((racer) => {
+      racer.y = grassStripH + (racer.laneIndex + 0.5) * trackHeight;
     });
   }
 
@@ -640,34 +652,28 @@ export abstract class BaseRaceScene extends Container implements Scene {
       }
     }
 
-    if (this.setupPhase) {
-      return; 
+    if (this.setupPhase) return;
+    if (this.raceEnded) return;
+
+    if (this.isFunnyMode && !this.setupFinished && !this.setupPhase && !this.raceStarted) {
+      this.setupFunnyModeInteraction();
+      return;
     }
 
-    if (this.raceEnded) return;
+    let activeLeaderX = 0;
 
     if (!this.entranceFinished) {
       let allAtStart = true;
       this.racers.forEach(r => { if (!r.walkEntrance(TRACK.START_LINE_X, delta)) allAtStart = false; });
       if (allAtStart) {
         this.entranceFinished = true;
-        if (this.isFunnyMode && !this.setupPhase && this.currentSetupPlayerIndex === 0 && !this.raceStarted) {
-          this.setupFunnyModeInteraction();
-          return;
-        }
-        if (!this.setupPhase && this.countdownText && !this.raceStarted) {
+        if (this.countdownText) {
           this.countdownText.visible = true;
+          this.countdownText.text = Math.ceil(this.countdownTimer).toString();
         }
       }
-      return;
-    }
-    
-    // Funny Mode Setup Phase
-    if (this.setupPhase) {
-        return; // Pause game loop
-    }
-
-    if (!this.raceStarted) {
+      activeLeaderX = Math.max(0, ...this.racers.map(r => r.x));
+    } else if (!this.raceStarted) {
       this.countdownTimer -= delta / 60;
       if (this.countdownTimer <= 0) {
         this.raceStarted = true;
@@ -687,60 +693,59 @@ export abstract class BaseRaceScene extends Container implements Scene {
       } else if (this.countdownText) {
         this.countdownText.text = Math.ceil(this.countdownTimer).toString();
       }
-      return;
-    }
-
-    this.elapsedTime += delta;
-    const activeRacers = this.racers.filter(r => !r.isFinished());
-    
-    // Check Hole Collisions — only check X proximity since holes are placed at racer Y
-    if (this.isFunnyMode && this.holes.length > 0) {
-        for (let i = this.holes.length - 1; i >= 0; i--) {
-            const hole = this.holes[i];
-            for (const racer of activeRacers) {
-                const dx = Math.abs(racer.x - hole.x);
-                const dy = Math.abs(racer.y - hole.y);
-                if (dx < 50 && dy < RACER.HEIGHT) {
-                    racer.applyHoleEffect();
-                    this.world.removeChild(hole);
-                    this.holes.splice(i, 1);
-                    break;
-                }
-            }
-        }
-    }
-
-    const ranked = [...activeRacers].sort((a, b) => b.x - a.x);
-    const rankMap = new Map<Racer, number>();
-    ranked.forEach((r, i) => rankMap.set(r, i + 1));
-
-    const totalDistPx = this.finishLineX - TRACK.START_LINE_X;
-    const leaderX = ranked[0]?.x || 0;
-    const climaxThreshold = this.finishLineX - totalDistPx * GAMEPLAY.BALANCE.CLIMAX_THRESHOLD;
-    const inClimaxPhase = activeRacers.some(r => r.x >= climaxThreshold);
-
-    this.racers.forEach(racer => {
-      if (!racer.isFinished()) {
-        racer.update(delta, this.elapsedTime, leaderX, this.finishLineX, rankMap.get(racer) || 1, totalDistPx, inClimaxPhase, activeRacers.length);
-        if (racer.x >= this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET) {
-          racer.x = this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET;
-          racer.setFinished(this.elapsedTime);
-          this.finishedRacers.push(racer);
-        }
+      activeLeaderX = Math.max(0, ...this.racers.map(r => r.x));
+    } else {
+      this.elapsedTime += delta;
+      const activeRacers = this.racers.filter(r => !r.isFinished());
+      
+      if (this.isFunnyMode && this.holes.length > 0) {
+          for (let i = this.holes.length - 1; i >= 0; i--) {
+              const hole = this.holes[i];
+              for (const racer of activeRacers) {
+                  const dx = Math.abs(racer.x - hole.x);
+                  const dy = Math.abs(racer.y - hole.y);
+                  if (dx < 50 && (racer.laneIndex === hole.laneIndex || dy < 10)) {
+                      racer.applyHoleEffect();
+                      this.world.removeChild(hole);
+                      this.holes.splice(i, 1);
+                      break;
+                  }
+              }
+          }
       }
-    });
 
-    if (this.remainingDistanceText) {
-      const leader = ranked[0] || this.racers[0];
-      const distToFinishM = Math.ceil((Math.max(0, this.finishLineX - leader.x) / totalDistPx) * this.distance);
-      this.remainingDistanceText.text = `${distToFinishM}m`;
+      const ranked = [...activeRacers].sort((a, b) => b.x - a.x);
+      const rankMap = new Map<Racer, number>();
+      ranked.forEach((r, i) => rankMap.set(r, i + 1));
+
+      const totalDistPx = this.finishLineX - TRACK.START_LINE_X;
+      const leaderX = ranked[0]?.x || 0;
+      const climaxThreshold = this.finishLineX - totalDistPx * GAMEPLAY.BALANCE.CLIMAX_THRESHOLD;
+      const inClimaxPhase = activeRacers.some(r => r.x >= climaxThreshold);
+
+      this.racers.forEach(racer => {
+        if (!racer.isFinished()) {
+          racer.update(delta, this.elapsedTime, leaderX, this.finishLineX, rankMap.get(racer) || 1, totalDistPx, inClimaxPhase, activeRacers.length);
+          if (racer.x >= this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET) {
+            racer.x = this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET;
+            racer.setFinished(this.elapsedTime);
+            this.finishedRacers.push(racer);
+          }
+        }
+      });
+
+      if (this.remainingDistanceText) {
+        const leader = ranked[0] || this.racers[0];
+        const distToFinishM = Math.ceil((Math.max(0, this.finishLineX - leader.x) / totalDistPx) * this.distance);
+        this.remainingDistanceText.text = `${distToFinishM}m`;
+      }
+
+      this.updateLeaderboard(delta);
+      activeLeaderX = activeRacers.length > 0 ? leaderX : Math.max(...this.racers.map(r => r.x));
     }
 
-    this.updateLeaderboard(delta);
-    
-    let activeLeaderX = activeRacers.length > 0 ? leaderX : Math.max(...this.racers.map(r => r.x));
     this.updateCamera(activeLeaderX, delta);
-    if (this.racers.every(r => r.isFinished())) this.endRace();
+    if (this.racers.length > 0 && this.racers.every(r => r.isFinished())) this.endRace();
   }
 
   protected updateCamera(leaderX: number, delta: number) {

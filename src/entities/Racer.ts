@@ -18,6 +18,7 @@ export interface RacerStats {
 export class Racer extends Container {
   public racerName: string;
   public characterKey: string;
+  public laneIndex: number = 0;
   private sprite: AnimatedSprite;
   private animations: RacerAnimations;
 
@@ -52,7 +53,6 @@ export class Racer extends Container {
   
   // Funny Mode — Hole Effect
   private holeStunTimer: number = 0;
-  private holeImmunityTimer: number = 0;
 
   // Second Wind — burst for deeply trailing racers
   private trailingFrames: number = 0;
@@ -129,7 +129,7 @@ export class Racer extends Container {
     this.addChild(this.labelText);
 
     this.x = -100; // Start off-screen for entrance
-    this.y = y + RACER.HEIGHT; // Offset for anchor at bottom
+    this.y = y; // y represents the feet position (anchor is at bottom)
   }
 
   /** Hide specific UI elements for mobile view. */
@@ -206,8 +206,6 @@ export class Racer extends Container {
     }
 
     this.elapsedFrames += delta;
-
-    if (this.holeImmunityTimer > 0) this.holeImmunityTimer -= delta;
 
     if (this.holeStunTimer > 0) {
       this.holeStunTimer -= delta;
@@ -446,12 +444,11 @@ export class Racer extends Container {
    * Applies the "Hole" effect: Full stop and temporary stun.
    */
   public applyHoleEffect() {
-    if (this.holeImmunityTimer > 0 || this.finished) return;
+    if (this.finished) return;
 
     this.currentSpeed = 0;
     this.targetSpeed = 0;
     this.holeStunTimer = 60; // ~1 second stun at 60fps
-    this.holeImmunityTimer = 180; // ~3 seconds immunity to avoid double hits
     
     // Visual feedback could go here (e.g. sweat animation)
     this.setAnimation("idle");

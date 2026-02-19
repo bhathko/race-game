@@ -1,4 +1,4 @@
-# 🏁 Choice Race — Game Design & Technical Spec
+ e # 🏁 Choice Race — Game Design & Technical Spec
 
 ## 1. Overview
 
@@ -91,28 +91,31 @@ Triggered when any racer enters the final 20 % of the track:
 
 ## 9. Funny Mode (Trap Mechanic)
 
-An optional game mode toggled from the main menu. When enabled, a **Trap Setup Phase** occurs between the racer entrance and the race countdown.
+An optional game mode toggled from the main menu. When enabled, a **Trap Setup Phase** occurs before the racer entrance and the race countdown.
 
 ### A. Setup Phase Flow
 
-1. Racers walk to the start line (entrance phase).
-2. Lane labels appear showing each racer's name.
-3. Players take turns placing one **Hole** (trap) on the track, or pressing **SKIP** to pass.
-4. Holes auto-align to the center of the nearest lane via `getNearestLaneIndex()` + `getLaneRacerY()`.
-5. A semi-transparent preview hole follows the cursor during placement.
-6. Once all players have placed or skipped, the **START MATCH** button appears.
-7. Clicking START MATCH triggers the standard 3-2-1-GO countdown.
+1. **Sequential Turns:** Players (1 through 8) take turns placing one **Hole** (trap) on the track, or pressing **SKIP** to pass.
+2. **Hidden Assignments:** Characters and their assigned lanes remain hidden and off-screen during setup to ensure trap placement is truly "blind."
+3. **Manual Scrolling:** For tracks exceeding the screen width (typically 100m+), wooden scroll buttons (`<` and `>`) allow players to navigate the entire length of the track during setup.
+4. **Visual Aids:** 
+   - A semi-transparent preview hole follows the cursor, snapping to the center of the nearest lane.
+   - The remaining distance label is hidden to focus on trap placement.
+   - Instructional text displays which player is currently active (e.g., "Player 1: Place a Trap!").
+5. **Start Match:** Once all players have finished, the **START MATCH** button appears.
+6. **Transition:** Clicking START MATCH hides the setup UI, resets the camera, and triggers the racer entrance walk. The camera smoothly follows the racers as they move to the start line.
 
 ### B. Hole Mechanics
 
-| Property        | Value                                                   |
-| :-------------- | :------------------------------------------------------ |
-| **Trigger**     | Racer X within 50px and Y within `RACER.HEIGHT` of hole |
-| **Effect**      | Full stop (`currentSpeed = 0`) + stun for ~1 second     |
-| **Immunity**    | 3 seconds post-stun to prevent double hits              |
-| **Consumption** | Single-use — hole is removed after triggering           |
+| Property        | Value                                                              |
+| :-------------- | :----------------------------------------------------------------- |
+| **Alignment**   | Perfectly aligned with the lane center "path" and racer feet.      |
+| **Trigger**     | Racer X within 50px AND (`laneIndex` match OR Y within 10px).      |
+| **Effect**      | Full stop (`currentSpeed = 0`) + stun for ~1 second.               |
+| **Immunity**    | **None.** Racers stop every time they hit a hole (encourages chaos). |
+| **Consumption** | Single-use — hole is removed after triggering.                     |
 
-### C. Scalability
+### C. Technical Implementation
 
-- Supports **2–8 players**, each getting one placement turn.
-- The `isFunnyMode` flag flows through `MenuScene → SelectionScene → RaceScene`.
+- **Lane Locking:** Holes store their `laneIndex` to ensure consistent positioning during window resizes and reliable collision detection regardless of character sprite size.
+- **Feet-Based Y:** Both racers and holes use the character's feet position as the Y-axis reference, ensuring perfect visual alignment on the dirt track.

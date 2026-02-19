@@ -2,6 +2,7 @@ import { Container, Graphics } from "pixi.js";
 
 export class Hole extends Container {
   private graphic: Graphics;
+  public laneIndex: number = -1;
 
   constructor() {
     super();
