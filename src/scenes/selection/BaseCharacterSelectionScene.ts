@@ -201,7 +201,13 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
         const anims = this.characterAnimations.get(key)!;
         const card = new Graphics();
         card
-          .roundRect(-RACER.WIDTH/2-5, -RACER.HEIGHT-5, RACER.WIDTH+10, RACER.HEIGHT+15, 8)
+          .roundRect(
+            -RACER.WIDTH / 2 - 5,
+            -RACER.HEIGHT - 5,
+            RACER.WIDTH + 10,
+            RACER.HEIGHT + 15,
+            8,
+          )
           .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.9 })
           .stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
         racerContainer.addChild(card);
@@ -216,7 +222,7 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
       } else {
         const box = new Graphics();
         box
-          .roundRect(-RACER.WIDTH/2, -RACER.HEIGHT, RACER.WIDTH, RACER.HEIGHT, 8)
+          .roundRect(-RACER.WIDTH / 2, -RACER.HEIGHT, RACER.WIDTH, RACER.HEIGHT, 8)
           .fill({ color: PALETTE.WOOD_DARK, alpha: 0.6 })
           .stroke({ color: PALETTE.WOOD_PALE, width: 2, alpha: 0.5 });
         racerContainer.addChild(box);

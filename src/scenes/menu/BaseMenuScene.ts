@@ -92,8 +92,7 @@ export abstract class BaseMenuScene extends Container {
     const distances = [50, 100, 200, 400];
     this.distStepper = this.createStepper((inc) => {
       const idx = distances.indexOf(this.selectedDistance);
-      if (inc && idx < distances.length - 1)
-        this.selectedDistance = distances[idx + 1];
+      if (inc && idx < distances.length - 1) this.selectedDistance = distances[idx + 1];
       else if (!inc && idx > 0) this.selectedDistance = distances[idx - 1];
       this.distValue.text = `${this.selectedDistance}m`;
       this.saveSettings();
@@ -106,11 +105,13 @@ export abstract class BaseMenuScene extends Container {
       onClick: () => {
         this.isFunnyMode = !this.isFunnyMode;
         (this.funnyBtn as any).content.text = `FUNNY MODE: ${this.isFunnyMode ? "ON" : "OFF"}`;
-        (this.funnyBtn as any).bg.tint = this.isFunnyMode ? COLORS.BUTTON_WARN : COLORS.BUTTON_NEUTRAL;
+        (this.funnyBtn as any).bg.tint = this.isFunnyMode
+          ? COLORS.BUTTON_WARN
+          : COLORS.BUTTON_NEUTRAL;
       },
       width: 240,
       height: 50,
-      fontSize: 18
+      fontSize: 18,
     });
     this.funnyBtn.label = "funny-btn";
     this.addChild(this.funnyBtn);
@@ -118,8 +119,7 @@ export abstract class BaseMenuScene extends Container {
     this.startBtn = createWoodenButton({
       label: "START!",
       color: COLORS.BUTTON_SUCCESS,
-      onClick: () =>
-        this.onStartRace(this.selectedCount, this.selectedDistance, this.isFunnyMode),
+      onClick: () => this.onStartRace(this.selectedCount, this.selectedDistance, this.isFunnyMode),
       width: 280,
     });
     this.addChild(this.startBtn);

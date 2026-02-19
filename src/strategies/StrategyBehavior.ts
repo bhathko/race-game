@@ -96,9 +96,7 @@ const conservativeStrategy: StrategyBehavior = {
     endurance: S.CONSERVATIVE_ENDURANCE_MULT,
   },
   shouldSprint(ctx) {
-    return (
-      ctx.inSprintZone || ctx.raceProgress > 1 - S.CONSERVATIVE_PUSH_FRACTION
-    );
+    return ctx.inSprintZone || ctx.raceProgress > 1 - S.CONSERVATIVE_PUSH_FRACTION;
   },
   tiredSpeedFactor: () => P.TIRED_SPEED_FACTOR,
   tiredExitThreshold: (max) => max,
@@ -116,11 +114,7 @@ const closerStrategy: StrategyBehavior = {
     endurance: S.CLOSER_ENDURANCE_MULT,
   },
   shouldSprint(ctx) {
-    return (
-      ctx.inSprintZone ||
-      ctx.inClimaxPhase ||
-      ctx.raceProgress > 1 - S.CLOSER_PUSH_FRACTION
-    );
+    return ctx.inSprintZone || ctx.inClimaxPhase || ctx.raceProgress > 1 - S.CLOSER_PUSH_FRACTION;
   },
   tiredSpeedFactor: () => P.TIRED_SPEED_FACTOR,
   tiredExitThreshold: (max) => max,
@@ -132,19 +126,15 @@ const closerStrategy: StrategyBehavior = {
  * Central registry — look up a strategy by name, or pick one at random.
  * To add a new strategy, simply add it here.
  */
-const STRATEGY_REGISTRY: ReadonlyMap<RacerStrategy, StrategyBehavior> = new Map(
-  [
-    ["aggressive", aggressiveStrategy],
-    ["pacer", pacerStrategy],
-    ["conservative", conservativeStrategy],
-    ["closer", closerStrategy],
-  ],
-);
+const STRATEGY_REGISTRY: ReadonlyMap<RacerStrategy, StrategyBehavior> = new Map([
+  ["aggressive", aggressiveStrategy],
+  ["pacer", pacerStrategy],
+  ["conservative", conservativeStrategy],
+  ["closer", closerStrategy],
+]);
 
 /** All available strategy names. */
-export const STRATEGY_NAMES: readonly RacerStrategy[] = [
-  ...STRATEGY_REGISTRY.keys(),
-];
+export const STRATEGY_NAMES: readonly RacerStrategy[] = [...STRATEGY_REGISTRY.keys()];
 
 /** Get the behavior object for a given strategy name. */
 export function getStrategy(name: RacerStrategy): StrategyBehavior {

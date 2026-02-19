@@ -18,11 +18,8 @@ function generateStats(strategy: StrategyBehavior) {
   const m = strategy.statMultipliers;
   return {
     accel: (STATS.ACCEL_BASE + Math.random() * STATS.ACCEL_VARIANCE) * m.accel,
-    topSpeed:
-      (STATS.BASE_SPEED + Math.random() * STATS.SPEED_VARIANCE) * m.speed,
-    endurance:
-      (STATS.ENDURANCE_BASE + Math.random() * STATS.ENDURANCE_VARIANCE) *
-      m.endurance,
+    topSpeed: (STATS.BASE_SPEED + Math.random() * STATS.SPEED_VARIANCE) * m.speed,
+    endurance: (STATS.ENDURANCE_BASE + Math.random() * STATS.ENDURANCE_VARIANCE) * m.endurance,
   };
 }
 

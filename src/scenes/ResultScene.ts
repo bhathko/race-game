@@ -25,7 +25,7 @@ export class ResultScene extends Container implements Scene {
     this.context = {
       finishedRacers,
       onRestart,
-      characterAnimations
+      characterAnimations,
     };
   }
 

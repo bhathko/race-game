@@ -1,17 +1,18 @@
 import { BaseRaceScene } from "./BaseRaceScene";
 import type { RaceState } from "./BaseRaceScene";
-import { CANVAS, COLORS, PALETTE, VISUALS } from "../../config";
-import { Graphics } from "pixi.js";
+import { COLORS, PALETTE, VISUALS } from "../../config";
+import { Graphics, Text } from "pixi.js";
 import type { RaceContext } from "../../core";
 
 export class MobileVerticalRaceScene extends BaseRaceScene {
   constructor(ctx: RaceContext, existingState?: RaceState) {
     super(ctx, existingState);
   }
+
   public resize(width: number, height: number) {
     this.isPortrait = true;
-    const availableH = height * 0.7;
-    this.gameViewH = availableH;
+    const lbH = 120;
+    this.gameViewH = height - lbH;
     this.gameViewW = width;
 
     this.worldMask
@@ -19,53 +20,47 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
       .rect(0, 0, this.gameViewW, this.gameViewH)
       .fill({ color: COLORS.MASK_FILL });
 
-    this.sidebarBg.clear();
-    this.sidebarBg
-      .rect(0, availableH, width, height - availableH)
+    const sidebarBg = this.uiManager.getSidebarBg();
+    sidebarBg
+      .clear()
+      .rect(0, this.gameViewH, width, lbH)
       .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
 
-    // Wooden Texture Lines
-    for (let y = availableH + 5; y < height; y += 10) {
-      this.sidebarBg
-        .rect(0, y, width, 2)
-        .fill({ color: COLORS.SIDEBAR_WOOD, alpha: 0.3 });
-    }
+    const lbContainer = this.uiManager.getLeaderboardContainer();
+    lbContainer.x = 10;
+    lbContainer.y = this.gameViewH + 10;
 
-    this.leaderboardContainer.x = 20;
-    this.leaderboardContainer.y = availableH + 15;
-
-    const title = this.leaderboardContainer.getChildByLabel("leaderboard-title");
+    const title = lbContainer.getChildByLabel("leaderboard-title");
     if (title) {
-      title.x = 0;
-      title.y = 0;
+      title.visible = false;
     }
 
-    const unitWidth = Math.max(this.gameViewW, CANVAS.MIN_UNIT_WIDTH);
-    this.finishLineX = 50 + (this.distance / 50) * unitWidth;
-    this.trackWidth = this.finishLineX + 200;
+    this.finishLineX = 50 + (this.distance / 50) * this.gameViewW;
+    this.trackWidth = this.finishLineX + 100;
 
     this.setupTracks();
-    this.repositionRacers();
+    this.trackManager.repositionRacers(this.racers, this.gameViewH);
     this.updateLeaderboard(60);
 
-    this.racers.forEach((r) => r.setMobileMode(true));
-
-    if (this.countdownText) {
-      this.countdownText.x = this.gameViewW / 2;
-      this.countdownText.y = this.gameViewH / 2;
+    const countdown = this.uiManager.getCountdownText();
+    if (countdown) {
+      countdown.x = width / 2;
+      countdown.y = this.gameViewH / 2;
     }
 
-    if (this.remainingDistanceText) {
-      this.remainingDistanceText.x = this.gameViewW / 2;
-      this.remainingDistanceText.y = 20;
+    const distance = this.uiManager.getRemainingDistanceText();
+    if (distance) {
+      distance.x = width / 2;
+      distance.y = 10;
     }
   }
 
   protected updateLeaderboard(delta: number) {
-    this.leaderboardUpdateTimer += delta;
-    if (this.leaderboardUpdateTimer >= this.LEADERBOARD_THROTTLE || this.sortedRacersCache.length === 0) {
-      this.leaderboardUpdateTimer = 0;
-      this.sortedRacersCache = [...this.racers].sort((a, b) => {
+    const um = this.uiManager;
+    um.leaderboardUpdateTimer += delta;
+    if (um.leaderboardUpdateTimer >= um.LEADERBOARD_THROTTLE || um.sortedRacersCache.length === 0) {
+      um.leaderboardUpdateTimer = 0;
+      um.sortedRacersCache = [...this.racers].sort((a, b) => {
         if (a.isFinished() && b.isFinished()) return a.finishTime - b.finishTime;
         if (a.isFinished()) return -1;
         if (b.isFinished()) return 1;
@@ -73,44 +68,42 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
       });
     }
 
-    const count = this.racers.length;
-    const totalW = this.gameViewW - 40;
-    const blockW = totalW / count;
-
-    this.sortedRacersCache.forEach((racer, index) => {
-      const container = this.leaderboardItems.get(racer);
+    const items = um.getLeaderboardItems();
+    um.sortedRacersCache.forEach((racer, index) => {
+      const container = items.get(racer);
       if (!container) return;
 
-      const targetX = index * blockW;
-      const targetY = 40;
-
+      const itemW = 70;
       const smoothing = 1 - Math.pow(1 - VISUALS.LEADERBOARD_ANIMATION_SPEED, delta);
-      container.x += (targetX - container.x) * smoothing;
-      container.y += (targetY - container.y) * smoothing;
+      container.x += (index * itemW - container.x) * smoothing;
+      container.y += (0 - container.y) * smoothing;
 
       const bg = container.getChildByLabel("item-bg") as Graphics;
-      const text = container.getChildByLabel("item-text");
+      const text = container.getChildByLabel("item-text") as Text;
       const icon = container.getChildByLabel("item-icon");
 
       if (bg) {
-        const w = blockW - 2;
-        const h = 40;
-        let borderColor: number = COLORS.RANK_DEFAULT;
-        if (index === 0) borderColor = COLORS.RANK_GOLD;
-        else if (index === 1) borderColor = COLORS.RANK_SILVER;
-        else if (index === 2) borderColor = COLORS.RANK_BRONZE;
-
+        let color: number = COLORS.RANK_DEFAULT;
+        if (index === 0) color = COLORS.RANK_GOLD;
+        else if (index === 1) color = COLORS.RANK_SILVER;
+        else if (index === 2) color = COLORS.RANK_BRONZE;
         bg.clear()
-          .roundRect(0, 0, w, h, 4)
+          .roundRect(0, 0, itemW - 10, 100, 8)
           .fill({ color: PALETTE.BLACK, alpha: 0.5 })
-          .stroke({ color: borderColor, width: index < 3 ? 3 : 1 });
+          .stroke({ color, width: index < 3 ? 3 : 1 });
       }
 
-      if (text) text.visible = false;
+      if (text) {
+        text.text = (index + 1).toString();
+        text.x = (itemW - 10) / 2;
+        text.y = 85;
+        text.anchor.set(0.5);
+        text.style.fontSize = 12;
+      }
       if (icon) {
-        icon.x = (blockW - 2) / 2;
-        icon.y = 20;
-        icon.scale.set(0.5);
+        icon.x = (itemW - 10) / 2;
+        icon.y = 40;
+        icon.scale.set(0.8);
       }
     });
   }

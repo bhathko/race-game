@@ -1,6 +1,6 @@
 import { BaseRaceScene } from "./BaseRaceScene";
 import type { RaceState } from "./BaseRaceScene";
-import { CANVAS, COLORS, PALETTE, VISUALS } from "../../config";
+import { COLORS, PALETTE, VISUALS } from "../../config";
 import { Graphics, Text } from "pixi.js";
 import type { RaceContext } from "../../core";
 
@@ -8,69 +8,59 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
   constructor(ctx: RaceContext, existingState?: RaceState) {
     super(ctx, existingState);
   }
+
   public resize(width: number, height: number) {
     this.isPortrait = false;
-    // On horizontal mobile, leaderboard can be a small sidebar or top bar.
-    // Let's stick to sidebar but make it narrower.
-    const uiWidth = 120;
+    const lbW = 140;
     this.gameViewH = height;
-    this.gameViewW = width - uiWidth;
+    this.gameViewW = width - lbW;
 
     this.worldMask
       .clear()
       .rect(0, 0, this.gameViewW, this.gameViewH)
       .fill({ color: COLORS.MASK_FILL });
 
-    this.sidebarBg.clear();
-    this.sidebarBg
-      .rect(this.gameViewW, 0, uiWidth, height)
+    const sidebarBg = this.uiManager.getSidebarBg();
+    sidebarBg
+      .clear()
+      .rect(this.gameViewW, 0, lbW, height)
       .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
 
-    // Wooden Texture Lines
-    for (let x = this.gameViewW + 5; x < width; x += 15) {
-      this.sidebarBg
-        .rect(x, 0, 2, height)
-        .fill({ color: COLORS.SIDEBAR_WOOD, alpha: 0.3 });
-    }
+    const lbContainer = this.uiManager.getLeaderboardContainer();
+    lbContainer.x = this.gameViewW + 5;
+    lbContainer.y = 10;
 
-    this.leaderboardContainer.x = this.gameViewW + 10;
-    this.leaderboardContainer.y = 15;
-
-    const title = this.leaderboardContainer.getChildByLabel("leaderboard-title") as Text;
+    const title = lbContainer.getChildByLabel("leaderboard-title");
     if (title) {
-      title.x = 0;
-      title.y = 0;
-      title.style.fontSize = 18;
+      title.visible = false;
     }
 
-    const unitWidth = Math.max(this.gameViewW, CANVAS.MIN_UNIT_WIDTH);
-    this.finishLineX = 50 + (this.distance / 50) * unitWidth;
-    this.trackWidth = this.finishLineX + 200;
+    this.finishLineX = 50 + (this.distance / 50) * this.gameViewW;
+    this.trackWidth = this.finishLineX + 100;
 
     this.setupTracks();
-    this.repositionRacers();
+    this.trackManager.repositionRacers(this.racers, this.gameViewH);
     this.updateLeaderboard(60);
 
-    this.racers.forEach((r) => r.setMobileMode(true));
-
-    if (this.countdownText) {
-      this.countdownText.x = this.gameViewW / 2;
-      this.countdownText.y = this.gameViewH / 2;
-      this.countdownText.scale.set(0.7);
+    const countdown = this.uiManager.getCountdownText();
+    if (countdown) {
+      countdown.x = this.gameViewW / 2;
+      countdown.y = height / 2;
     }
 
-    if (this.remainingDistanceText) {
-      this.remainingDistanceText.x = this.gameViewW / 2;
-      this.remainingDistanceText.y = 15;
-      this.remainingDistanceText.scale.set(0.6);
+    const distance = this.uiManager.getRemainingDistanceText();
+    if (distance) {
+      distance.x = this.gameViewW / 2;
+      distance.y = 10;
     }
   }
 
   protected updateLeaderboard(delta: number) {
-    this.leaderboardUpdateTimer += delta;
-    if (this.leaderboardUpdateTimer >= this.LEADERBOARD_THROTTLE || this.sortedRacersCache.length === 0) {
-      this.leaderboardUpdateTimer = 0;
-      this.sortedRacersCache = [...this.racers].sort((a, b) => {
+    const um = this.uiManager;
+    um.leaderboardUpdateTimer += delta;
+    if (um.leaderboardUpdateTimer >= um.LEADERBOARD_THROTTLE || um.sortedRacersCache.length === 0) {
+      um.leaderboardUpdateTimer = 0;
+      um.sortedRacersCache = [...this.racers].sort((a, b) => {
         if (a.isFinished() && b.isFinished()) return a.finishTime - b.finishTime;
         if (a.isFinished()) return -1;
         if (b.isFinished()) return 1;
@@ -78,50 +68,42 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
       });
     }
 
-    this.sortedRacersCache.forEach((racer, index) => {
-      const container = this.leaderboardItems.get(racer);
+    const items = um.getLeaderboardItems();
+    const itemH = 45;
+    um.sortedRacersCache.forEach((racer, index) => {
+      const container = items.get(racer);
       if (!container) return;
 
-      const targetX = 0;
-      const targetY = 30 + index * 32;
-
       const smoothing = 1 - Math.pow(1 - VISUALS.LEADERBOARD_ANIMATION_SPEED, delta);
-      container.x += (targetX - container.x) * smoothing;
-      container.y += (targetY - container.y) * smoothing;
+      container.x += (0 - container.x) * smoothing;
+      container.y += (index * itemH - container.y) * smoothing;
 
       const bg = container.getChildByLabel("item-bg") as Graphics;
       const text = container.getChildByLabel("item-text") as Text;
       const icon = container.getChildByLabel("item-icon");
 
-      const uiWidth = 120;
       if (bg) {
-        const w = uiWidth - 20;
-        const h = 28;
-        let borderColor: number = COLORS.RANK_DEFAULT;
-        if (index === 0) borderColor = COLORS.RANK_GOLD;
-        else if (index === 1) borderColor = COLORS.RANK_SILVER;
-        else if (index === 2) borderColor = COLORS.RANK_BRONZE;
-
+        let color: number = COLORS.RANK_DEFAULT;
+        if (index === 0) color = COLORS.RANK_GOLD;
+        else if (index === 1) color = COLORS.RANK_SILVER;
+        else if (index === 2) color = COLORS.RANK_BRONZE;
         bg.clear()
-          .roundRect(0, 0, w, h, 4)
+          .roundRect(0, 0, 130, itemH - 5, 4)
           .fill({ color: PALETTE.BLACK, alpha: 0.5 })
-          .stroke({ color: borderColor, width: index < 3 ? 2 : 1 });
+          .stroke({ color, width: index < 3 ? 3 : 1 });
       }
 
       if (text) {
-        text.visible = true;
-        const rank = index + 1;
-        text.text = `${rank}: ${racer.racerName.split(" ").pop()}`;
-        text.x = 35;
-        text.y = 14;
+        text.text = `${index + 1}: ${racer.racerName.split(" ").pop()}`;
+        text.x = 40;
+        text.y = (itemH - 5) / 2;
         text.anchor.set(0, 0.5);
         text.style.fontSize = 11;
       }
-
       if (icon) {
-        icon.x = 18;
-        icon.y = 14;
-        icon.scale.set(0.4);
+        icon.x = 20;
+        icon.y = (itemH - 5) / 2;
+        icon.scale.set(0.6);
       }
     });
   }

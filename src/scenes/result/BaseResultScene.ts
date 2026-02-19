@@ -52,12 +52,7 @@ WINS!`,
       character: racer.characterKey,
     }));
 
-    this.leaderboardSidebar = new LeaderboardSidebar(
-      entries,
-      300,
-      480,
-      ctx.characterAnimations,
-    );
+    this.leaderboardSidebar = new LeaderboardSidebar(entries, 300, 480, ctx.characterAnimations);
     this.addChild(this.leaderboardSidebar);
 
     this.restartBtn = createWoodenButton({

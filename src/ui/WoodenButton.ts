@@ -23,14 +23,7 @@ export class WoodenButton extends Container {
 
   constructor(opts: WoodenButtonOptions) {
     super();
-    const {
-      label,
-      color,
-      onClick,
-      width = 60,
-      height: h = 60,
-      fontSize = 28,
-    } = opts;
+    const { label, color, onClick, width = 60, height: h = 60, fontSize = 28 } = opts;
 
     this._onClick = onClick;
 
@@ -69,7 +62,8 @@ export class WoodenButton extends Container {
       alpha: 0.4,
     });
     // Main body
-    this.bg.roundRect(-width / 2, -h / 2, width, h, 8)
+    this.bg
+      .roundRect(-width / 2, -h / 2, width, h, 8)
       .fill({ color })
       .stroke({ color: PALETTE.WOOD_DARK, width: 4 });
     // Wood grain lines

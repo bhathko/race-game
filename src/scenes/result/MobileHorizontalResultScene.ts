@@ -21,7 +21,7 @@ export class MobileHorizontalResultScene extends BaseResultScene {
     const topSpace = 20;
     const bottomSpace = 20;
     const sidebarH = height - topSpace - bottomSpace;
-    
+
     this.leaderboardSidebar.setShowList(false);
     this.leaderboardSidebar.resize(sidebarW, sidebarH);
     this.leaderboardSidebar.x = rightX - sidebarW / 2;

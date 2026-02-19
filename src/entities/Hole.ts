@@ -14,7 +14,7 @@ export class Hole extends Container {
     this.graphic.stroke({ color: 0x3e2723, width: 2, alpha: 0.5 }); // Dark brown edge
 
     this.addChild(this.graphic);
-    
+
     this.label = "hole";
   }
 }

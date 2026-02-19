@@ -40,9 +40,9 @@ export class LoadingScene extends Container implements Scene {
     this.loadingText.anchor.set(0.5);
     this.addChild(this.loadingText);
 
-    this.percentageText = new Text({ 
-      text: "0%", 
-      style: { ...textStyle, fontSize: 24 } 
+    this.percentageText = new Text({
+      text: "0%",
+      style: { ...textStyle, fontSize: 24 },
     });
     this.percentageText.anchor.set(0.5);
     this.addChild(this.percentageText);
@@ -60,13 +60,9 @@ export class LoadingScene extends Container implements Scene {
     const barWidth = (width - padding * 2) * this.progress;
 
     this.progressBar.clear();
-    this.progressBar.roundRect(
-      -width / 2 + padding, 
-      -height / 2 + padding, 
-      barWidth, 
-      height - padding * 2, 
-      4
-    ).fill({ color: COLORS.STAMINA_GOOD });
+    this.progressBar
+      .roundRect(-width / 2 + padding, -height / 2 + padding, barWidth, height - padding * 2, 4)
+      .fill({ color: COLORS.STAMINA_GOOD });
 
     this.percentageText.text = `${Math.round(this.progress * 100)}%`;
   }
@@ -84,10 +80,11 @@ export class LoadingScene extends Container implements Scene {
     const barH = 30;
 
     this.progressBg.clear();
-    this.progressBg.roundRect(-barW / 2, -barH / 2, barW, barH, 8)
+    this.progressBg
+      .roundRect(-barW / 2, -barH / 2, barW, barH, 8)
       .fill({ color: PALETTE.BLACK, alpha: 0.3 })
       .stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
-    
+
     this.progressBg.x = centerX;
     this.progressBg.y = centerY;
 

@@ -43,11 +43,11 @@ export class DesktopSelectionScene extends BaseCharacterSelectionScene {
     let i = 0;
     const totalItems = this.selectionSprites.size;
     const itemsArray = Array.from(this.selectionSprites.values());
-    
+
     for (let row = 0; i < totalItems; row++) {
       const itemsInRow = Math.min(cols, totalItems - row * cols);
       const rowWidth = (itemsInRow - 1) * spacingX;
-      
+
       for (let col = 0; col < itemsInRow; col++) {
         const item = itemsArray[i];
         item.x = col * spacingX - rowWidth / 2;

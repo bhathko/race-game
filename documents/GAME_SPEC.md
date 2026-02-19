@@ -1,4 +1,4 @@
- e # 🏁 Choice Race — Game Design & Technical Spec
+e # 🏁 Choice Race — Game Design & Technical Spec
 
 ## 1. Overview
 
@@ -98,7 +98,7 @@ An optional game mode toggled from the main menu. When enabled, a **Trap Setup P
 1. **Sequential Turns:** Players (1 through 8) take turns placing one **Hole** (trap) on the track, or pressing **SKIP** to pass.
 2. **Hidden Assignments:** Characters and their assigned lanes remain hidden and off-screen during setup to ensure trap placement is truly "blind."
 3. **Manual Scrolling:** For tracks exceeding the screen width (typically 100m+), wooden scroll buttons (`<` and `>`) allow players to navigate the entire length of the track during setup.
-4. **Visual Aids:** 
+4. **Visual Aids:**
    - A semi-transparent preview hole follows the cursor, snapping to the center of the nearest lane.
    - The remaining distance label is hidden to focus on trap placement.
    - Instructional text displays which player is currently active (e.g., "Player 1: Place a Trap!").
@@ -107,13 +107,13 @@ An optional game mode toggled from the main menu. When enabled, a **Trap Setup P
 
 ### B. Hole Mechanics
 
-| Property        | Value                                                              |
-| :-------------- | :----------------------------------------------------------------- |
-| **Alignment**   | Perfectly aligned with the lane center "path" and racer feet.      |
-| **Trigger**     | Racer X within 50px AND (`laneIndex` match OR Y within 10px).      |
-| **Effect**      | Full stop (`currentSpeed = 0`) + stun for ~1 second.               |
+| Property        | Value                                                                |
+| :-------------- | :------------------------------------------------------------------- |
+| **Alignment**   | Perfectly aligned with the lane center "path" and racer feet.        |
+| **Trigger**     | Racer X within 50px AND (`laneIndex` match OR Y within 10px).        |
+| **Effect**      | Full stop (`currentSpeed = 0`) + stun for ~1 second.                 |
 | **Immunity**    | **None.** Racers stop every time they hit a hole (encourages chaos). |
-| **Consumption** | Single-use — hole is removed after triggering.                     |
+| **Consumption** | Single-use — hole is removed after triggering.                       |
 
 ### C. Technical Implementation
 

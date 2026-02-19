@@ -62,7 +62,8 @@ export class MobileVerticalSelectionScene extends BaseCharacterSelectionScene {
     const cardVisualH = (RACER.HEIGHT + 15) * lineupScale;
 
     this.statusText.x = centerX;
-    this.statusText.y = this.lineupContainer.y + (isTwoRowLineup ? cardVisualH * 2 + 40 : cardVisualH + 30);
+    this.statusText.y =
+      this.lineupContainer.y + (isTwoRowLineup ? cardVisualH * 2 + 40 : cardVisualH + 30);
     this.statusText.style.fontSize = 16;
 
     const gridScale = 0.7;
@@ -76,12 +77,12 @@ export class MobileVerticalSelectionScene extends BaseCharacterSelectionScene {
     let i = 0;
     const totalItems = this.selectionSprites.size;
     const itemsArray = Array.from(this.selectionSprites.values());
-    
+
     for (let row = 0; i < totalItems; row++) {
       // Determine items in this row
       const itemsInRow = Math.min(cols, totalItems - row * cols);
       const rowWidth = (itemsInRow - 1) * spacingX;
-      
+
       for (let col = 0; col < itemsInRow; col++) {
         const item = itemsArray[i];
         item.x = col * spacingX - rowWidth / 2;

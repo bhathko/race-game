@@ -14,11 +14,11 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
     const count = this.lineupSprites.length;
     const lineupScale = this.getLineupScale();
     const cardVisualW = (RACER.WIDTH + 10) * lineupScale;
-    
+
     // Ensure at least 8px space between horizontal cards
     const spacing = cardVisualW + 8;
     const totalWidth = (count - 1) * spacing;
-    
+
     this.lineupSprites.forEach((sprite, i) => {
       sprite.x = i * spacing - totalWidth / 2;
       sprite.y = 0;
@@ -40,17 +40,17 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
     const spacingX = cardSize + 15;
     const spacingY = cardSize + 10;
     const cols = 5;
-    
+
     // const gridWidth = (Math.min(cols, this.selectionSprites.size) - 1) * spacingX;
 
     let i = 0;
     const totalItems = this.selectionSprites.size;
     const itemsArray = Array.from(this.selectionSprites.values());
-    
+
     for (let row = 0; i < totalItems; row++) {
       const itemsInRow = Math.min(cols, totalItems - row * cols);
       const rowWidth = (itemsInRow - 1) * spacingX;
-      
+
       for (let col = 0; col < itemsInRow; col++) {
         const item = itemsArray[i];
         item.x = col * spacingX - rowWidth / 2;
@@ -65,7 +65,7 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
     // Lineup Layout (Lower section)
     this.lineupContainer.x = centerX;
     // Position lineup relative to the bottom, but above the Start button area
-    this.lineupContainer.y = height - 70; 
+    this.lineupContainer.y = height - 70;
     this.repositionLineup();
 
     this.statusText.x = centerX;

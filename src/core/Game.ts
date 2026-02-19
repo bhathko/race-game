@@ -1,12 +1,11 @@
+import { Application, Container, Ticker, Assets, Texture, Rectangle } from "pixi.js";
 import {
-  Application,
-  Container,
-  Ticker,
-  Assets,
-  Texture,
-  Rectangle,
-} from "pixi.js";
-import { RaceScene, MenuScene, ResultScene, CharacterSelectionScene, LoadingScene } from "../scenes";
+  RaceScene,
+  MenuScene,
+  ResultScene,
+  CharacterSelectionScene,
+  LoadingScene,
+} from "../scenes";
 import { Racer } from "../entities";
 import { CHARACTERS, ITEMS } from "../config";
 import type { Scene } from "./Scene";
@@ -32,7 +31,7 @@ export class Game {
 
   private onResize() {
     if (this.currentScene) {
-      // Use requestAnimationFrame to ensure Pixi's 'resizeTo' logic 
+      // Use requestAnimationFrame to ensure Pixi's 'resizeTo' logic
       // has updated app.screen before we read from it.
       requestAnimationFrame(() => {
         if (this.currentScene) {
@@ -172,7 +171,7 @@ export class Game {
           this.showRaceScene(names, dist, selectedKeys, isFunnyMode);
         },
         () => this.showMenuScene(),
-        isFunnyMode // Pass to constructor
+        isFunnyMode, // Pass to constructor
       ),
     );
   }
@@ -201,13 +200,7 @@ export class Game {
   }
 
   showResultScene(results: Racer[]) {
-    this.setScene(
-      new ResultScene(
-        results,
-        () => this.showMenuScene(),
-        this.characterAnimations,
-      ),
-    );
+    this.setScene(new ResultScene(results, () => this.showMenuScene(), this.characterAnimations));
   }
 
   // ── helpers ─────────────────────────────────────────────────────────────

@@ -24,8 +24,8 @@ export class DesktopMenuScene extends BaseMenuScene {
     this.countStepper.x = centerX;
     this.countStepper.y = valueY1;
 
-    const labelY2 = height * 0.50;
-    const valueY2 = height * 0.60;
+    const labelY2 = height * 0.5;
+    const valueY2 = height * 0.6;
     this.distLabel.x = centerX;
     this.distLabel.y = labelY2;
     this.distValue.x = centerX;

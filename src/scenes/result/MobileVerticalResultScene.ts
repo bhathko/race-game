@@ -22,7 +22,7 @@ export class MobileVerticalResultScene extends BaseResultScene {
     const topSpace = height * 0.2;
     const maxSidebarH = height - topSpace - btnH - btnPad - bottomMargin;
     const sidebarH = Math.max(150, Math.min(maxSidebarH, 600));
-    
+
     this.leaderboardSidebar.setShowList(true);
     this.leaderboardSidebar.resize(sidebarW, sidebarH);
     this.leaderboardSidebar.x = centerX - sidebarW / 2;

@@ -26,7 +26,7 @@ export class MobileHorizontalMenuScene extends BaseMenuScene {
 
     // Split count and distance into two columns
     this.countLabel.x = leftX;
-    this.countLabel.y = height * 0.30;
+    this.countLabel.y = height * 0.3;
     this.countValue.x = leftX;
     this.countValue.y = height * 0.48;
     this.countStepper.x = leftX;
@@ -34,7 +34,7 @@ export class MobileHorizontalMenuScene extends BaseMenuScene {
     this.countStepper.scale.set(0.7);
 
     this.distLabel.x = rightX;
-    this.distLabel.y = height * 0.30;
+    this.distLabel.y = height * 0.3;
     this.distValue.x = rightX;
     this.distValue.y = height * 0.48;
     this.distStepper.x = rightX;

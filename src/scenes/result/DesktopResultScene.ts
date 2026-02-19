@@ -22,7 +22,7 @@ export class DesktopResultScene extends BaseResultScene {
     const topSpace = height * 0.22;
     const maxSidebarH = height - topSpace - btnH - btnPad - bottomMargin;
     const sidebarH = Math.max(200, Math.min(maxSidebarH, 700));
-    
+
     this.leaderboardSidebar.setShowList(true);
     this.leaderboardSidebar.resize(sidebarW, sidebarH);
     this.leaderboardSidebar.x = centerX - sidebarW / 2;
