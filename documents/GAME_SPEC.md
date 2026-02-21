@@ -1,4 +1,4 @@
-e # 🏁 Choice Race — Game Design & Technical Spec
+# 🏁 Choice Race — Game Design & Technical Spec
 
 ## 1. Overview
 
@@ -8,12 +8,13 @@ e # 🏁 Choice Race — Game Design & Technical Spec
 
 - **Engine:** Pixi.js v8 (WebGPU/WebGL)
 - **Framework:** TypeScript + Vite
+- **Pattern: 12-Column Grid:** Every scene utilizes a centralized grid system (`src/core/utils.ts`) for proportional layout and alignment.
 - **Pattern: Responsive Controller:** Scenes are "Controllers" that manage specialized "Layout" subclasses (Desktop, MobileVertical, MobileHorizontal).
-- **Pattern: Dependency Grouping:** Layout constructors utilize **Scene Context** interfaces (e.g., `RaceContext`) to unify dependencies and simplify maintenance.
+- **Pattern: Dependency Grouping:** Layout constructors utilize **Scene Context** interfaces (e.g., `RaceContext`) to unify dependencies.
 - **Pattern: Barrel:** Uses `index.ts` files to provide clean, centralized module access.
-- **Pattern: Strategy:** AI behavior is encapsulated in `StrategyBehavior` implementations, controlling stamina management and sprint triggers.
-- **Pattern: Factory:** `RacerFactory` handles randomized stat generation, character assignment, and strategy selection.
-- **Scene Lifecycle:** Managed by `Game.ts`, implementing robust **Orientation Handling** with `requestAnimationFrame` to ensure stable UI rerendering on mobile rotation.
+- **Pattern: Strategy:** AI behavior is encapsulated in `StrategyBehavior` implementations.
+- **Pattern: Factory:** `RacerFactory` handles randomized stat generation and character assignment.
+- **Scene Lifecycle:** Managed by `Game.ts`, implementing robust **Orientation Handling** with state preservation.
 
 ## 3. The Core Stat Trifecta
 
@@ -32,13 +33,11 @@ All rank-based multipliers use a continuous normalized rank `t = (rank - 1) / (t
 ### A. The Slingshot (Acceleration Multiplier)
 
 Trailing racers gain higher torque to recover from mistakes or stamina crashes.
-
 - **Formula:** `A_final = A_base × (1 + t × 0.56)`
 
 ### B. The Slipstream & Deep-Trailing Boost
 
 Chasers "slice" through resistance, allowing a higher top speed than the leader.
-
 - **Slipstream:** `V_max_base × (1 + t × 0.25)`
 - **Deep-Trailing:** Quadratic extra speed boost for bottom-half racers.
 
@@ -65,7 +64,6 @@ Racers walk from off-screen to the start line before the countdown begins.
 ### B. The Climax Phase (Final 20 %)
 
 Triggered when any racer enters the final 20 % of the track:
-
 - **Enhanced Recovery:** 1.5× recovery multiplier for all.
 - **Overdrive:** Speed boost for the top trailing racers within range of the leader.
 - **All-In Sprint:** Strategy constraints are ignored for a final dash.
@@ -81,41 +79,30 @@ Triggered when any racer enters the final 20 % of the track:
 
 ## 8. Visual Design & UI
 
-- **Theme:** Nature-themed racing with solid green backgrounds and lighter oak wood UI.
-- **Design System:** Centralized `PALETTE` token system in `config.ts`.
+- **Theme:** Natural Earthy Aesthetic with Forest Green backgrounds.
+- **Redesign:** 3D multi-layered wooden buttons with organic grain and tactile click animations.
+- **Design System:** Centralized `PALETTE` and 12-column grid system.
 - **Responsive Layouts:**
-  - **Desktop:** Sidebar leaderboard, full race view.
-  - **Mobile Portrait:** Bottom-docked leaderboard, vertical lineup.
-  - **Mobile Landscape:** Compact sidebar or split-screen result view, optimized for height.
-- **Aesthetics:** **Podium-style leaderboard** for top 3 winners, animated pixel-art characters.
+  - **Desktop:** Unified centered ranking component (Podium + List).
+  - **Mobile Portrait:** Bottom-docked ranking list, hidden racer names/stamina during race.
+  - **Mobile Landscape:** Specialized split-screen result view (Winner/Podium on left, List on right) to optimize for short screen height.
+- **Aesthetics:** **Animated pixel-art characters** with specialized idle and walk states.
 
 ## 9. Funny Mode (Trap Mechanic)
 
-An optional game mode toggled from the main menu. When enabled, a **Trap Setup Phase** occurs before the racer entrance and the race countdown.
+Optional mode where players place **Hole** (trap) obstacles.
 
 ### A. Setup Phase Flow
 
-1. **Sequential Turns:** Players (1 through 8) take turns placing one **Hole** (trap) on the track, or pressing **SKIP** to pass.
-2. **Hidden Assignments:** Characters and their assigned lanes remain hidden and off-screen during setup to ensure trap placement is truly "blind."
-3. **Manual Scrolling:** For tracks exceeding the screen width (typically 100m+), wooden scroll buttons (`<` and `>`) allow players to navigate the entire length of the track during setup.
-4. **Visual Aids:**
-   - A semi-transparent preview hole follows the cursor, snapping to the center of the nearest lane.
-   - The remaining distance label is hidden to focus on trap placement.
-   - Instructional text displays which player is currently active (e.g., "Player 1: Place a Trap!").
-5. **Start Match:** Once all players have finished, the **START MATCH** button appears.
-6. **Transition:** Clicking START MATCH hides the setup UI, resets the camera, and triggers the racer entrance walk. The camera smoothly follows the racers as they move to the start line.
+1. **Blind Placement:** Players place traps before lanes and racers are revealed.
+2. **Scrolling:** Scroll buttons allow placement across tracks up to 200m.
+3. **Start Match:** Triggers racer entrance once all players have finished setup.
 
 ### B. Hole Mechanics
 
 | Property        | Value                                                                |
 | :-------------- | :------------------------------------------------------------------- |
-| **Alignment**   | Perfectly aligned with the lane center "path" and racer feet.        |
-| **Trigger**     | Racer X within 50px AND (`laneIndex` match OR Y within 10px).        |
-| **Effect**      | Full stop (`currentSpeed = 0`) + stun for ~1 second.                 |
-| **Immunity**    | **None.** Racers stop every time they hit a hole (encourages chaos). |
+| **Alignment**   | Aligned with racer feet using `RACER.Y_OFFSET`.                      |
+| **Trigger**     | Proximity-based detection.                                           |
+| **Effect**      | Momentary stun; racer must re-accelerate from 0.                     |
 | **Consumption** | Single-use — hole is removed after triggering.                       |
-
-### C. Technical Implementation
-
-- **Lane Locking:** Holes store their `laneIndex` to ensure consistent positioning during window resizes and reliable collision detection regardless of character sprite size.
-- **Feet-Based Y:** Both racers and holes use the character's feet position as the Y-axis reference, ensuring perfect visual alignment on the dirt track.

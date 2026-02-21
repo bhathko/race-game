@@ -9,18 +9,22 @@ The project utilizes the **Barrel Pattern** (`index.ts` files) to centralize mod
 - `documents/`: Project documentation (`spec.md`, `DEVELOPMENT.md`).
 - `src/main.ts`: Entry point — creates the Pixi Application and Game controller.
 - `src/config.ts`: Grouped configuration constants.
-- `src/core/`: Core framework, scene lifecycle, and shared types (includes `index.ts`).
+- `src/core/`: Core engine components and shared types.
+  - `utils.ts`: Includes the **12-Column Grid System** for unified layout management.
 - `src/entities/`: Game entities (includes `index.ts`).
 - `src/strategies/`: AI Strategy Pattern implementations (includes `index.ts`).
 - `src/factories/`: Factory Pattern implementations (includes `index.ts`).
 - `src/scenes/`: Responsive Controller Pattern.
   - Controllers (`MenuScene`, etc.) manage switching between specialized layout subclasses.
-  - `LoadingScene.ts`: Initial scene displaying asset loading progress.
-  - Subdirectories (`menu/`, `race/`, `result/`, `selection/`) contain `Base` classes and layout views for `Desktop`, `MobileVertical`, and `MobileHorizontal`.
+  - Subdirectories (`loading/`, `menu/`, `race/`, `result/`, `selection/`) contain `Base` classes and layout views for `Desktop`, `MobileVertical`, and `MobileHorizontal`.
 - `src/ui/`: Reusable UI components (includes `index.ts`).
 - `public/assets/`: Static assets (characters, items, sound).
 
 ## Design Patterns
+
+### 12-Column Grid Layout (`src/core/utils.ts`)
+
+A centralized utility system that ensures consistent UI alignment, gutters, and margins across all screen sizes. Every scene calculates its layout based on these grid proportions.
 
 ### Responsive Controller Pattern (`src/scenes/`)
 
@@ -38,18 +42,14 @@ Each racer receives a `StrategyBehavior` object controlling stat multipliers, sp
 
 `createRacers()` factory encapsulates Gaussian stat generation, character shuffling, and strategy assignment.
 
-### Barrel Pattern (`index.ts`)
-
-Major directories use barrel files to simplify imports (e.g., `import { Racer } from "../entities"`) and define public APIs.
-
 ## Key Features
 
 - **Nature-Themed Aesthetic:** Dirt racetrack with grass edges and animated pixel-art trees.
-- **Farming-Sim UI:** Story of Seasons–inspired podium leaderboard and wooden buttons.
-- **Loading Progress:** Real-time visual feedback while large assets (characters, music) are loading.
-- **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations without progress loss.
+- **Hand-Crafted UI:** Earthy color palette (Forest Green, Terracotta, Stone) with 3D multi-layered wooden buttons and organic textures.
+- **Loading Progress:** Real-time visual feedback with specialized responsive layouts for every orientation.
+- **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations (including specialized Landscape split-layouts) without progress loss.
 - **Comeback Engine:** Continuous rank-based multipliers keep races competitive through the finish.
-- **Funny Mode:** Optional trap-placement phase where players place Holes on the track before the race. Racers that hit a Hole are stunned for ~1 second. Supports 2–8 players with skip option.
+- **Funny Mode:** Optional blind trap-placement phase where players place Holes on the track. Racers that hit a Hole are stunned and must re-accelerate.
 
 ## Building and Running
 

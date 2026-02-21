@@ -82,6 +82,10 @@ public/
 
 ## Architecture & Design Patterns
 
+### 12-Column Grid System
+
+Every scene utilizes a centralized grid system (`src/core/utils.ts`) to ensure consistent alignment, adaptive gutters, and proportional layouts across all screen sizes.
+
 ### Responsive Controller Pattern
 
 Each main scene acts as a **Controller** that manages specialized layout subclasses for Desktop, Mobile Portrait, and Mobile Landscape.
