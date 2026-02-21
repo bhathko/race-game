@@ -1,5 +1,6 @@
 import { BaseCharacterSelectionScene } from "./BaseCharacterSelectionScene";
 import type { SelectionContext } from "../../core";
+import { getStandardGridConfig } from "../../core";
 
 export class DesktopSelectionScene extends BaseCharacterSelectionScene {
   constructor(ctx: SelectionContext, initialSelectedKeys: string[] = []) {
@@ -20,6 +21,7 @@ export class DesktopSelectionScene extends BaseCharacterSelectionScene {
 
   public resize(width: number, height: number): void {
     const centerX = width / 2;
+    const grid = getStandardGridConfig(width);
 
     this.bg.clear().rect(0, 0, width, height).fill({ color: 0x81c784 }); // Nature green
 
@@ -38,7 +40,6 @@ export class DesktopSelectionScene extends BaseCharacterSelectionScene {
     const cols = 8;
     const spacingX = 110;
     const spacingY = 110;
-    // const gridWidth = (Math.min(cols, this.selectionSprites.size) - 1) * spacingX;
 
     let i = 0;
     const totalItems = this.selectionSprites.size;
@@ -64,7 +65,7 @@ export class DesktopSelectionScene extends BaseCharacterSelectionScene {
     this.startBtn.y = height - 60;
     this.startBtn.scale.set(1.0);
 
-    this.backBtn.x = 80;
+    this.backBtn.x = grid.margin + 40;
     this.backBtn.y = 40;
     this.backBtn.scale.set(1.0);
   }

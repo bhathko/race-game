@@ -1,14 +1,12 @@
 import { Container } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import type { RacerAnimations, SelectionContext } from "../core/types";
+import { type RacerAnimations, type SelectionContext, LayoutMode, determineMode } from "../core";
 import {
   BaseCharacterSelectionScene,
   DesktopSelectionScene,
   MobileVerticalSelectionScene,
   MobileHorizontalSelectionScene,
 } from "./selection";
-
-type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
 /**
  * Controller scene that manages switching between different device-specific layouts.
@@ -40,21 +38,13 @@ export class CharacterSelectionScene extends Container implements Scene {
   }
 
   public resize(width: number, height: number): void {
-    const newMode = this.determineMode(width, height);
+    const newMode = determineMode(width, height);
 
     if (newMode !== this.currentMode) {
       this.switchLayout(newMode, width, height);
     } else if (this.currentLayout) {
       this.currentLayout.resize(width, height);
     }
-  }
-
-  private determineMode(width: number, height: number): LayoutMode {
-    const isMobile = width < 600 || height < 500;
-    const isPortrait = height > width;
-
-    if (!isMobile) return "desktop";
-    return isPortrait ? "mobile-vertical" : "mobile-horizontal";
   }
 
   private switchLayout(mode: LayoutMode, width: number, height: number): void {
@@ -69,13 +59,13 @@ export class CharacterSelectionScene extends Container implements Scene {
 
     // Factory for new layout
     switch (mode) {
-      case "desktop":
+      case LayoutMode.Desktop:
         this.currentLayout = new DesktopSelectionScene(this.context, this.selectedKeys);
         break;
-      case "mobile-vertical":
+      case LayoutMode.MobileVertical:
         this.currentLayout = new MobileVerticalSelectionScene(this.context, this.selectedKeys);
         break;
-      case "mobile-horizontal":
+      case LayoutMode.MobileHorizontal:
         this.currentLayout = new MobileHorizontalSelectionScene(this.context, this.selectedKeys);
         break;
     }

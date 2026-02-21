@@ -1,6 +1,6 @@
 import { Container } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import type { RacerAnimations, ResultContext } from "../core/types";
+import { type RacerAnimations, type ResultContext, LayoutMode, determineMode } from "../core";
 import { Racer } from "../entities";
 import {
   BaseResultScene,
@@ -8,8 +8,6 @@ import {
   MobileVerticalResultScene,
   MobileHorizontalResultScene,
 } from "./result";
-
-type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
 export class ResultScene extends Container implements Scene {
   private context: ResultContext;
@@ -30,21 +28,13 @@ export class ResultScene extends Container implements Scene {
   }
 
   public resize(width: number, height: number): void {
-    const newMode = this.determineMode(width, height);
+    const newMode = determineMode(width, height);
 
     if (newMode !== this.currentMode) {
       this.switchLayout(newMode, width, height);
     } else if (this.currentLayout) {
       this.currentLayout.resize(width, height);
     }
-  }
-
-  private determineMode(width: number, height: number): LayoutMode {
-    const isMobile = width < 600 || height < 500;
-    const isPortrait = height > width;
-
-    if (!isMobile) return "desktop";
-    return isPortrait ? "mobile-vertical" : "mobile-horizontal";
   }
 
   private switchLayout(mode: LayoutMode, width: number, height: number): void {
@@ -56,13 +46,13 @@ export class ResultScene extends Container implements Scene {
     this.currentMode = mode;
 
     switch (mode) {
-      case "desktop":
+      case LayoutMode.Desktop:
         this.currentLayout = new DesktopResultScene(this.context);
         break;
-      case "mobile-vertical":
+      case LayoutMode.MobileVertical:
         this.currentLayout = new MobileVerticalResultScene(this.context);
         break;
-      case "mobile-horizontal":
+      case LayoutMode.MobileHorizontal:
         this.currentLayout = new MobileHorizontalResultScene(this.context);
         break;
     }

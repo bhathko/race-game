@@ -3,6 +3,7 @@ import type { RaceState } from "./BaseRaceScene";
 import { COLORS, PALETTE, VISUALS } from "../../config";
 import { Graphics, Text } from "pixi.js";
 import type { RaceContext } from "../../core";
+import { getGridRect, getStandardGridConfig } from "../../core";
 
 export class MobileHorizontalRaceScene extends BaseRaceScene {
   constructor(ctx: RaceContext, existingState?: RaceState) {
@@ -11,9 +12,12 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
 
   public resize(width: number, height: number) {
     this.isPortrait = false;
-    const lbW = 140;
+    const grid = getStandardGridConfig(width);
+    const trackRect = getGridRect(0, 9, grid);
+    const sidebarRect = getGridRect(9, 3, grid);
+
     this.gameViewH = height;
-    this.gameViewW = width - lbW;
+    this.gameViewW = trackRect.width + grid.margin;
 
     this.worldMask
       .clear()
@@ -23,11 +27,11 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
     const sidebarBg = this.uiManager.getSidebarBg();
     sidebarBg
       .clear()
-      .rect(this.gameViewW, 0, lbW, height)
+      .rect(this.gameViewW, 0, width - this.gameViewW, height)
       .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
 
     const lbContainer = this.uiManager.getLeaderboardContainer();
-    lbContainer.x = this.gameViewW + 5;
+    lbContainer.x = sidebarRect.x;
     lbContainer.y = 10;
 
     const title = lbContainer.getChildByLabel("leaderboard-title");
@@ -69,7 +73,10 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
     }
 
     const items = um.getLeaderboardItems();
+    const grid = getStandardGridConfig(this.width);
+    const sidebarWidth = getGridRect(9, 3, grid).width;
     const itemH = 45;
+
     um.sortedRacersCache.forEach((racer, index) => {
       const container = items.get(racer);
       if (!container) return;
@@ -88,7 +95,7 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
         else if (index === 1) color = COLORS.RANK_SILVER;
         else if (index === 2) color = COLORS.RANK_BRONZE;
         bg.clear()
-          .roundRect(0, 0, 130, itemH - 5, 4)
+          .roundRect(0, 0, sidebarWidth, itemH - 5, 4)
           .fill({ color: PALETTE.BLACK, alpha: 0.5 })
           .stroke({ color, width: index < 3 ? 3 : 1 });
       }

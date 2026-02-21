@@ -160,24 +160,17 @@ export abstract class BaseRaceScene extends Container implements Scene {
       this.racers.length,
       this.distance,
     );
-    if (!this.isFunnyMode) {
+    if (this.isFunnyMode) {
+      // Reposition holes on orientation change
+      this.holes.forEach((h) => {
+        if (h.laneIndex !== -1) {
+          h.y = this.trackManager.getLaneRacerY(h.laneIndex, this.gameViewH, this.racers.length);
+        }
+      });
+    } else {
+      // Clean up any stray holes in normal mode
       this.holes.forEach((h) => this.world.removeChild(h));
       this.holes = [];
-      const totalDistPx = this.finishLineX - TRACK.START_LINE_X;
-      for (let i = 0; i < this.racers.length; i++) {
-        const hole = new Hole();
-        hole.x = TRACK.START_LINE_X + (0.2 + Math.random() * 0.6) * totalDistPx;
-        hole.y = this.trackManager.getLaneRacerY(i, this.gameViewH, this.racers.length);
-        hole.laneIndex = i;
-        this.holes.push(hole);
-        this.world.addChild(hole);
-        this.world.setChildIndex(hole, this.world.getChildIndex(this.trackManager) + 1);
-      }
-    } else {
-      this.holes.forEach((h) => {
-        if (h.laneIndex !== -1)
-          h.y = this.trackManager.getLaneRacerY(h.laneIndex, this.gameViewH, this.racers.length);
-      });
     }
   }
 

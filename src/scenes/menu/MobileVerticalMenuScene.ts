@@ -1,6 +1,7 @@
 import { BaseMenuScene } from "./BaseMenuScene";
 import { PALETTE } from "../../config";
 import type { MenuContext } from "../../core";
+import { getStandardGridConfig } from "../../core";
 
 export class MobileVerticalMenuScene extends BaseMenuScene {
   constructor(ctx: MenuContext) {
@@ -8,6 +9,7 @@ export class MobileVerticalMenuScene extends BaseMenuScene {
   }
   public resize(width: number, height: number) {
     const centerX = width / 2;
+    const grid = getStandardGridConfig(width);
 
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
@@ -18,7 +20,7 @@ export class MobileVerticalMenuScene extends BaseMenuScene {
     this.title.scale.set(1); // Reset scale first
 
     // Check if title is too wide
-    const maxTitleWidth = width * 0.9;
+    const maxTitleWidth = width - 2 * grid.margin;
     if (this.title.width > maxTitleWidth) {
       const scale = maxTitleWidth / this.title.width;
       this.title.scale.set(scale);
@@ -53,7 +55,7 @@ export class MobileVerticalMenuScene extends BaseMenuScene {
     this.startBtn.scale.set(0.8);
 
     // Version Text
-    this.versionText.x = width - 10;
-    this.versionText.y = height - 10;
+    this.versionText.x = width - grid.margin;
+    this.versionText.y = height - grid.margin / 2;
   }
 }

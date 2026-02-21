@@ -1,8 +1,9 @@
 import { BaseRaceScene } from "./BaseRaceScene";
 import type { RaceState } from "./BaseRaceScene";
-import { CANVAS, COLORS, PALETTE, VISUALS } from "../../config";
+import { COLORS, PALETTE, VISUALS } from "../../config";
 import { Graphics, Text } from "pixi.js";
 import type { RaceContext } from "../../core";
+import { getGridRect, getStandardGridConfig } from "../../core";
 
 export class DesktopRaceScene extends BaseRaceScene {
   constructor(ctx: RaceContext, existingState?: RaceState) {
@@ -11,8 +12,12 @@ export class DesktopRaceScene extends BaseRaceScene {
 
   public resize(width: number, height: number) {
     this.isPortrait = false;
+    const grid = getStandardGridConfig(width);
+    const trackRect = getGridRect(0, 10, grid);
+    const sidebarRect = getGridRect(10, 2, grid);
+
     this.gameViewH = height;
-    this.gameViewW = width - CANVAS.UI_WIDTH;
+    this.gameViewW = trackRect.width + grid.margin; // Include margin for the track
 
     this.worldMask
       .clear()
@@ -22,7 +27,7 @@ export class DesktopRaceScene extends BaseRaceScene {
     const sidebarBg = this.uiManager.getSidebarBg();
     sidebarBg
       .clear()
-      .rect(this.gameViewW, 0, CANVAS.UI_WIDTH, height)
+      .rect(this.gameViewW, 0, width - this.gameViewW, height)
       .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
 
     for (let x = this.gameViewW + 5; x < width; x += 15) {
@@ -30,7 +35,7 @@ export class DesktopRaceScene extends BaseRaceScene {
     }
 
     const lbContainer = this.uiManager.getLeaderboardContainer();
-    lbContainer.x = this.gameViewW + 15;
+    lbContainer.x = sidebarRect.x;
     lbContainer.y = 20;
 
     const title = lbContainer.getChildByLabel("leaderboard-title");
@@ -39,8 +44,7 @@ export class DesktopRaceScene extends BaseRaceScene {
       title.y = 0;
     }
 
-    const unitWidth = Math.max(this.gameViewW, CANVAS.MIN_UNIT_WIDTH);
-    this.finishLineX = 50 + (this.distance / 50) * unitWidth;
+    this.finishLineX = 50 + (this.distance / 50) * this.gameViewW;
     this.trackWidth = this.finishLineX + 200;
 
     this.setupTracks();
@@ -74,6 +78,9 @@ export class DesktopRaceScene extends BaseRaceScene {
     }
 
     const items = um.getLeaderboardItems();
+    const grid = getStandardGridConfig(this.width);
+    const sidebarWidth = getGridRect(10, 2, grid).width;
+
     um.sortedRacersCache.forEach((racer, index) => {
       const container = items.get(racer);
       if (!container) return;
@@ -92,7 +99,7 @@ export class DesktopRaceScene extends BaseRaceScene {
         else if (index === 1) color = COLORS.RANK_SILVER;
         else if (index === 2) color = COLORS.RANK_BRONZE;
         bg.clear()
-          .roundRect(0, 0, CANVAS.UI_WIDTH - 30, 36, 4)
+          .roundRect(0, 0, sidebarWidth, 36, 4)
           .fill({ color: PALETTE.BLACK, alpha: 0.5 })
           .stroke({ color, width: index < 3 ? 3 : 1 });
       }

@@ -1,6 +1,7 @@
 import { BaseCharacterSelectionScene } from "./BaseCharacterSelectionScene";
 import { RACER } from "../../config";
 import type { SelectionContext } from "../../core";
+import { getStandardGridConfig } from "../../core";
 
 export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene {
   constructor(ctx: SelectionContext, initialSelectedKeys: string[] = []) {
@@ -27,6 +28,8 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
 
   public resize(width: number, height: number): void {
     const centerX = width / 2;
+    const grid = getStandardGridConfig(width);
+
     this.bg.clear().rect(0, 0, width, height).fill({ color: 0x81c784 });
 
     this.title.x = centerX;
@@ -40,8 +43,6 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
     const spacingX = cardSize + 15;
     const spacingY = cardSize + 10;
     const cols = 5;
-
-    // const gridWidth = (Math.min(cols, this.selectionSprites.size) - 1) * spacingX;
 
     let i = 0;
     const totalItems = this.selectionSprites.size;
@@ -74,11 +75,11 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
 
     // Controls
     this.startBtn.scale.set(0.6);
-    this.startBtn.x = width - 90;
+    this.startBtn.x = width - grid.margin - 50;
     this.startBtn.y = height - 40;
 
     this.backBtn.scale.set(0.5);
-    this.backBtn.x = 45;
+    this.backBtn.x = grid.margin + 30;
     this.backBtn.y = 25;
   }
 }

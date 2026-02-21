@@ -1,6 +1,7 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { COLORS, PALETTE } from "../../config";
 import { LeaderboardSidebar, createWoodenButton } from "../../ui";
+import { LeaderboardPodium } from "../../ui/leaderboard/LeaderboardPodium";
 import type { RankEntry } from "../../ui";
 import type { ResultContext } from "../../core";
 
@@ -8,6 +9,7 @@ export abstract class BaseResultScene extends Container {
   protected onRestart: () => void;
   protected bg: Graphics;
   protected winnerText: Text;
+  protected podium: LeaderboardPodium;
   protected leaderboardSidebar: LeaderboardSidebar;
   protected restartBtn: Container;
 
@@ -52,7 +54,13 @@ WINS!`,
       character: racer.characterKey,
     }));
 
+    // Create a standalone podium
+    this.podium = new LeaderboardPodium(entries, 400, ctx.characterAnimations);
+    this.addChild(this.podium);
+
+    // Create sidebar for the full list (without the internal podium)
     this.leaderboardSidebar = new LeaderboardSidebar(entries, 300, 480, ctx.characterAnimations);
+    this.leaderboardSidebar.setShowPodium(false);
     this.addChild(this.leaderboardSidebar);
 
     this.restartBtn = createWoodenButton({
@@ -68,5 +76,8 @@ WINS!`,
 
   update(delta: number) {
     this.leaderboardSidebar.update(delta);
+    if (this.podium) {
+      this.podium.update(delta);
+    }
   }
 }

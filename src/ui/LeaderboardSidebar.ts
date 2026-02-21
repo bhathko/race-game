@@ -20,6 +20,7 @@ export class LeaderboardSidebar extends Container {
   private sidebarH: number;
   private animations: Map<string, RacerAnimations> | null;
   private showList = true;
+  private showPodium = true;
   private elapsed = 0;
 
   constructor(
@@ -73,8 +74,11 @@ export class LeaderboardSidebar extends Container {
     }
 
     this.drawBackground();
-    this.podium = new LeaderboardPodium(this.entries, this.sidebarW, this.animations);
-    this.addChild(this.podium);
+
+    if (this.showPodium) {
+      this.podium = new LeaderboardPodium(this.entries, this.sidebarW, this.animations);
+      this.addChild(this.podium);
+    }
 
     if (this.showList) {
       this.list = new LeaderboardList(this.entries, this.sidebarW, this.animations);
@@ -112,15 +116,14 @@ export class LeaderboardSidebar extends Container {
     }
     if (this.list) {
       this.list.x = 18;
-      this.list.y = 250;
+      this.list.y = this.showPodium ? 250 : 70;
     }
   }
 
   update(delta: number) {
     this.elapsed += delta;
     if (this.podium) {
-      const alpha = 0.12 + Math.sin(this.elapsed * 0.06) * 0.06;
-      this.podium.glowGraphics.forEach((g) => (g.alpha = alpha / 0.15));
+      this.podium.update(delta);
     }
   }
 
@@ -135,6 +138,10 @@ export class LeaderboardSidebar extends Container {
   }
   public setShowList(v: boolean) {
     this.showList = v;
+    this.refresh();
+  }
+  public setShowPodium(v: boolean) {
+    this.showPodium = v;
     this.refresh();
   }
 }

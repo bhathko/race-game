@@ -1,12 +1,17 @@
 import { BaseMenuScene } from "./BaseMenuScene";
 import { PALETTE } from "../../config";
 import type { MenuContext } from "../../core";
+import { getGridRect, getStandardGridConfig } from "../../core";
 
 export class MobileHorizontalMenuScene extends BaseMenuScene {
   constructor(ctx: MenuContext) {
     super(ctx);
   }
   public resize(width: number, height: number) {
+    const grid = getStandardGridConfig(width);
+    const leftCol = getGridRect(0, 6, grid);
+    const rightCol = getGridRect(6, 6, grid);
+
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
     this.title.x = width / 2;
@@ -14,15 +19,15 @@ export class MobileHorizontalMenuScene extends BaseMenuScene {
     this.title.style.fontSize = 32;
     this.title.scale.set(1);
 
-    const maxTitleWidth = width * 0.9;
+    const maxTitleWidth = width - 2 * grid.margin;
     if (this.title.width > maxTitleWidth) {
       const scale = maxTitleWidth / this.title.width;
       this.title.scale.set(scale);
     }
 
     const centerX = width / 2;
-    const leftX = width * 0.25;
-    const rightX = width * 0.75;
+    const leftX = leftCol.x + leftCol.width / 2;
+    const rightX = rightCol.x + rightCol.width / 2;
 
     // Split count and distance into two columns
     this.countLabel.x = leftX;
@@ -49,7 +54,7 @@ export class MobileHorizontalMenuScene extends BaseMenuScene {
     this.startBtn.y = height - 35;
     this.startBtn.scale.set(0.65);
 
-    this.versionText.x = width - 10;
-    this.versionText.y = height - 10;
+    this.versionText.x = width - grid.margin;
+    this.versionText.y = height - grid.margin / 2;
   }
 }

@@ -1,8 +1,14 @@
-import { Container } from "pixi.js";
+import { Container, Texture } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import type { RacerAnimations, GroundTextures, GrassTextures, RaceContext } from "../core/types";
+import {
+  type RacerAnimations,
+  type GroundTextures,
+  type GrassTextures,
+  type RaceContext,
+  LayoutMode,
+  determineMode,
+} from "../core";
 import { Racer } from "../entities";
-import { Texture } from "pixi.js";
 import {
   BaseRaceScene,
   DesktopRaceScene,
@@ -10,8 +16,6 @@ import {
   MobileHorizontalRaceScene,
 } from "./race";
 import type { RaceState } from "./race";
-
-type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
 export class RaceScene extends Container implements Scene {
   private context: RaceContext;
@@ -44,21 +48,13 @@ export class RaceScene extends Container implements Scene {
   }
 
   public resize(width: number, height: number): void {
-    const newMode = this.determineMode(width, height);
+    const newMode = determineMode(width, height);
 
     if (newMode !== this.currentMode) {
       this.switchLayout(newMode, width, height);
     } else if (this.currentLayout) {
       this.currentLayout.resize(width, height);
     }
-  }
-
-  private determineMode(width: number, height: number): LayoutMode {
-    const isMobile = width < 600 || height < 500;
-    const isPortrait = height > width;
-
-    if (!isMobile) return "desktop";
-    return isPortrait ? "mobile-vertical" : "mobile-horizontal";
   }
 
   private switchLayout(mode: LayoutMode, width: number, height: number): void {
@@ -74,13 +70,13 @@ export class RaceScene extends Container implements Scene {
     this.currentMode = mode;
 
     switch (mode) {
-      case "desktop":
+      case LayoutMode.Desktop:
         this.currentLayout = new DesktopRaceScene(this.context, existingState);
         break;
-      case "mobile-vertical":
+      case LayoutMode.MobileVertical:
         this.currentLayout = new MobileVerticalRaceScene(this.context, existingState);
         break;
-      case "mobile-horizontal":
+      case LayoutMode.MobileHorizontal:
         this.currentLayout = new MobileHorizontalRaceScene(this.context, existingState);
         break;
     }

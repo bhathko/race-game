@@ -1,6 +1,15 @@
 import { Texture } from "pixi.js";
 import type { Racer } from "../entities";
 
+/** Layout mode based on screen size and orientation. */
+export const LayoutMode = {
+  Desktop: "desktop",
+  MobileVertical: "mobile-vertical",
+  MobileHorizontal: "mobile-horizontal",
+} as const;
+
+export type LayoutMode = (typeof LayoutMode)[keyof typeof LayoutMode];
+
 /** Sprite-sheet animation frames for a racer character. */
 export interface RacerAnimations {
   idle: Texture[];

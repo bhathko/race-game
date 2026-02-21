@@ -1,6 +1,7 @@
 import { BaseMenuScene } from "./BaseMenuScene";
 import { PALETTE } from "../../config";
 import type { MenuContext } from "../../core";
+import { getStandardGridConfig } from "../../core";
 
 export class DesktopMenuScene extends BaseMenuScene {
   constructor(ctx: MenuContext) {
@@ -8,6 +9,7 @@ export class DesktopMenuScene extends BaseMenuScene {
   }
   public resize(width: number, height: number) {
     const centerX = width / 2;
+    const grid = getStandardGridConfig(width);
 
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
@@ -40,7 +42,7 @@ export class DesktopMenuScene extends BaseMenuScene {
     this.startBtn.y = height * 0.86;
     this.startBtn.scale.set(1.0);
 
-    this.versionText.x = width - 20;
-    this.versionText.y = height - 20;
+    this.versionText.x = width - grid.margin;
+    this.versionText.y = height - grid.margin / 2;
   }
 }

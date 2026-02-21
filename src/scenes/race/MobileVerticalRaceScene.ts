@@ -3,6 +3,7 @@ import type { RaceState } from "./BaseRaceScene";
 import { COLORS, PALETTE, VISUALS } from "../../config";
 import { Graphics, Text } from "pixi.js";
 import type { RaceContext } from "../../core";
+import { getStandardGridConfig } from "../../core";
 
 export class MobileVerticalRaceScene extends BaseRaceScene {
   constructor(ctx: RaceContext, existingState?: RaceState) {
@@ -11,6 +12,7 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
 
   public resize(width: number, height: number) {
     this.isPortrait = true;
+    const grid = getStandardGridConfig(width);
     const lbH = 120;
     this.gameViewH = height - lbH;
     this.gameViewW = width;
@@ -27,7 +29,7 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
       .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
 
     const lbContainer = this.uiManager.getLeaderboardContainer();
-    lbContainer.x = 10;
+    lbContainer.x = grid.margin;
     lbContainer.y = this.gameViewH + 10;
 
     const title = lbContainer.getChildByLabel("leaderboard-title");
@@ -69,11 +71,13 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
     }
 
     const items = um.getLeaderboardItems();
+    const grid = getStandardGridConfig(this.width);
+    const itemW = (this.width - 2 * grid.margin) / this.racers.length;
+
     um.sortedRacersCache.forEach((racer, index) => {
       const container = items.get(racer);
       if (!container) return;
 
-      const itemW = 70;
       const smoothing = 1 - Math.pow(1 - VISUALS.LEADERBOARD_ANIMATION_SPEED, delta);
       container.x += (index * itemW - container.x) * smoothing;
       container.y += (0 - container.y) * smoothing;
@@ -88,20 +92,20 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
         else if (index === 1) color = COLORS.RANK_SILVER;
         else if (index === 2) color = COLORS.RANK_BRONZE;
         bg.clear()
-          .roundRect(0, 0, itemW - 10, 100, 8)
+          .roundRect(0, 0, itemW - 5, 100, 8)
           .fill({ color: PALETTE.BLACK, alpha: 0.5 })
           .stroke({ color, width: index < 3 ? 3 : 1 });
       }
 
       if (text) {
         text.text = (index + 1).toString();
-        text.x = (itemW - 10) / 2;
+        text.x = (itemW - 5) / 2;
         text.y = 85;
         text.anchor.set(0.5);
         text.style.fontSize = 12;
       }
       if (icon) {
-        icon.x = (itemW - 10) / 2;
+        icon.x = (itemW - 5) / 2;
         icon.y = 40;
         icon.scale.set(0.8);
       }

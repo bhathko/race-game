@@ -18,6 +18,10 @@ const COL = {
 
 export class LeaderboardPodium extends Container {
   public glowGraphics: Graphics[] = [];
+  private elapsed = 0;
+  private entries: RankEntry[];
+  private animations: Map<string, RacerAnimations> | null;
+  private podiumWidth: number;
 
   constructor(
     entries: RankEntry[],
@@ -25,10 +29,20 @@ export class LeaderboardPodium extends Container {
     animations: Map<string, RacerAnimations> | null,
   ) {
     super();
-    const top3 = entries.slice(0, 3);
+    this.entries = entries;
+    this.podiumWidth = width;
+    this.animations = animations;
+    this.refresh();
+  }
+
+  private refresh() {
+    this.removeChildren();
+    this.glowGraphics = [];
+
+    const top3 = this.entries.slice(0, 3);
     if (top3.length === 0) return;
 
-    const colW = (width - 40) / 3;
+    const colW = (this.podiumWidth - 40) / 3;
     const heights = { 1: 90, 2: 70, 3: 50 };
     const order = [2, 1, 3];
 
@@ -71,7 +85,7 @@ export class LeaderboardPodium extends Container {
       rText.y = -h / 2;
       col.addChild(rText);
 
-      const icon = this.createIcon(entry.character, animations);
+      const icon = this.createIcon(entry.character, this.animations);
       icon.scale.set(1.2);
       icon.y = capY - 44;
       col.addChild(icon);
@@ -98,6 +112,17 @@ export class LeaderboardPodium extends Container {
         this.glowGraphics.push(glow);
       }
     });
+  }
+
+  public update(delta: number) {
+    this.elapsed += delta;
+    const alpha = 0.12 + Math.sin(this.elapsed * 0.06) * 0.06;
+    this.glowGraphics.forEach((g) => (g.alpha = alpha));
+  }
+
+  public resize(width: number) {
+    this.podiumWidth = width;
+    this.refresh();
   }
 
   private createIcon(key?: string, anims?: Map<string, RacerAnimations> | null): Container {

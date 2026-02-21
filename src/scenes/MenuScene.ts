@@ -1,14 +1,12 @@
 import { Container } from "pixi.js";
 import type { Scene } from "../core/Scene";
-import type { MenuContext } from "../core/types";
+import { type MenuContext, LayoutMode, determineMode } from "../core";
 import {
   BaseMenuScene,
   DesktopMenuScene,
   MobileVerticalMenuScene,
   MobileHorizontalMenuScene,
 } from "./menu";
-
-type LayoutMode = "desktop" | "mobile-vertical" | "mobile-horizontal";
 
 export class MenuScene extends Container implements Scene {
   private context: MenuContext;
@@ -29,21 +27,13 @@ export class MenuScene extends Container implements Scene {
   }
 
   public resize(width: number, height: number): void {
-    const newMode = this.determineMode(width, height);
+    const newMode = determineMode(width, height);
 
     if (newMode !== this.currentMode) {
       this.switchLayout(newMode, width, height);
     } else if (this.currentLayout) {
       this.currentLayout.resize(width, height);
     }
-  }
-
-  private determineMode(width: number, height: number): LayoutMode {
-    const isMobile = width < 600 || height < 500;
-    const isPortrait = height > width;
-
-    if (!isMobile) return "desktop";
-    return isPortrait ? "mobile-vertical" : "mobile-horizontal";
   }
 
   private switchLayout(mode: LayoutMode, width: number, height: number): void {
@@ -61,13 +51,13 @@ export class MenuScene extends Container implements Scene {
     // BaseMenuScene defaults to false. We might need to set it after creation.
 
     switch (mode) {
-      case "desktop":
+      case LayoutMode.Desktop:
         this.currentLayout = new DesktopMenuScene(this.context);
         break;
-      case "mobile-vertical":
+      case LayoutMode.MobileVertical:
         this.currentLayout = new MobileVerticalMenuScene(this.context);
         break;
-      case "mobile-horizontal":
+      case LayoutMode.MobileHorizontal:
         this.currentLayout = new MobileHorizontalMenuScene(this.context);
         break;
     }

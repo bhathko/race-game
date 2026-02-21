@@ -87,6 +87,7 @@ export class Racer extends Container {
     this.labelText.y = -RACER.HEIGHT - 10;
     this.addChild(this.labelText);
 
+    this.x = -100; // Start off-screen
     this.y = y;
   }
 
@@ -98,9 +99,11 @@ export class Racer extends Container {
   walkEntrance(targetX: number, delta: number): boolean {
     if (this.x < targetX) {
       this.x += 2 * delta;
+      this.moveSys.x = this.x; // Keep moveSys in sync
       this.setAnimation("walk");
       if (this.x >= targetX) {
         this.x = targetX;
+        this.moveSys.x = this.x;
         this.setAnimation("idle");
         return true;
       }
@@ -203,13 +206,6 @@ export class Racer extends Container {
     this.setAnimation("idle");
   }
 
-  // Getters for proxying component state if needed
-  get x() {
-    return this.moveSys.x;
-  }
-  set x(val: number) {
-    this.moveSys.x = val;
-  }
   get stumbleCount() {
     return this.dramaSys.stumbleCount;
   }
