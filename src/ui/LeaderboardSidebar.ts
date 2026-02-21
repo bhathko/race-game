@@ -1,7 +1,6 @@
 import { Container, Graphics, Text, TextStyle, Sprite } from "pixi.js";
 import { PALETTE, ITEMS } from "../config";
 import type { RacerAnimations } from "../core";
-import { LeaderboardPodium } from "./leaderboard/LeaderboardPodium";
 import { LeaderboardList } from "./leaderboard/LeaderboardList";
 import type { RankEntry } from "./leaderboard/types";
 
@@ -9,7 +8,6 @@ export type { RankEntry };
 
 export class LeaderboardSidebar extends Container {
   private bg: Graphics;
-  private podium: LeaderboardPodium | null = null;
   private list: LeaderboardList | null = null;
   private titleContainer: Container;
   private trophySprite: Sprite;
@@ -20,8 +18,7 @@ export class LeaderboardSidebar extends Container {
   private sidebarH: number;
   private animations: Map<string, RacerAnimations> | null;
   private showList = true;
-  private showPodium = true;
-  private elapsed = 0;
+  private listOffsetY = 70;
 
   constructor(
     entries: RankEntry[],
@@ -64,21 +61,12 @@ export class LeaderboardSidebar extends Container {
 
   private refresh() {
     this.bg.clear();
-    if (this.podium) {
-      this.podium.destroy();
-      this.podium = null;
-    }
     if (this.list) {
       this.list.destroy();
       this.list = null;
     }
 
     this.drawBackground();
-
-    if (this.showPodium) {
-      this.podium = new LeaderboardPodium(this.entries, this.sidebarW, this.animations);
-      this.addChild(this.podium);
-    }
 
     if (this.showList) {
       this.list = new LeaderboardList(this.entries, this.sidebarW, this.animations);
@@ -92,12 +80,15 @@ export class LeaderboardSidebar extends Container {
     this.bg
       .roundRect(0, 0, this.sidebarW, this.sidebarH, 18)
       .fill({ color: PALETTE.WOOD_MID, alpha: 0.92 });
-    [65, 138, 215, 298, 380, 446].forEach((py) => {
-      if (py < this.sidebarH - 10)
-        this.bg
-          .roundRect(10, py, this.sidebarW - 20, 2, 1)
-          .fill({ color: PALETTE.WOOD_DARK, alpha: 0.55 });
-    });
+    
+    // Decorative lines
+    const step = 70;
+    for (let py = 65; py < this.sidebarH - 20; py += step) {
+      this.bg
+        .roundRect(10, py, this.sidebarW - 20, 2, 1)
+        .fill({ color: PALETTE.WOOD_DARK, alpha: 0.55 });
+    }
+
     this.bg
       .roundRect(0, 0, this.sidebarW, this.sidebarH, 18)
       .stroke({ color: PALETTE.WOOD_PALE, width: 3.5 });
@@ -110,21 +101,15 @@ export class LeaderboardSidebar extends Container {
     this.titleText.x = startX + this.trophySprite.width * 1.5 + 10;
     this.titleContainer.y = 35;
 
-    if (this.podium) {
-      this.podium.x = 20;
-      this.podium.y = this.showList ? 70 : (this.sidebarH - 70) / 2 + 40;
-    }
     if (this.list) {
       this.list.x = 18;
-      this.list.y = this.showPodium ? 250 : 70;
+      this.list.y = this.listOffsetY;
     }
   }
 
-  update(delta: number) {
-    this.elapsed += delta;
-    if (this.podium) {
-      this.podium.update(delta);
-    }
+  public setListOffsetY(y: number) {
+    this.listOffsetY = y;
+    this.layout();
   }
 
   public resize(w: number, h: number) {
@@ -138,10 +123,6 @@ export class LeaderboardSidebar extends Container {
   }
   public setShowList(v: boolean) {
     this.showList = v;
-    this.refresh();
-  }
-  public setShowPodium(v: boolean) {
-    this.showPodium = v;
     this.refresh();
   }
 }

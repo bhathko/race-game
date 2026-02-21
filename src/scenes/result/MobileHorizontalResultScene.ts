@@ -14,30 +14,37 @@ export class MobileHorizontalResultScene extends BaseResultScene {
 
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
-    // Split layout: Winner & Podium on left, Ranking List on right
+    // Split layout: Winner on left, Ranking (List) on right
     const leftX = leftRect.x + leftRect.width / 2;
 
-    this.winnerText.x = leftX;
+    // Winner title aligned to the right edge of the left column (next to leaderboard)
+    this.winnerText.anchor.set(1, 0.5);
+    this.winnerText.x = rightRect.x - grid.gutter;
     this.winnerText.y = height * 0.15;
-    this.winnerText.style.fontSize = 32;
+    this.winnerText.style.fontSize = 28;
+    this.winnerText.style.align = "right";
 
-    // Podium below winner on the left
-    this.podium.resize(leftRect.width);
-    this.podium.x = leftRect.x;
-    this.podium.y = height * 0.55;
+    // Podium remains centered in the left column area
+    const podiumW = Math.min(leftRect.width * 0.9, 280);
+    this.podium.resize(podiumW);
+    this.podium.scale.set(0.75);
+    this.podium.x = leftX - (podiumW * 0.75) / 2;
+    this.podium.y = height * 0.78;
 
-    // Sidebar (List) on the right
     const topSpace = 20;
     const bottomSpace = 20;
     const sidebarH = height - topSpace - bottomSpace;
 
-    this.leaderboardSidebar.setShowList(true);
+    // Sidebar Wood Panel (Right side)
     this.leaderboardSidebar.resize(rightRect.width, sidebarH);
     this.leaderboardSidebar.x = rightRect.x;
     this.leaderboardSidebar.y = topSpace;
 
+    // Remove the large gap for the podium in the list
+    this.leaderboardSidebar.setListOffsetY(70);
+
     this.restartBtn.x = leftX;
-    this.restartBtn.y = height * 0.85;
-    this.restartBtn.scale.set(0.65);
+    this.restartBtn.y = height * 0.9;
+    this.restartBtn.scale.set(0.6);
   }
 }

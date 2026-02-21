@@ -2,6 +2,7 @@ export const RACER = {
   WIDTH: 80,
   HEIGHT: 80,
   COLLISION_OFFSET: 80,
+  Y_OFFSET: 40, // Pushes the bottom-anchored racer down for better lane centering
 } as const;
 
 export const TRACK = {

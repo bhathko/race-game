@@ -48,6 +48,7 @@ export class DesktopRaceScene extends BaseRaceScene {
     this.trackWidth = this.finishLineX + 200;
 
     this.setupTracks();
+    this.racers.forEach((r) => r.setMobileMode(false));
     this.trackManager.repositionRacers(this.racers, this.gameViewH);
     this.updateLeaderboard(60);
 

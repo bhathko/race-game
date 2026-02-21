@@ -58,9 +58,8 @@ WINS!`,
     this.podium = new LeaderboardPodium(entries, 400, ctx.characterAnimations);
     this.addChild(this.podium);
 
-    // Create sidebar for the full list (without the internal podium)
+    // Create sidebar which now handles the internal ranking list
     this.leaderboardSidebar = new LeaderboardSidebar(entries, 300, 480, ctx.characterAnimations);
-    this.leaderboardSidebar.setShowPodium(false);
     this.addChild(this.leaderboardSidebar);
 
     this.restartBtn = createWoodenButton({
@@ -75,7 +74,6 @@ WINS!`,
   public abstract resize(width: number, height: number): void;
 
   update(delta: number) {
-    this.leaderboardSidebar.update(delta);
     if (this.podium) {
       this.podium.update(delta);
     }

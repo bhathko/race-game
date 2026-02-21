@@ -1,7 +1,7 @@
 import { Container, Text, TextStyle } from "pixi.js";
 import { Hole } from "../../entities";
 import { createWoodenButton } from "../../ui";
-import { COLORS, PALETTE, TRACK, ITEMS } from "../../config";
+import { COLORS, PALETTE, TRACK, ITEMS, RACER } from "../../config";
 
 export interface FunnyModeConfig {
   world: Container;
@@ -251,7 +251,7 @@ export class FunnyModeManager {
     let minDist = Infinity;
     let bestIdx = -1;
     for (let i = 0; i < this.racerCount; i++) {
-      const laneCenterY = grassStripH + (i + 0.5) * trackHeight;
+      const laneCenterY = grassStripH + (i + 0.5) * trackHeight + RACER.Y_OFFSET;
       const dist = Math.abs(localY - laneCenterY);
       if (dist < minDist) {
         minDist = dist;
@@ -266,6 +266,6 @@ export class FunnyModeManager {
     const grassStripH = unit * 4;
     const dirtH = this.gameViewH - grassStripH * 2;
     const trackHeight = dirtH / this.racerCount;
-    return grassStripH + (laneIndex + 0.5) * trackHeight;
+    return grassStripH + (laneIndex + 0.5) * trackHeight + RACER.Y_OFFSET;
   }
 }

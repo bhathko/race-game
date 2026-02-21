@@ -42,7 +42,8 @@ export class LeaderboardPodium extends Container {
     const top3 = this.entries.slice(0, 3);
     if (top3.length === 0) return;
 
-    const colW = (this.podiumWidth - 40) / 3;
+    // Use full width divided by 3
+    const colW = this.podiumWidth / 3;
     const heights = { 1: 90, 2: 70, 3: 50 };
     const order = [2, 1, 3];
 
@@ -60,13 +61,15 @@ export class LeaderboardPodium extends Container {
         rank === 1 ? PALETTE.WOOD_LIGHT : rank === 2 ? PALETTE.WOOD_MID : PALETTE.WOOD_DARK;
       const mColor = rank === 1 ? COL.GOLD : rank === 2 ? COL.SILVER : COL.BRONZE;
 
-      ped.roundRect(-colW / 2 + 10, -h + 4, colW - 12, h, 6).fill({ color: 0, alpha: 0.25 });
-      ped.roundRect(-colW / 2 + 6, -h, colW - 12, h, 6).fill(bColor);
+      // Pedestal body
+      ped.roundRect(-colW / 2 + 5, -h + 4, colW - 10, h, 6).fill({ color: 0, alpha: 0.25 });
+      ped.roundRect(-colW / 2 + 2, -h, colW - 10, h, 6).fill(bColor);
 
       const capY = -h - 6;
-      ped.roundRect(-colW / 2 + 4, capY + 4, colW - 4, 14, 4).fill({ color: 0, alpha: 0.3 });
+      // Pedestal cap
+      ped.roundRect(-colW / 2 + 2, capY + 4, colW - 4, 14, 4).fill({ color: 0, alpha: 0.3 });
       ped
-        .roundRect(-colW / 2 + 2, capY, colW - 4, 14, 4)
+        .roundRect(-colW / 2 + 1, capY, colW - 4, 14, 4)
         .fill(mColor)
         .stroke({ color: rank === 1 ? COL.GOLD_DARK : 0, width: 1.5, alpha: 0.5 });
 

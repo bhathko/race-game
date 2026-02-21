@@ -92,7 +92,7 @@ export class Game {
     this.treeAnimation = this.createFrames(
       treeSheet,
       ITEMS.tree.cols,
-      5, // Total rows in sheet
+      ITEMS.tree.rows, // Use config rows instead of hardcoded 5
       3, // 4th row index
     );
 

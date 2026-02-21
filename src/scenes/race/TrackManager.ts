@@ -1,5 +1,5 @@
 import { Container, Graphics, TilingSprite, AnimatedSprite, Text, Texture } from "pixi.js";
-import { ITEMS, TRACK, TRACK_COLORS, CANVAS } from "../../config";
+import { ITEMS, TRACK, TRACK_COLORS, CANVAS, RACER } from "../../config";
 import type { GroundTextures, GrassTextures } from "../../core";
 
 export class TrackManager extends Container {
@@ -168,7 +168,7 @@ export class TrackManager extends Container {
   public getLaneRacerY(laneIndex: number, gameViewH: number, racerCount: number): number {
     const grassStripH = ITEMS.ground.unit * 4;
     const trackHeight = (gameViewH - grassStripH * 2) / racerCount;
-    return grassStripH + (laneIndex + 0.5) * trackHeight;
+    return grassStripH + (laneIndex + 0.5) * trackHeight + RACER.Y_OFFSET;
   }
 
   public repositionRacers(racers: any[], gameViewH: number) {

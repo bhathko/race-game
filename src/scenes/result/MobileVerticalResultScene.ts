@@ -10,30 +10,33 @@ export class MobileVerticalResultScene extends BaseResultScene {
   public resize(width: number, height: number) {
     const centerX = width / 2;
     const grid = getStandardGridConfig(width);
-    const fullRect = getGridRect(1, 10, grid); // Span middle 10 columns
+    const rankingRect = getGridRect(1, 10, grid); // 10 columns
 
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
     this.winnerText.x = centerX;
-    this.winnerText.y = height * 0.12;
+    this.winnerText.y = height * 0.1;
     this.winnerText.style.fontSize = 42;
-
-    // Position podium in the center
-    this.podium.resize(fullRect.width);
-    this.podium.x = fullRect.x;
-    this.podium.y = height * 0.38;
 
     const btnH = 50;
     const btnPad = 15;
     const bottomMargin = 15;
-    const topSpace = height * 0.48;
+    const topSpace = height * 0.18;
     const maxSidebarH = height - topSpace - btnH - btnPad - bottomMargin;
-    const sidebarH = Math.max(120, Math.min(maxSidebarH, 350));
+    const sidebarH = Math.max(250, Math.min(maxSidebarH, 550));
 
-    this.leaderboardSidebar.setShowList(true);
-    this.leaderboardSidebar.resize(fullRect.width, sidebarH);
-    this.leaderboardSidebar.x = fullRect.x;
+    // Sidebar Wood Panel
+    this.leaderboardSidebar.resize(rankingRect.width, sidebarH);
+    this.leaderboardSidebar.x = rankingRect.x;
     this.leaderboardSidebar.y = topSpace;
+
+    // Podium Unified
+    this.podium.resize(rankingRect.width);
+    this.podium.x = rankingRect.x;
+    this.podium.y = topSpace + 175;
+
+    // Ranking List
+    this.leaderboardSidebar.setListOffsetY(250);
 
     this.restartBtn.x = centerX;
     this.restartBtn.y = height - bottomMargin - btnH / 2;
