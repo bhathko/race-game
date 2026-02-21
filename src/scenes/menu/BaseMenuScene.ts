@@ -89,7 +89,7 @@ export abstract class BaseMenuScene extends Container {
     // Distance
     this.distLabel = this.createLabel("DISTANCE");
     this.distValue = this.createValueText(`${this.selectedDistance}m`);
-    const distances = [50, 100, 200, 400];
+    const distances = [50, 100, 150, 200];
     this.distStepper = this.createStepper((inc) => {
       const idx = distances.indexOf(this.selectedDistance);
       if (inc && idx < distances.length - 1) this.selectedDistance = distances[idx + 1];
@@ -133,7 +133,7 @@ export abstract class BaseMenuScene extends Container {
         if (settings.count >= 2 && settings.count <= GAMEPLAY.MAX_RACERS) {
           this.selectedCount = settings.count;
         }
-        if ([50, 100, 200, 400].includes(settings.distance)) {
+        if ([50, 100, 150, 200].includes(settings.distance)) {
           this.selectedDistance = settings.distance;
         }
       }

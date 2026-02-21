@@ -134,13 +134,20 @@ export class Racer extends Container {
       return;
     }
     this.elapsedFrames += delta;
-    if (this.dramaSys.isStunned()) {
-      this.setAnimation("idle");
-      return;
-    }
 
     const isLeader = rank === 1;
     if (isLeader) this.leadFrames += delta;
+
+    // Always update drama system so timers (stumble, stun, second wind) can decrement
+    this.dramaSys.update(delta, isLeader, (rank - 1) / Math.max(1, totalRacers - 1));
+
+    if (this.dramaSys.isStunned()) {
+      this.moveSys.targetSpeed = 0;
+      this.moveSys.update(delta, 0.1, GAMEPLAY.PHYSICS); // Slow down/stay at zero
+      this.x = this.moveSys.x;
+      this.setAnimation("idle");
+      return;
+    }
 
     const mults = calculateComebackMultipliers(this, {
       rank,
@@ -153,7 +160,6 @@ export class Racer extends Container {
       pacePhase: this.dramaSys.pacePhase,
     });
 
-    this.dramaSys.update(delta, isLeader, (rank - 1) / Math.max(1, totalRacers - 1));
     this.staminaSys.update(
       delta,
       mults.recoveryMult,
