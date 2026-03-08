@@ -8,4 +8,6 @@ export const RACER = {
 export const TRACK = {
   FINISH_LINE_X: 750,
   START_LINE_X: 50,
+  GRASS_STRIP_UNITS: 4,
+  TRACK_BUFFER: 200,
 } as const;

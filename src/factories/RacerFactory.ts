@@ -1,4 +1,4 @@
-import { GAMEPLAY, CHARACTERS, COLORS } from "../config";
+import { GAMEPLAY, CHARACTERS } from "../config";
 import { Racer } from "../entities";
 import type { RacerAnimations } from "../core";
 import { randomStrategy } from "../strategies";
@@ -51,7 +51,6 @@ export function createRacers(
   const charKeys = selectedKeys || shuffledCharacterKeys();
 
   return names.map((name, i) => {
-    const color = COLORS.RACERS[i % COLORS.RACERS.length];
     const characterKey = charKeys[i % charKeys.length];
     const anims = characterAnimations.get(characterKey)!;
     const strategy = randomStrategy();
@@ -59,7 +58,6 @@ export function createRacers(
 
     const racer = new Racer(
       name,
-      color,
       0, // y position set later by the scene
       stats,
       anims,

@@ -3,6 +3,17 @@ import { Racer } from "../../entities";
 import { PALETTE, COLORS } from "../../config";
 import type { RacerAnimations } from "../../core";
 
+export interface LeaderboardLayoutConfig {
+  direction: "vertical" | "horizontal";
+  itemWidth: number;
+  itemHeight: number;
+  textFormat: (racer: Racer, index: number) => string;
+  iconScale: number;
+  textX: number;
+  textAnchorX: number;
+  fontSize: number;
+}
+
 export class RaceUIManager {
   private ui: Container;
   private countdownText: Text | null = null;
@@ -139,5 +150,56 @@ export class RaceUIManager {
   }
   public getRemainingDistanceText() {
     return this.remainingDistanceText;
+  }
+  public updateLeaderboard(racers: Racer[], config: LeaderboardLayoutConfig, delta: number) {
+    if (this.leaderboardUpdateTimer > 0) {
+      this.leaderboardUpdateTimer -= delta;
+    } else {
+      this.sortedRacersCache = [...racers].sort((a, b) => b.x - a.x);
+      this.leaderboardUpdateTimer = this.LEADERBOARD_THROTTLE;
+    }
+
+    this.sortedRacersCache.forEach((racer, index) => {
+      const itemConfig = this.leaderboardItems.get(racer);
+      if (!itemConfig) return;
+
+      const targetX = config.direction === "vertical" ? 0 : index * config.itemWidth;
+      const targetY = config.direction === "vertical" ? index * config.itemHeight : 0;
+
+      itemConfig.x += (targetX - itemConfig.x) * 0.1;
+      itemConfig.y += (targetY - itemConfig.y) * 0.1;
+
+      const bg = itemConfig.children.find((c) => c.label === "item-bg") as Graphics | undefined;
+      if (bg) {
+        let color: number = COLORS.RANK_DEFAULT;
+        if (index === 0) color = COLORS.RANK_GOLD;
+        else if (index === 1) color = COLORS.RANK_SILVER;
+        else if (index === 2) color = COLORS.RANK_BRONZE;
+        bg.clear()
+          .roundRect(0, 0, config.itemWidth - 10, config.itemHeight - 10, 8)
+          .fill({ color: PALETTE.BLACK, alpha: 0.5 })
+          .stroke({ color, width: index < 3 ? 3 : 1 });
+      }
+
+      const icon = itemConfig.children.find((c) => c.label === "item-icon") as
+        | AnimatedSprite
+        | undefined;
+      if (icon) {
+        icon.scale.set(config.iconScale);
+        icon.x = config.itemHeight / 2 - 5;
+        icon.y = config.itemHeight / 2 - 5;
+      }
+
+      const text = itemConfig.children.find((c) => c.label === "item-text") as Text | undefined;
+      if (text) {
+        text.text = config.textFormat(racer, index);
+        text.x = config.textX;
+        text.y = config.itemHeight / 2;
+        text.anchor.set(config.textAnchorX, 0.5);
+        if (text.style instanceof TextStyle) {
+          text.style.fontSize = config.fontSize;
+        }
+      }
+    });
   }
 }

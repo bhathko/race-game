@@ -1,12 +1,12 @@
 import { Container } from "pixi.js";
-import type { Scene } from "../core/Scene";
-import { type RacerAnimations, type SelectionContext, LayoutMode, determineMode } from "../core";
+import type { Scene } from "../../core/Scene";
+import { type RacerAnimations, type SelectionContext, LayoutMode, determineMode } from "../../core";
 import {
   BaseCharacterSelectionScene,
   DesktopSelectionScene,
   MobileVerticalSelectionScene,
   MobileHorizontalSelectionScene,
-} from "./selection";
+} from "./";
 
 /**
  * Controller scene that manages switching between different device-specific layouts.

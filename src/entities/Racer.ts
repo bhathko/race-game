@@ -43,7 +43,6 @@ export class Racer extends Container {
 
   constructor(
     name: string,
-    _color: number,
     y: number,
     stats: RacerStats,
     animations: RacerAnimations,

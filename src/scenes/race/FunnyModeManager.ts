@@ -1,27 +1,25 @@
 import { Container, Text, TextStyle } from "pixi.js";
 import { Hole } from "../../entities";
 import { createWoodenButton } from "../../ui";
-import { COLORS, PALETTE, TRACK, ITEMS, RACER } from "../../config";
+import { COLORS, PALETTE, TRACK } from "../../config";
+import type { TrackLayoutData } from "../../core";
+import type { TrackManager } from "./TrackManager";
 
 export interface FunnyModeConfig {
   world: Container;
   ui: Container;
-  gameViewW: number;
-  gameViewH: number;
-  trackWidth: number;
-  finishLineX: number;
-  racerCount: number;
+  layout: TrackLayoutData;
+  trackManager: TrackManager;
   onSetupFinished: (holes: Hole[]) => void;
+  startIndex?: number;
+  holes?: Hole[];
 }
 
 export class FunnyModeManager {
   private world: Container;
   private ui: Container;
-  private gameViewW: number;
-  private gameViewH: number;
-  private trackWidth: number;
-  private finishLineX: number;
-  private racerCount: number;
+  private layout: TrackLayoutData;
+  private trackManager: TrackManager;
   private onSetupFinished: (holes: Hole[]) => void;
 
   private setupInstructionText: Text | null = null;
@@ -38,18 +36,80 @@ export class FunnyModeManager {
   constructor(config: FunnyModeConfig) {
     this.world = config.world;
     this.ui = config.ui;
-    this.gameViewW = config.gameViewW;
-    this.gameViewH = config.gameViewH;
-    this.trackWidth = config.trackWidth;
-    this.finishLineX = config.finishLineX;
-    this.racerCount = config.racerCount;
+    this.layout = config.layout;
+    this.trackManager = config.trackManager;
     this.onSetupFinished = config.onSetupFinished;
+    if (config.startIndex !== undefined) this.currentSetupPlayerIndex = config.startIndex;
+    if (config.holes) this.holes = config.holes;
+  }
+
+  public resize(layout: TrackLayoutData) {
+    this.layout = layout;
+    if (!this.setupPhase) return;
+
+    if (this.setupInstructionText) {
+      this.setupInstructionText.x = this.layout.viewWidth / 2;
+    }
+    if (this.skipBtn) {
+      this.skipBtn.x = this.layout.viewWidth / 2;
+    }
+    if (this.startMatchBtn) {
+      this.startMatchBtn.x = this.layout.viewWidth / 2;
+      this.startMatchBtn.y = this.layout.viewHeight / 2;
+    }
+
+    if (this.layout.trackWidth > this.layout.viewWidth) {
+      if (!this.scrollLeftBtn) {
+        this.createScrollButtons();
+      }
+      if (this.scrollLeftBtn) {
+        this.scrollLeftBtn.y = this.layout.viewHeight / 2;
+      }
+      if (this.scrollRightBtn) {
+        this.scrollRightBtn.x = this.layout.viewWidth - 50;
+        this.scrollRightBtn.y = this.layout.viewHeight / 2;
+      }
+    } else {
+      if (this.scrollLeftBtn) {
+        this.scrollLeftBtn.destroy();
+        this.scrollLeftBtn = null;
+      }
+      if (this.scrollRightBtn) {
+        this.scrollRightBtn.destroy();
+        this.scrollRightBtn = null;
+      }
+    }
+  }
+
+  private createScrollButtons() {
+    this.scrollLeftBtn = createWoodenButton({
+      label: "<",
+      color: COLORS.BUTTON_PRIMARY,
+      onClick: () => this.handleScroll("left"),
+      width: 60,
+      height: 60,
+      fontSize: 32,
+    });
+    this.scrollLeftBtn.x = 50;
+    this.ui.addChild(this.scrollLeftBtn);
+
+    this.scrollRightBtn = createWoodenButton({
+      label: ">",
+      color: COLORS.BUTTON_PRIMARY,
+      onClick: () => this.handleScroll("right"),
+      width: 60,
+      height: 60,
+      fontSize: 32,
+    });
+    this.ui.addChild(this.scrollRightBtn);
   }
 
   public startSetup() {
     this.setupPhase = true;
-    this.currentSetupPlayerIndex = 0;
-    this.holes = [];
+    if (this.holes.length === 0) {
+      this.currentSetupPlayerIndex = 0;
+      this.holes = [];
+    }
 
     const style = new TextStyle({
       fill: PALETTE.STR_WHITE,
@@ -60,7 +120,7 @@ export class FunnyModeManager {
     });
     this.setupInstructionText = new Text({ text: "", style });
     this.setupInstructionText.anchor.set(0.5);
-    this.setupInstructionText.x = this.gameViewW / 2;
+    this.setupInstructionText.x = this.layout.viewWidth / 2;
     this.setupInstructionText.y = 60;
     this.ui.addChild(this.setupInstructionText);
 
@@ -79,7 +139,7 @@ export class FunnyModeManager {
       height: 50,
       fontSize: 20,
     });
-    this.skipBtn.x = this.gameViewW / 2;
+    this.skipBtn.x = this.layout.viewWidth / 2;
     this.skipBtn.y = 130;
     this.ui.addChild(this.skipBtn);
 
@@ -94,41 +154,27 @@ export class FunnyModeManager {
     this.startMatchBtn.visible = false;
     this.ui.addChild(this.startMatchBtn);
 
-    this.previewHole = new Hole();
+    const { radiusX, radiusY } = this.getHoleRadii();
+    this.previewHole = new Hole(radiusX, radiusY);
     this.previewHole.alpha = 0.5;
     this.previewHole.visible = false;
     this.world.addChild(this.previewHole);
 
-    if (this.trackWidth > this.gameViewW) {
-      this.scrollLeftBtn = createWoodenButton({
-        label: "<",
-        color: COLORS.BUTTON_PRIMARY,
-        onClick: () => this.handleScroll("left"),
-        width: 60,
-        height: 60,
-        fontSize: 32,
-      });
-      this.scrollLeftBtn.x = 50;
-      this.scrollLeftBtn.y = this.gameViewH / 2;
-      this.ui.addChild(this.scrollLeftBtn);
-
-      this.scrollRightBtn = createWoodenButton({
-        label: ">",
-        color: COLORS.BUTTON_PRIMARY,
-        onClick: () => this.handleScroll("right"),
-        width: 60,
-        height: 60,
-        fontSize: 32,
-      });
-      this.scrollRightBtn.x = this.gameViewW - 50;
-      this.scrollRightBtn.y = this.gameViewH / 2;
-      this.ui.addChild(this.scrollRightBtn);
+    if (this.layout.trackWidth > this.layout.viewWidth) {
+      this.createScrollButtons();
+      if (this.scrollLeftBtn) {
+        this.scrollLeftBtn.y = this.layout.viewHeight / 2;
+      }
+      if (this.scrollRightBtn) {
+        this.scrollRightBtn.x = this.layout.viewWidth - 50;
+        this.scrollRightBtn.y = this.layout.viewHeight / 2;
+      }
     }
   }
 
   private updateInstruction() {
     if (!this.setupInstructionText) return;
-    if (this.currentSetupPlayerIndex < this.racerCount) {
+    if (this.currentSetupPlayerIndex < this.layout.racerCount) {
       this.setupInstructionText.text = `Player ${this.currentSetupPlayerIndex + 1}: Place a Trap!`;
       this.setupInstructionText.style.fill = PALETTE.STR_WHITE;
     } else {
@@ -138,16 +184,17 @@ export class FunnyModeManager {
   }
 
   private handlePointerDown(e: any) {
-    if (!this.setupPhase || this.currentSetupPlayerIndex >= this.racerCount) return;
+    if (!this.setupPhase || this.currentSetupPlayerIndex >= this.layout.racerCount) return;
     const localPos = this.world.toLocal(e.global);
-    if (localPos.x < TRACK.START_LINE_X + 100 || localPos.x > this.finishLineX - 50) return;
+    if (localPos.x < TRACK.START_LINE_X + 100 || localPos.x > this.layout.finishLineX - 50) return;
 
-    const laneIdx = this.getNearestLaneIndex(localPos.y);
+    const laneIdx = this.trackManager.getNearestLaneIndex(localPos.y);
     if (laneIdx === null) return;
 
-    const hole = new Hole();
+    const { radiusX, radiusY } = this.getHoleRadii();
+    const hole = new Hole(radiusX, radiusY);
     hole.x = localPos.x;
-    hole.y = this.getLaneRacerY(laneIdx);
+    hole.y = this.trackManager.getLaneCenterY(laneIdx);
     hole.laneIndex = laneIdx;
     this.world.addChild(hole);
     this.holes.push(hole);
@@ -158,21 +205,25 @@ export class FunnyModeManager {
   }
 
   private handlePointerMove(e: any) {
-    if (!this.setupPhase || !this.previewHole || this.currentSetupPlayerIndex >= this.racerCount) {
+    if (
+      !this.setupPhase ||
+      !this.previewHole ||
+      this.currentSetupPlayerIndex >= this.layout.racerCount
+    ) {
       if (this.previewHole) this.previewHole.visible = false;
       return;
     }
     const localPos = this.world.toLocal(e.global);
-    const laneIdx = this.getNearestLaneIndex(localPos.y);
+    const laneIdx = this.trackManager.getNearestLaneIndex(localPos.y);
 
     if (
       laneIdx !== null &&
       localPos.x >= TRACK.START_LINE_X + 100 &&
-      localPos.x <= this.finishLineX - 50
+      localPos.x <= this.layout.finishLineX - 50
     ) {
       this.previewHole.visible = true;
       this.previewHole.x = localPos.x;
-      this.previewHole.y = this.getLaneRacerY(laneIdx);
+      this.previewHole.y = this.trackManager.getLaneCenterY(laneIdx);
       this.previewHole.laneIndex = laneIdx;
     } else {
       this.previewHole.visible = false;
@@ -180,18 +231,18 @@ export class FunnyModeManager {
   }
 
   private handleSkip() {
-    if (!this.setupPhase || this.currentSetupPlayerIndex >= this.racerCount) return;
+    if (!this.setupPhase || this.currentSetupPlayerIndex >= this.layout.racerCount) return;
     this.currentSetupPlayerIndex++;
     this.updateInstruction();
     this.checkCompletion();
   }
 
   private checkCompletion() {
-    if (this.currentSetupPlayerIndex >= this.racerCount) {
+    if (this.currentSetupPlayerIndex >= this.layout.racerCount) {
       if (this.startMatchBtn) {
         this.startMatchBtn.visible = true;
-        this.startMatchBtn.x = this.gameViewW / 2;
-        this.startMatchBtn.y = this.gameViewH / 2;
+        this.startMatchBtn.x = this.layout.viewWidth / 2;
+        this.startMatchBtn.y = this.layout.viewHeight / 2;
       }
       if (this.skipBtn) this.skipBtn.visible = false;
       if (this.previewHole) this.previewHole.visible = false;
@@ -201,7 +252,7 @@ export class FunnyModeManager {
   private handleScroll(direction: "left" | "right") {
     const scrollAmount = 300;
     const targetX = this.world.x + (direction === "left" ? scrollAmount : -scrollAmount);
-    const minX = -(this.trackWidth - this.gameViewW);
+    const minX = -(this.layout.trackWidth - this.layout.viewWidth);
     this.world.x = Math.max(minX, Math.min(0, targetX));
   }
 
@@ -242,30 +293,10 @@ export class FunnyModeManager {
     this.world.off("pointermove", this.handlePointerMove, this);
   }
 
-  private getNearestLaneIndex(localY: number): number | null {
-    const unit = ITEMS.ground.unit;
-    const grassStripH = unit * 4;
-    if (localY < grassStripH || localY > this.gameViewH - grassStripH) return null;
-    const dirtH = this.gameViewH - grassStripH * 2;
-    const trackHeight = dirtH / this.racerCount;
-    let minDist = Infinity;
-    let bestIdx = -1;
-    for (let i = 0; i < this.racerCount; i++) {
-      const laneCenterY = grassStripH + (i + 0.5) * trackHeight + RACER.Y_OFFSET;
-      const dist = Math.abs(localY - laneCenterY);
-      if (dist < minDist) {
-        minDist = dist;
-        bestIdx = i;
-      }
-    }
-    return bestIdx;
-  }
-
-  private getLaneRacerY(laneIndex: number): number {
-    const unit = ITEMS.ground.unit;
-    const grassStripH = unit * 4;
-    const dirtH = this.gameViewH - grassStripH * 2;
-    const trackHeight = dirtH / this.racerCount;
-    return grassStripH + (laneIndex + 0.5) * trackHeight + RACER.Y_OFFSET;
+  private getHoleRadii(): { radiusX: number; radiusY: number } {
+    const laneH = this.trackManager.getLaneHeight();
+    const radiusY = Math.min(20, laneH * 0.4);
+    const radiusX = Math.min(30, radiusY * 1.5);
+    return { radiusX, radiusY };
   }
 }

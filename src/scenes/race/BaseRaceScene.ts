@@ -10,6 +10,7 @@ import type {
   RacerAnimations,
   GroundTextures,
   GrassTextures,
+  TrackLayoutData,
 } from "../../core";
 import { TrackManager } from "./TrackManager";
 import { FunnyModeManager } from "./FunnyModeManager";
@@ -26,6 +27,10 @@ export interface RaceState {
   musicInstance: IMediaInstance | null;
   currentMusicVolume: number;
   targetMusicVolume: number;
+  holes: Hole[];
+  setupPhase: boolean;
+  setupFinished: boolean;
+  currentSetupPlayerIndex: number;
 }
 
 export abstract class BaseRaceScene extends Container implements Scene {
@@ -43,8 +48,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
 
   protected elapsedTime: number = 0;
   protected raceEnded: boolean = false;
-  protected trackWidth: number = 0;
-  protected finishLineX: number = 0;
+  protected trackLayout: TrackLayoutData | null = null;
 
   protected onFinished: (results: Racer[]) => void;
   protected distance: number;
@@ -67,6 +71,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
   protected isFunnyMode: boolean = false;
   protected setupPhase: boolean = false;
   protected setupFinished: boolean = false;
+  protected currentSetupPlayerIndex: number = 0;
   protected holes: Hole[] = [];
 
   constructor(ctx: RaceContext, existingState?: RaceState) {
@@ -119,8 +124,14 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.musicInstance = s.musicInstance;
     this.currentMusicVolume = s.currentMusicVolume;
     this.targetMusicVolume = s.targetMusicVolume;
-    this.setupFinished = true;
+
+    this.holes = s.holes;
+    this.setupPhase = s.setupPhase;
+    this.setupFinished = s.setupFinished;
+    this.currentSetupPlayerIndex = s.currentSetupPlayerIndex;
+
     this.racers.forEach((r) => this.world.addChild(r));
+    this.holes.forEach((h) => this.world.addChild(h));
   }
 
   private initNewRace(names: string[], keys?: string[]) {
@@ -148,27 +159,26 @@ export abstract class BaseRaceScene extends Container implements Scene {
       musicInstance: this.musicInstance,
       currentMusicVolume: this.currentMusicVolume,
       targetMusicVolume: this.targetMusicVolume,
+      holes: this.holes,
+      setupPhase: this.setupPhase,
+      setupFinished: this.setupFinished,
+      currentSetupPlayerIndex: this.currentSetupPlayerIndex,
     };
   }
 
-  protected setupTracks() {
-    this.trackManager.setup(
-      this.trackWidth,
-      this.gameViewW,
-      this.gameViewH,
-      this.finishLineX,
-      this.racers.length,
-      this.distance,
-    );
+  protected setupTracks(layout: TrackLayoutData) {
+    this.trackLayout = layout;
+    this.trackManager.setup(layout);
     if (this.isFunnyMode) {
-      // Reposition holes on orientation change
       this.holes.forEach((h) => {
-        if (h.laneIndex !== -1) {
-          h.y = this.trackManager.getLaneRacerY(h.laneIndex, this.gameViewH, this.racers.length);
-        }
+        if (h.laneIndex !== -1) h.y = this.trackManager.getLaneCenterY(h.laneIndex);
       });
+      if (this.setupPhase && !this.setupFinished && !this.funnyModeManager) {
+        this.startFunnyModeSetup();
+      } else if (this.funnyModeManager) {
+        this.funnyModeManager.resize(layout);
+      }
     } else {
-      // Clean up any stray holes in normal mode
       this.holes.forEach((h) => this.world.removeChild(h));
       this.holes = [];
     }
@@ -177,14 +187,12 @@ export abstract class BaseRaceScene extends Container implements Scene {
   protected startFunnyModeSetup() {
     this.setupPhase = true;
     this.uiManager.updateDistance(0, false);
+    if (!this.trackLayout) return;
     this.funnyModeManager = new FunnyModeManager({
       world: this.world,
       ui: this.ui,
-      gameViewW: this.gameViewW,
-      gameViewH: this.gameViewH,
-      trackWidth: this.trackWidth,
-      finishLineX: this.finishLineX,
-      racerCount: this.racers.length,
+      layout: this.trackLayout,
+      trackManager: this.trackManager,
       onSetupFinished: (holes) => this.onFunnyModeSetupFinished(holes),
     });
     this.funnyModeManager.startSetup();
@@ -194,6 +202,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.holes = holes;
     this.setupPhase = false;
     this.setupFinished = true;
+    this.currentSetupPlayerIndex = this.holes.length;
     this.uiManager.updateDistance(this.distance, true);
     const indices = this.racers.map((_, i) => i).sort(() => Math.random() - 0.5);
     this.racers.forEach((r, i) => {
@@ -201,7 +210,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
       r.x = -100;
       this.world.addChild(r);
     });
-    this.trackManager.repositionRacers(this.racers, this.gameViewH);
+    this.trackManager.repositionRacers(this.racers);
     this.entranceFinished = false;
     this.raceStarted = false;
   }
@@ -295,9 +304,10 @@ export abstract class BaseRaceScene extends Container implements Scene {
       }
     }
     const ranked = [...active].sort((a, b) => b.x - a.x);
-    const totalPx = this.finishLineX - TRACK.START_LINE_X;
+    if (!this.trackLayout) return;
+    const totalPx = this.trackLayout.finishLineX - TRACK.START_LINE_X;
     const inClimax = active.some(
-      (r) => r.x >= this.finishLineX - totalPx * GAMEPLAY.BALANCE.CLIMAX_THRESHOLD,
+      (r) => r.x >= this.trackLayout!.finishLineX - totalPx * GAMEPLAY.BALANCE.CLIMAX_THRESHOLD,
     );
     this.racers.forEach((r) => {
       if (!r.isFinished()) {
@@ -305,21 +315,21 @@ export abstract class BaseRaceScene extends Container implements Scene {
           delta,
           this.elapsedTime,
           ranked[0]?.x || 0,
-          this.finishLineX,
+          this.trackLayout!.finishLineX,
           ranked.indexOf(r) + 1 || 1,
           totalPx,
           inClimax,
           active.length,
         );
-        if (r.x >= this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET) {
-          r.x = this.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET;
+        if (r.x >= this.trackLayout!.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET) {
+          r.x = this.trackLayout!.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET;
           r.setFinished(this.elapsedTime);
           this.finishedRacers.push(r);
         }
       }
     });
     const distM = Math.ceil(
-      (Math.max(0, this.finishLineX - (ranked[0]?.x || this.racers[0].x)) / totalPx) *
+      (Math.max(0, this.trackLayout.finishLineX - (ranked[0]?.x || this.racers[0].x)) / totalPx) *
         this.distance,
     );
     this.uiManager.updateDistance(distM, true);
@@ -327,9 +337,10 @@ export abstract class BaseRaceScene extends Container implements Scene {
   }
 
   protected updateCamera(leaderX: number, delta: number) {
+    if (!this.trackLayout) return;
     const targetX = Math.max(
       0,
-      Math.min(leaderX - this.gameViewW / 2, this.trackWidth - this.gameViewW),
+      Math.min(leaderX - this.gameViewW / 2, this.trackLayout.trackWidth - this.gameViewW),
     );
     this.world.x = -(
       -this.world.x +

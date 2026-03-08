@@ -1,12 +1,12 @@
 import { Container } from "pixi.js";
-import type { Scene } from "../core/Scene";
-import { type MenuContext, LayoutMode, determineMode } from "../core";
+import type { Scene } from "../../core/Scene";
+import { type MenuContext, LayoutMode, determineMode } from "../../core";
 import {
   BaseMenuScene,
   DesktopMenuScene,
   MobileVerticalMenuScene,
   MobileHorizontalMenuScene,
-} from "./menu";
+} from "./";
 
 export class MenuScene extends Container implements Scene {
   private context: MenuContext;

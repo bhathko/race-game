@@ -1,9 +1,8 @@
 import { BaseRaceScene } from "./BaseRaceScene";
 import type { RaceState } from "./BaseRaceScene";
-import { COLORS, PALETTE, VISUALS } from "../../config";
-import { Graphics, Text } from "pixi.js";
+import { COLORS } from "../../config";
 import type { RaceContext } from "../../core";
-import { getGridRect, getStandardGridConfig } from "../../core";
+import { getGridRect, getStandardGridConfig, createTrackLayout } from "../../core";
 
 export class DesktopRaceScene extends BaseRaceScene {
   constructor(ctx: RaceContext, existingState?: RaceState) {
@@ -44,12 +43,15 @@ export class DesktopRaceScene extends BaseRaceScene {
       title.y = 0;
     }
 
-    this.finishLineX = 50 + (this.distance / 50) * this.gameViewW;
-    this.trackWidth = this.finishLineX + 200;
-
-    this.setupTracks();
+    const layout = createTrackLayout(
+      this.gameViewW,
+      this.gameViewH,
+      this.racers.length,
+      this.distance,
+    );
+    this.setupTracks(layout);
     this.racers.forEach((r) => r.setMobileMode(false));
-    this.trackManager.repositionRacers(this.racers, this.gameViewH);
+    this.trackManager.repositionRacers(this.racers);
     this.updateLeaderboard(60);
 
     const countdown = this.uiManager.getCountdownText();
@@ -66,59 +68,26 @@ export class DesktopRaceScene extends BaseRaceScene {
   }
 
   protected updateLeaderboard(delta: number) {
-    const um = this.uiManager;
-    um.leaderboardUpdateTimer += delta;
-    if (um.leaderboardUpdateTimer >= um.LEADERBOARD_THROTTLE || um.sortedRacersCache.length === 0) {
-      um.leaderboardUpdateTimer = 0;
-      um.sortedRacersCache = [...this.racers].sort((a, b) => {
-        if (a.isFinished() && b.isFinished()) return a.finishTime - b.finishTime;
-        if (a.isFinished()) return -1;
-        if (b.isFinished()) return 1;
-        return b.x - a.x;
-      });
-    }
-
-    const items = um.getLeaderboardItems();
     const grid = getStandardGridConfig(this.width);
     const sidebarWidth = getGridRect(10, 2, grid).width;
 
-    um.sortedRacersCache.forEach((racer, index) => {
-      const container = items.get(racer);
-      if (!container) return;
-
-      const smoothing = 1 - Math.pow(1 - VISUALS.LEADERBOARD_ANIMATION_SPEED, delta);
-      container.x += (0 - container.x) * smoothing;
-      container.y += (40 + index * 42 - container.y) * smoothing;
-
-      const bg = container.getChildByLabel("item-bg") as Graphics;
-      const text = container.getChildByLabel("item-text") as Text;
-      const icon = container.getChildByLabel("item-icon");
-
-      if (bg) {
-        let color: number = COLORS.RANK_DEFAULT;
-        if (index === 0) color = COLORS.RANK_GOLD;
-        else if (index === 1) color = COLORS.RANK_SILVER;
-        else if (index === 2) color = COLORS.RANK_BRONZE;
-        bg.clear()
-          .roundRect(0, 0, sidebarWidth, 36, 4)
-          .fill({ color: PALETTE.BLACK, alpha: 0.5 })
-          .stroke({ color, width: index < 3 ? 3 : 1 });
-      }
-
-      if (text) {
-        const rank = index + 1;
-        const suffix = rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
-        text.text = `${rank}${suffix}: ${racer.racerName.split(" ").pop()}`;
-        text.x = 50;
-        text.y = 18;
-        text.anchor.set(0, 0.5);
-        text.style.fontSize = 14;
-      }
-      if (icon) {
-        icon.x = 25;
-        icon.y = 18;
-        icon.scale.set(1);
-      }
-    });
+    this.uiManager.updateLeaderboard(
+      this.racers,
+      {
+        direction: "vertical",
+        itemWidth: sidebarWidth,
+        itemHeight: 42,
+        iconScale: 1,
+        textX: 50,
+        textAnchorX: 0,
+        fontSize: 14,
+        textFormat: (racer, index) => {
+          const rank = index + 1;
+          const suffix = rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
+          return `${rank}${suffix}: ${racer.racerName.split(" ").pop()}`;
+        },
+      },
+      delta,
+    );
   }
 }

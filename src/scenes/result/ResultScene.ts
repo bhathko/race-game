@@ -1,27 +1,30 @@
 import { Container } from "pixi.js";
-import type { Scene } from "../core/Scene";
-import { LayoutMode, determineMode } from "../core";
+import type { Scene } from "../../core/Scene";
+import { type RacerAnimations, type ResultContext, LayoutMode, determineMode } from "../../core";
+import { Racer } from "../../entities";
 import {
-  BaseLoadingScene,
-  DesktopLoadingScene,
-  MobileVerticalLoadingScene,
-  MobileHorizontalLoadingScene,
-} from "./loading";
+  BaseResultScene,
+  DesktopResultScene,
+  MobileVerticalResultScene,
+  MobileHorizontalResultScene,
+} from "./";
 
-export class LoadingScene extends Container implements Scene {
-  private currentLayout: BaseLoadingScene | null = null;
+export class ResultScene extends Container implements Scene {
+  private context: ResultContext;
+  private currentLayout: BaseResultScene | null = null;
   private currentMode: LayoutMode | null = null;
-  private currentProgress: number = 0;
 
-  constructor() {
+  constructor(
+    finishedRacers: Racer[],
+    onRestart: () => void,
+    characterAnimations: Map<string, RacerAnimations>,
+  ) {
     super();
-  }
-
-  public setProgress(value: number) {
-    this.currentProgress = Math.min(1, Math.max(0, value));
-    if (this.currentLayout) {
-      this.currentLayout.setProgress(this.currentProgress);
-    }
+    this.context = {
+      finishedRacers,
+      onRestart,
+      characterAnimations,
+    };
   }
 
   public resize(width: number, height: number): void {
@@ -44,19 +47,18 @@ export class LoadingScene extends Container implements Scene {
 
     switch (mode) {
       case LayoutMode.Desktop:
-        this.currentLayout = new DesktopLoadingScene();
+        this.currentLayout = new DesktopResultScene(this.context);
         break;
       case LayoutMode.MobileVertical:
-        this.currentLayout = new MobileVerticalLoadingScene();
+        this.currentLayout = new MobileVerticalResultScene(this.context);
         break;
       case LayoutMode.MobileHorizontal:
-        this.currentLayout = new MobileHorizontalLoadingScene();
+        this.currentLayout = new MobileHorizontalResultScene(this.context);
         break;
     }
 
     if (this.currentLayout) {
       this.addChild(this.currentLayout);
-      this.currentLayout.setProgress(this.currentProgress);
       this.currentLayout.resize(width, height);
     }
   }

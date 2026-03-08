@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { GAMEPLAY, COLORS, PALETTE } from "../../config";
-import { createWoodenButton } from "../../ui";
+import { createCuteButton } from "../../ui";
 import type { MenuContext } from "../../core";
 
 const STORAGE_KEY = "choice-race-settings";
@@ -49,18 +49,18 @@ export abstract class BaseMenuScene extends Container {
     this.addChild(this.bg);
 
     const titleStyle = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 64,
+      fill: PALETTE.CUTE_YELLOW,
+      fontSize: 68,
       fontWeight: "900",
-      stroke: { color: COLORS.SIDEBAR_WOOD, width: 8 },
+      stroke: { color: PALETTE.CHUNKY_SHADOW, width: 10, join: "round" },
       dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 4,
-        blur: 4,
+        alpha: 0.2,
+        angle: Math.PI / 2,
+        blur: 0,
         color: PALETTE.STR_BLACK,
-        distance: 8,
+        distance: 6,
       },
-      letterSpacing: 4,
+      letterSpacing: 6,
     });
     this.title = new Text({ text: "CHOICE RACE", style: titleStyle });
     this.title.anchor.set(0.5);
@@ -68,9 +68,10 @@ export abstract class BaseMenuScene extends Container {
 
     // Version Text
     const versionStyle = new TextStyle({
-      fill: PALETTE.STR_GREY_SUBTLE,
-      fontSize: 14,
+      fill: PALETTE.STR_WHITE,
+      fontSize: 16,
       fontWeight: "bold",
+      stroke: { color: PALETTE.CHUNKY_SHADOW, width: 4, join: "round" },
     });
     this.versionText = new Text({ text: this.version, style: versionStyle });
     this.versionText.anchor.set(1, 1); // Bottom-right alignment anchor
@@ -99,26 +100,30 @@ export abstract class BaseMenuScene extends Container {
     });
 
     // Funny Mode Toggle
-    this.funnyBtn = createWoodenButton({
+    this.funnyBtn = createCuteButton({
       label: "FUNNY MODE: OFF",
       color: COLORS.BUTTON_NEUTRAL,
+      animalStyle: "rabbit",
       onClick: () => {
         this.isFunnyMode = !this.isFunnyMode;
         (this.funnyBtn as any).content.text = `FUNNY MODE: ${this.isFunnyMode ? "ON" : "OFF"}`;
-        (this.funnyBtn as any).bg.tint = this.isFunnyMode
-          ? COLORS.BUTTON_WARN
-          : COLORS.BUTTON_NEUTRAL;
+        (this.funnyBtn as any).updateColor(
+          this.isFunnyMode ? COLORS.BUTTON_WARN : COLORS.BUTTON_NEUTRAL,
+          240,
+          50,
+        );
       },
       width: 240,
       height: 50,
-      fontSize: 18,
+      fontSize: 20,
     });
     this.funnyBtn.label = "funny-btn";
     this.addChild(this.funnyBtn);
 
-    this.startBtn = createWoodenButton({
+    this.startBtn = createCuteButton({
       label: "START!",
       color: COLORS.BUTTON_SUCCESS,
+      animalStyle: "cat",
       onClick: () => this.onStartRace(this.selectedCount, this.selectedDistance, this.isFunnyMode),
       width: 280,
     });
@@ -157,9 +162,10 @@ export abstract class BaseMenuScene extends Container {
   private createLabel(text: string) {
     const style = new TextStyle({
       fill: PALETTE.STR_WHITE,
-      fontSize: 28,
+      fontSize: 32,
       fontWeight: "900",
-      stroke: { color: PALETTE.STR_BLACK, width: 4 },
+      stroke: { color: PALETTE.CHUNKY_SHADOW, width: 6, join: "round" },
+      letterSpacing: 2,
     });
     const label = new Text({ text, style });
     label.anchor.set(0.5);
@@ -172,7 +178,7 @@ export abstract class BaseMenuScene extends Container {
       fill: PALETTE.STR_WHITE,
       fontSize: 64,
       fontWeight: "900",
-      stroke: { color: COLORS.SIDEBAR_WOOD, width: 6 },
+      stroke: { color: PALETTE.CHUNKY_SHADOW, width: 8, join: "round" },
     });
     const valText = new Text({ text, style });
     valText.anchor.set(0.5);
@@ -183,21 +189,25 @@ export abstract class BaseMenuScene extends Container {
   private createStepper(onChange: (inc: boolean) => void) {
     const stepper = new Container();
 
-    const minusBtn = createWoodenButton({
+    const minusBtn = createCuteButton({
       label: "-",
       color: COLORS.BUTTON_PRIMARY,
+      animalStyle: "bear",
       onClick: () => onChange(false),
-      width: 80,
-      fontSize: 32,
+      width: 70,
+      height: 60,
+      fontSize: 40,
     });
     minusBtn.x = -140;
     stepper.addChild(minusBtn);
 
-    const plusBtn = createWoodenButton({
+    const plusBtn = createCuteButton({
       label: "+",
       color: COLORS.BUTTON_PRIMARY,
+      animalStyle: "bear",
       onClick: () => onChange(true),
-      width: 80,
+      width: 70,
+      height: 60,
       fontSize: 32,
     });
     plusBtn.x = 140;

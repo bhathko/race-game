@@ -52,19 +52,25 @@ export class WoodenButton extends Container {
     // ── interaction ─────────────────────────────────────────────────────────
     this.eventMode = "static";
     this.cursor = "pointer";
+
+    let baseScaleX = 1;
+    let baseScaleY = 1;
+
     this.on("pointerdown", () => {
-      this.scale.set(0.98);
+      baseScaleX = this.scale.x;
+      baseScaleY = this.scale.y;
+      this.scale.set(baseScaleX * 0.98, baseScaleY * 0.98);
       this.bg.y = 2;
       this.content.y = 0; // Move text down with the face
       this._onClick();
     });
     this.on("pointerup", () => {
-      this.scale.set(1.0);
+      this.scale.set(baseScaleX, baseScaleY);
       this.bg.y = 0;
       this.content.y = -2;
     });
     this.on("pointerupoutside", () => {
-      this.scale.set(1.0);
+      this.scale.set(baseScaleX, baseScaleY);
       this.bg.y = 0;
       this.content.y = -2;
     });

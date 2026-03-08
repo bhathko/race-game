@@ -1,5 +1,5 @@
 import { Container, Texture } from "pixi.js";
-import type { Scene } from "../core/Scene";
+import type { Scene } from "../../core/Scene";
 import {
   type RacerAnimations,
   type GroundTextures,
@@ -7,15 +7,15 @@ import {
   type RaceContext,
   LayoutMode,
   determineMode,
-} from "../core";
-import { Racer } from "../entities";
+} from "../../core";
+import { Racer } from "../../entities";
 import {
   BaseRaceScene,
   DesktopRaceScene,
   MobileVerticalRaceScene,
   MobileHorizontalRaceScene,
-} from "./race";
-import type { RaceState } from "./race";
+} from "./";
+import type { RaceState } from "./";
 
 export class RaceScene extends Container implements Scene {
   private context: RaceContext;

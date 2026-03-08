@@ -1,6 +1,6 @@
 import { Container, Graphics, TilingSprite, AnimatedSprite, Text, Texture } from "pixi.js";
 import { ITEMS, TRACK, TRACK_COLORS, CANVAS, RACER } from "../../config";
-import type { GroundTextures, GrassTextures } from "../../core";
+import type { GroundTextures, GrassTextures, TrackLayoutData } from "../../core";
 
 export class TrackManager extends Container {
   private trackGraphics: Graphics;
@@ -19,6 +19,7 @@ export class TrackManager extends Container {
   private treeAnimation: Texture[];
   private grassTextures: GrassTextures;
   private groundTextures: GroundTextures;
+  public layout: TrackLayoutData | null = null;
 
   constructor(
     grassTextures: GrassTextures,
@@ -60,41 +61,43 @@ export class TrackManager extends Container {
     this.addChild(this.trackGraphics);
   }
 
-  public setup(
-    trackWidth: number,
-    gameViewW: number,
-    gameViewH: number,
-    finishLineX: number,
-    racerCount: number,
-    distance: number,
-  ) {
+  public setup(layout: TrackLayoutData) {
+    this.layout = layout;
+    const {
+      trackWidth,
+      viewWidth,
+      viewHeight,
+      distance,
+      racerCount,
+      finishLineX,
+      grassStripHeight,
+      dirtHeight,
+      laneHeight,
+    } = layout;
     const unit = ITEMS.ground.unit;
-    const grassStripH = unit * 4;
-    const dirtH = gameViewH - grassStripH * 2;
-    const trackHeight = dirtH / racerCount;
 
     // Grass
     this.topGrassMiddle.width = trackWidth;
-    this.topGrassMiddle.height = grassStripH - unit;
+    this.topGrassMiddle.height = grassStripHeight - unit;
     this.topGrassMiddle.y = 0;
     this.topGrassEdge.width = trackWidth;
     this.topGrassEdge.height = unit;
-    this.topGrassEdge.y = grassStripH - unit;
+    this.topGrassEdge.y = grassStripHeight - unit;
     this.bottomGrassEdge.width = trackWidth;
     this.bottomGrassEdge.height = unit;
-    this.bottomGrassEdge.y = gameViewH - grassStripH;
+    this.bottomGrassEdge.y = viewHeight - grassStripHeight;
     this.bottomGrassMiddle.width = trackWidth;
-    this.bottomGrassMiddle.height = grassStripH - unit;
-    this.bottomGrassMiddle.y = gameViewH - grassStripH + unit;
+    this.bottomGrassMiddle.height = grassStripHeight - unit;
+    this.bottomGrassMiddle.y = viewHeight - grassStripHeight + unit;
 
     // Dirt
     this.topEdge.width = trackWidth;
-    this.topEdge.y = grassStripH;
+    this.topEdge.y = grassStripHeight;
     this.bottomEdge.width = trackWidth;
-    this.bottomEdge.y = gameViewH - grassStripH - unit;
+    this.bottomEdge.y = viewHeight - grassStripHeight - unit;
     this.middleGround.width = trackWidth;
-    this.middleGround.height = dirtH - unit * 2;
-    this.middleGround.y = grassStripH + unit;
+    this.middleGround.height = dirtHeight - unit * 2;
+    this.middleGround.y = grassStripHeight + unit;
 
     this.trackGraphics.clear();
     const { CREAM: colorLight, DARK_BROWN: colorDark, WARM_RED: colorRed } = TRACK_COLORS;
@@ -103,7 +106,7 @@ export class TrackManager extends Container {
     const dividerSize = 8;
     const dividerGap = 16;
     for (let i = 1; i < racerCount; i++) {
-      const y = Math.floor(grassStripH + i * trackHeight - dividerSize / 2);
+      const y = Math.floor(grassStripHeight + i * laneHeight - dividerSize / 2);
       for (let x = 0; x < trackWidth; x += dividerSize + dividerGap) {
         this.trackGraphics
           .roundRect(x, y, dividerSize, dividerSize, 2)
@@ -113,7 +116,11 @@ export class TrackManager extends Container {
 
     // Start Line
     const startBlockSize = 16;
-    for (let y = grassStripH; y <= gameViewH - grassStripH - startBlockSize; y += startBlockSize) {
+    for (
+      let y = grassStripHeight;
+      y <= viewHeight - grassStripHeight - startBlockSize;
+      y += startBlockSize
+    ) {
       this.trackGraphics
         .roundRect(TRACK.START_LINE_X - startBlockSize, y, startBlockSize, startBlockSize, 4)
         .fill({ color: colorLight })
@@ -125,8 +132,8 @@ export class TrackManager extends Container {
     const finishBlockSize = 16;
     for (let col = 0; col < 2; col++) {
       const x = finishLineX + col * finishBlockSize;
-      for (let row = 0; row * finishBlockSize <= dirtH - finishBlockSize; row++) {
-        const y = grassStripH + row * finishBlockSize;
+      for (let row = 0; row * finishBlockSize <= dirtHeight - finishBlockSize; row++) {
+        const y = grassStripHeight + row * finishBlockSize;
         const color = (row + col) % 2 === 0 ? colorLight : colorDark;
         this.trackGraphics.roundRect(x, y, finishBlockSize, finishBlockSize, 4).fill({ color });
       }
@@ -142,7 +149,7 @@ export class TrackManager extends Container {
       .forEach((c) => this.removeChild(c));
 
     // Markers & Trees
-    const unitWidth = Math.max(gameViewW, CANVAS.MIN_UNIT_WIDTH);
+    const unitWidth = Math.max(viewWidth, CANVAS.MIN_UNIT_WIDTH);
     for (let m = 10; m <= distance; m += 10) {
       const x = TRACK.START_LINE_X + (m / 50) * unitWidth;
       [0, 1].forEach((top) => {
@@ -152,8 +159,8 @@ export class TrackManager extends Container {
         tree.width = tree.height = ITEMS.tree.width;
         tree.x = x;
         tree.y = top
-          ? (grassStripH - ITEMS.tree.height) / 2
-          : gameViewH - (grassStripH - ITEMS.tree.height) / 2;
+          ? (grassStripHeight - ITEMS.tree.height) / 2
+          : viewHeight - (grassStripHeight - ITEMS.tree.height) / 2;
         tree.animationSpeed = 0.1;
         tree.play();
         this.addChild(tree);
@@ -165,13 +172,46 @@ export class TrackManager extends Container {
     return this.trackGraphics;
   }
 
-  public getLaneRacerY(laneIndex: number, gameViewH: number, racerCount: number): number {
-    const grassStripH = ITEMS.ground.unit * 4;
-    const trackHeight = (gameViewH - grassStripH * 2) / racerCount;
-    return grassStripH + (laneIndex + 0.5) * trackHeight + RACER.Y_OFFSET;
+  public getLaneHeight(): number {
+    if (!this.layout) return 0;
+    return this.layout.laneHeight;
   }
 
-  public repositionRacers(racers: any[], gameViewH: number) {
-    racers.forEach((r) => (r.y = this.getLaneRacerY(r.laneIndex, gameViewH, racers.length)));
+  /** Visual lane center Y — for centered objects like holes. */
+  public getLaneCenterY(laneIndex: number): number {
+    if (!this.layout) return 0;
+    return this.layout.grassStripHeight + (laneIndex + 0.5) * this.layout.laneHeight;
+  }
+
+  /** Racer anchor Y — includes Y_OFFSET for bottom-anchored sprites. */
+  public getLaneRacerY(laneIndex: number): number {
+    if (!this.layout) return 0;
+    const yOffset = Math.min(RACER.Y_OFFSET, this.layout.laneHeight * 0.5);
+    return this.layout.grassStripHeight + (laneIndex + 0.5) * this.layout.laneHeight + yOffset;
+  }
+
+  public getNearestLaneIndex(localY: number): number | null {
+    if (!this.layout) return null;
+    if (
+      localY < this.layout.grassStripHeight ||
+      localY > this.layout.viewHeight - this.layout.grassStripHeight
+    )
+      return null;
+    let minDist = Infinity;
+    let bestIdx = -1;
+    for (let i = 0; i < this.layout.racerCount; i++) {
+      const laneCenterY = this.layout.grassStripHeight + (i + 0.5) * this.layout.laneHeight;
+      const dist = Math.abs(localY - laneCenterY);
+      if (dist < minDist) {
+        minDist = dist;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  }
+
+  public repositionRacers(racers: { laneIndex: number; y: number }[]) {
+    if (!this.layout) return;
+    racers.forEach((r) => (r.y = this.getLaneRacerY(r.laneIndex)));
   }
 }
