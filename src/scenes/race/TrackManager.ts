@@ -180,11 +180,16 @@ export class TrackManager extends Container {
     return this.layout.grassStripHeight + (laneIndex + 0.5) * this.layout.laneHeight;
   }
 
-  /** Racer anchor Y — includes Y_OFFSET for bottom-anchored sprites. */
-  public getLaneRacerY(laneIndex: number): number {
+  /**
+   * Racer Y position — centers a bottom-anchored (0.5, 1) sprite in a lane.
+   * @param racerScale The racer's current container scale (default 1.0)
+   */
+  public getLaneRacerY(laneIndex: number, racerScale: number = 1): number {
     if (!this.layout) return 0;
-    const yOffset = Math.min(RACER.Y_OFFSET, this.layout.laneHeight * 0.3);
-    return this.layout.grassStripHeight + (laneIndex + 0.5) * this.layout.laneHeight + yOffset;
+    const laneCenter = this.layout.grassStripHeight + (laneIndex + 0.5) * this.layout.laneHeight;
+    // For a bottom-anchored sprite, y must be shifted down by half the visible height
+    const visibleHalfH = (RACER.HEIGHT * racerScale) / 2;
+    return laneCenter + visibleHalfH;
   }
 
   public getNearestLaneIndex(localY: number): number | null {
@@ -207,8 +212,8 @@ export class TrackManager extends Container {
     return bestIdx;
   }
 
-  public repositionRacers(racers: { laneIndex: number; y: number }[]) {
+  public repositionRacers(racers: { laneIndex: number; y: number; scale: { y: number } }[]) {
     if (!this.layout) return;
-    racers.forEach((r) => (r.y = this.getLaneRacerY(r.laneIndex)));
+    racers.forEach((r) => (r.y = this.getLaneRacerY(r.laneIndex, r.scale.y)));
   }
 }

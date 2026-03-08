@@ -56,6 +56,7 @@ export class ColorPencilButton extends Container {
 
     let baseScaleX = 1;
     let baseScaleY = 1;
+    let isDown = false;
 
     this.on("pointerdown", () => {
       baseScaleX = this.scale.x;
@@ -63,17 +64,22 @@ export class ColorPencilButton extends Container {
       this.scale.set(baseScaleX * 0.93, baseScaleY * 0.93);
       this.bg.y = 4;
       this.content.y = 1;
-      this._onClick();
+      isDown = true;
     });
     this.on("pointerup", () => {
       this.scale.set(baseScaleX, baseScaleY);
       this.bg.y = 0;
       this.content.y = -3;
+      if (isDown) {
+        isDown = false;
+        this._onClick();
+      }
     });
     this.on("pointerupoutside", () => {
       this.scale.set(baseScaleX, baseScaleY);
       this.bg.y = 0;
       this.content.y = -3;
+      isDown = false;
     });
   }
 

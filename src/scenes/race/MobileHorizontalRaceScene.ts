@@ -66,15 +66,8 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
     const racerScale = Math.max(minScale, Math.min(1, idealScale));
     this.racers.forEach((r) => r.scale.set(racerScale));
 
-    // Manually center racers in their lanes (replaces repositionRacers)
-    // Sprite anchor is (0.5, 1) = bottom-centered.
-    // For visual center to align with lane center:
-    //   racer.y = laneCenter + (spriteHeight * scale) / 2
-    const visibleHalfH = (RACER.HEIGHT * racerScale) / 2;
-    this.racers.forEach((r) => {
-      const laneCenter = layout.grassStripHeight + (r.laneIndex + 0.5) * layout.laneHeight;
-      r.y = laneCenter + visibleHalfH;
-    });
+    // repositionRacers now uses scale-aware centering for bottom-anchored sprites
+    this.trackManager.repositionRacers(this.racers);
     this.updateLeaderboard(60);
 
     const countdown = this.uiManager.getCountdownText();
