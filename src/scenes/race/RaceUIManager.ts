@@ -7,6 +7,9 @@ export interface LeaderboardLayoutConfig {
   direction: "vertical" | "horizontal";
   itemWidth: number;
   itemHeight: number;
+  gap: number;
+  availableSpace: number;
+  usePositionOrder: boolean;
   textFormat: (racer: Racer, index: number) => string;
   iconScale: number;
   textX: number;
@@ -21,6 +24,7 @@ export class RaceUIManager {
   private leaderboardContainer: Container;
   private sidebarBg: Graphics;
   private leaderboardItems: Map<Racer, Container> = new Map();
+  private hasSnapped: boolean = false;
 
   public leaderboardUpdateTimer: number = 0;
   public readonly LEADERBOARD_THROTTLE: number = 30;
@@ -151,23 +155,94 @@ export class RaceUIManager {
   public getRemainingDistanceText() {
     return this.remainingDistanceText;
   }
+
   public updateLeaderboard(racers: Racer[], config: LeaderboardLayoutConfig, delta: number) {
     if (this.leaderboardUpdateTimer > 0) {
       this.leaderboardUpdateTimer -= delta;
     } else {
-      this.sortedRacersCache = [...racers].sort((a, b) => b.x - a.x);
+      if (config.usePositionOrder) {
+        // During race: sort by position (furthest ahead first)
+        this.sortedRacersCache = [...racers].sort((a, b) => b.x - a.x);
+      } else {
+        // Before race: sort by lane index (ascending)
+        this.sortedRacersCache = [...racers].sort((a, b) => a.laneIndex - b.laneIndex);
+      }
       this.leaderboardUpdateTimer = this.LEADERBOARD_THROTTLE;
     }
+
+    const isVertical = config.direction === "vertical";
+    const totalRacers = this.sortedRacersCache.length;
+    if (totalRacers === 0) return;
+    const gap = config.gap;
+
+    let cardW: number, cardH: number;
+    let cols: number, rows: number;
+
+    if (isVertical) {
+      cardW = config.itemWidth;
+      cardH = config.itemHeight;
+      const totalNeeded = totalRacers * (cardH + gap) - gap;
+      if (totalNeeded > config.availableSpace) {
+        rows = Math.max(1, Math.floor((config.availableSpace + gap) / (cardH + gap)));
+        cols = Math.ceil(totalRacers / rows);
+        cardW = Math.floor((config.itemWidth - gap * (cols - 1)) / cols);
+      } else {
+        cols = 1;
+        rows = totalRacers;
+      }
+    } else {
+      cardW = config.itemWidth;
+      cardH = config.itemHeight;
+
+      cols = Math.max(1, Math.floor((config.availableSpace + gap) / (cardW + gap)));
+
+      if (cols >= totalRacers) {
+        cols = totalRacers;
+        rows = 1;
+        cardW = Math.floor((config.availableSpace - gap * Math.max(0, cols - 1)) / cols);
+      } else {
+        rows = Math.ceil(totalRacers / cols);
+        cardW = Math.floor((config.availableSpace - gap * Math.max(0, cols - 1)) / cols);
+        cardH = Math.floor((config.itemHeight - gap * (rows - 1)) / rows);
+        cardH = Math.max(36, cardH);
+      }
+    }
+
+    const smallerDim = Math.min(cardW, cardH);
+    const effectiveIconScale = Math.min(config.iconScale, (smallerDim - 8) / 32);
+
+    // On the first layout, snap positions instantly (no lerp)
+    const snap = !this.hasSnapped;
+    if (snap) this.hasSnapped = true;
+    const lerpSpeed = snap ? 1.0 : 0.15;
 
     this.sortedRacersCache.forEach((racer, index) => {
       const itemConfig = this.leaderboardItems.get(racer);
       if (!itemConfig) return;
 
-      const targetX = config.direction === "vertical" ? 0 : index * config.itemWidth;
-      const targetY = config.direction === "vertical" ? index * config.itemHeight : 0;
+      itemConfig.visible = true;
 
-      itemConfig.x += (targetX - itemConfig.x) * 0.1;
-      itemConfig.y += (targetY - itemConfig.y) * 0.1;
+      let targetX: number, targetY: number;
+
+      if (isVertical) {
+        const col = Math.floor(index / rows);
+        const row = index % rows;
+        targetX = col * (cardW + gap);
+        targetY = row * (cardH + gap);
+      } else {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        targetX = col * (cardW + gap);
+        targetY = row * (cardH + gap);
+      }
+
+      if (snap) {
+        itemConfig.x = targetX;
+        itemConfig.y = targetY;
+      } else {
+        itemConfig.x += (targetX - itemConfig.x) * lerpSpeed;
+        itemConfig.y += (targetY - itemConfig.y) * lerpSpeed;
+      }
 
       const bg = itemConfig.children.find((c) => c.label === "item-bg") as Graphics | undefined;
       if (bg) {
@@ -176,28 +251,42 @@ export class RaceUIManager {
         else if (index === 1) color = COLORS.RANK_SILVER;
         else if (index === 2) color = COLORS.RANK_BRONZE;
         bg.clear()
-          .roundRect(0, 0, config.itemWidth - 10, config.itemHeight - 10, 8)
+          .roundRect(0, 0, cardW - 2, cardH - 2, 6)
           .fill({ color: PALETTE.BLACK, alpha: 0.5 })
-          .stroke({ color, width: index < 3 ? 3 : 1 });
+          .stroke({ color, width: index < 3 ? 3 : 1.5 });
       }
 
       const icon = itemConfig.children.find((c) => c.label === "item-icon") as
         | AnimatedSprite
         | undefined;
       if (icon) {
-        icon.scale.set(config.iconScale);
-        icon.x = config.itemHeight / 2 - 5;
-        icon.y = config.itemHeight / 2 - 5;
+        icon.scale.set(effectiveIconScale);
+        if (isVertical) {
+          icon.x = cardH / 2 - 2;
+          icon.y = cardH / 2 - 2;
+        } else {
+          icon.x = cardW / 2;
+          icon.y = cardH * 0.4;
+        }
       }
 
       const text = itemConfig.children.find((c) => c.label === "item-text") as Text | undefined;
       if (text) {
         text.text = config.textFormat(racer, index);
-        text.x = config.textX;
-        text.y = config.itemHeight / 2;
-        text.anchor.set(config.textAnchorX, 0.5);
+        if (isVertical) {
+          text.x = config.textX;
+          text.y = cardH / 2;
+          text.anchor.set(config.textAnchorX, 0.5);
+        } else {
+          text.x = cardW / 2;
+          text.y = cardH * 0.82;
+          text.anchor.set(0.5, 0.5);
+        }
         if (text.style instanceof TextStyle) {
-          text.style.fontSize = config.fontSize;
+          text.style.fontSize = Math.min(
+            config.fontSize,
+            isVertical ? cardH * 0.35 : Math.max(9, cardW * 0.2),
+          );
         }
       }
     });

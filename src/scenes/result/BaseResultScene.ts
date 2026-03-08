@@ -1,11 +1,12 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { COLORS, PALETTE } from "../../config";
-import { LeaderboardSidebar, createWoodenButton } from "../../ui";
+import { LeaderboardSidebar, createColorPencilButton } from "../../ui";
 import { LeaderboardPodium } from "../../ui/leaderboard/LeaderboardPodium";
 import type { RankEntry } from "../../ui";
 import type { ResultContext } from "../../core";
 
 export abstract class BaseResultScene extends Container {
+  protected ctx: ResultContext;
   protected onRestart: () => void;
   protected bg: Graphics;
   protected winnerText: Text;
@@ -15,6 +16,7 @@ export abstract class BaseResultScene extends Container {
 
   constructor(ctx: ResultContext) {
     super();
+    this.ctx = ctx;
     this.onRestart = ctx.onRestart;
 
     this.bg = new Graphics();
@@ -54,15 +56,15 @@ WINS!`,
       character: racer.characterKey,
     }));
 
-    // Create a standalone podium
-    this.podium = new LeaderboardPodium(entries, 400, ctx.characterAnimations);
-    this.addChild(this.podium);
-
-    // Create sidebar which now handles the internal ranking list
+    // Create sidebar FIRST so its background renders behind the podium
     this.leaderboardSidebar = new LeaderboardSidebar(entries, 300, 480, ctx.characterAnimations);
     this.addChild(this.leaderboardSidebar);
 
-    this.restartBtn = createWoodenButton({
+    // Create podium AFTER sidebar so it renders ON TOP of the sidebar background
+    this.podium = new LeaderboardPodium(entries, 400, ctx.characterAnimations);
+    this.addChild(this.podium);
+
+    this.restartBtn = createColorPencilButton({
       label: "BACK TO MENU",
       color: COLORS.BUTTON_PRIMARY,
       onClick: () => this.onRestart(),

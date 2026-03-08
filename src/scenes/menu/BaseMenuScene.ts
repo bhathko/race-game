@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { GAMEPLAY, COLORS, PALETTE } from "../../config";
-import { createCuteButton } from "../../ui";
+import { createColorPencilButton } from "../../ui";
 import type { MenuContext } from "../../core";
 
 const STORAGE_KEY = "choice-race-settings";
@@ -100,30 +100,30 @@ export abstract class BaseMenuScene extends Container {
     });
 
     // Funny Mode Toggle
-    this.funnyBtn = createCuteButton({
+    this.funnyBtn = createColorPencilButton({
       label: "FUNNY MODE: OFF",
       color: COLORS.BUTTON_NEUTRAL,
-      animalStyle: "rabbit",
+
       onClick: () => {
         this.isFunnyMode = !this.isFunnyMode;
         (this.funnyBtn as any).content.text = `FUNNY MODE: ${this.isFunnyMode ? "ON" : "OFF"}`;
         (this.funnyBtn as any).updateColor(
           this.isFunnyMode ? COLORS.BUTTON_WARN : COLORS.BUTTON_NEUTRAL,
-          240,
-          50,
+          280,
+          56,
         );
       },
-      width: 240,
-      height: 50,
+      width: 280,
+      height: 56,
       fontSize: 20,
     });
     this.funnyBtn.label = "funny-btn";
     this.addChild(this.funnyBtn);
 
-    this.startBtn = createCuteButton({
+    this.startBtn = createColorPencilButton({
       label: "START!",
       color: COLORS.BUTTON_SUCCESS,
-      animalStyle: "cat",
+
       onClick: () => this.onStartRace(this.selectedCount, this.selectedDistance, this.isFunnyMode),
       width: 280,
     });
@@ -189,10 +189,10 @@ export abstract class BaseMenuScene extends Container {
   private createStepper(onChange: (inc: boolean) => void) {
     const stepper = new Container();
 
-    const minusBtn = createCuteButton({
+    const minusBtn = createColorPencilButton({
       label: "-",
       color: COLORS.BUTTON_PRIMARY,
-      animalStyle: "bear",
+
       onClick: () => onChange(false),
       width: 70,
       height: 60,
@@ -201,10 +201,10 @@ export abstract class BaseMenuScene extends Container {
     minusBtn.x = -140;
     stepper.addChild(minusBtn);
 
-    const plusBtn = createCuteButton({
+    const plusBtn = createColorPencilButton({
       label: "+",
       color: COLORS.BUTTON_PRIMARY,
-      animalStyle: "bear",
+
       onClick: () => onChange(true),
       width: 70,
       height: 60,

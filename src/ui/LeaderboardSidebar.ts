@@ -47,10 +47,10 @@ export class LeaderboardSidebar extends Container {
       text: "Ranking",
       style: new TextStyle({
         fill: PALETTE.STR_WHITE,
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: "900",
         letterSpacing: 2,
-        stroke: { color: PALETTE.STR_WOOD_MID, width: 5 },
+        stroke: { color: PALETTE.STR_BLACK, width: 6, join: "round" },
       }),
     });
     this.titleText.anchor.set(0, 0.5);
@@ -76,22 +76,29 @@ export class LeaderboardSidebar extends Container {
   }
 
   private drawBackground() {
-    this.bg.roundRect(4, 6, this.sidebarW, this.sidebarH, 18).fill({ color: 0, alpha: 0.35 });
+    // Drop shadow
     this.bg
-      .roundRect(0, 0, this.sidebarW, this.sidebarH, 18)
-      .fill({ color: PALETTE.WOOD_MID, alpha: 0.92 });
-    
-    // Decorative lines
-    const step = 70;
-    for (let py = 65; py < this.sidebarH - 20; py += step) {
-      this.bg
-        .roundRect(10, py, this.sidebarW - 20, 2, 1)
-        .fill({ color: PALETTE.WOOD_DARK, alpha: 0.55 });
-    }
+      .roundRect(4, 6, this.sidebarW, this.sidebarH, 16)
+      .fill({ color: PALETTE.CHUNKY_SHADOW });
+    this.bg
+      .roundRect(4, 6, this.sidebarW, this.sidebarH, 16)
+      .stroke({ color: PALETTE.STR_BLACK, width: 3, alpha: 0.5 });
 
+    // Main paper-like background
     this.bg
-      .roundRect(0, 0, this.sidebarW, this.sidebarH, 18)
-      .stroke({ color: PALETTE.WOOD_PALE, width: 3.5 });
+      .roundRect(0, 0, this.sidebarW, this.sidebarH, 16)
+      .fill({ color: 0xffffff, alpha: 0.85 });
+
+    // Sketchy outlines
+    this.bg
+      .roundRect(0, 0, this.sidebarW, this.sidebarH, 16)
+      .stroke({ color: PALETTE.STR_BLACK, width: 4, join: "round" });
+    this.bg
+      .roundRect(-1, 2, this.sidebarW + 2, this.sidebarH - 1, 16)
+      .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.5, join: "round" });
+    this.bg
+      .roundRect(2, -1, this.sidebarW - 3, this.sidebarH + 2, 16)
+      .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.3, join: "round" });
   }
 
   private layout() {

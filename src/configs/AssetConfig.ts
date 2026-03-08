@@ -42,7 +42,7 @@ export const CHARACTERS = {
 } as const;
 
 export const ITEMS = {
-  tree: { path: "assets/item/tree-idle.png", cols: 12, rows: 4, width: 48, height: 48 },
+  tree: { path: "assets/item/tree-idle.png", cols: 12, rows: 1, width: 48, height: 48 },
   trophy: { path: "assets/item/gold-trophy.png" },
   ground: { path: "assets/item/ground.png", unit: 16 },
   grass: { path: "assets/item/grass.png", unit: 16 },

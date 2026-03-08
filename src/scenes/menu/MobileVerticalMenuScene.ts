@@ -30,8 +30,10 @@ export class MobileVerticalMenuScene extends BaseMenuScene {
     const valueY1 = height * 0.35;
     this.countLabel.x = centerX;
     this.countLabel.y = labelY1;
+    this.countLabel.style.fontSize = 22;
     this.countValue.x = centerX;
     this.countValue.y = valueY1;
+    this.countValue.style.fontSize = 48;
     this.countStepper.x = centerX;
     this.countStepper.y = valueY1;
     this.countStepper.scale.set(0.85);
@@ -40,8 +42,10 @@ export class MobileVerticalMenuScene extends BaseMenuScene {
     const valueY2 = height * 0.57;
     this.distLabel.x = centerX;
     this.distLabel.y = labelY2;
+    this.distLabel.style.fontSize = 22;
     this.distValue.x = centerX;
     this.distValue.y = valueY2;
+    this.distValue.style.fontSize = 48;
     this.distStepper.x = centerX;
     this.distStepper.y = valueY2;
     this.distStepper.scale.set(0.85);

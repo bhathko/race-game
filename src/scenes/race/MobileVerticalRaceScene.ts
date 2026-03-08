@@ -12,7 +12,13 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
   public resize(width: number, height: number) {
     this.isPortrait = true;
     const grid = getStandardGridConfig(width);
-    const lbH = 120;
+
+    // Dynamic leaderboard height: use 2-row grid when many racers
+    const availableW = width - 2 * grid.margin;
+    const desiredCardW = 70;
+    const fitsInOneRow = this.racers.length * (desiredCardW + 6) - 6 <= availableW;
+    const lbH = fitsInOneRow ? 120 : 160;
+
     this.gameViewH = height - lbH;
     this.gameViewW = width;
 
@@ -29,7 +35,7 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
 
     const lbContainer = this.uiManager.getLeaderboardContainer();
     lbContainer.x = grid.margin;
-    lbContainer.y = this.gameViewH + 10;
+    lbContainer.y = this.gameViewH + 8;
 
     const title = lbContainer.getChildByLabel("leaderboard-title");
     if (title) {
@@ -62,16 +68,19 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
 
   protected updateLeaderboard(delta: number) {
     const grid = getStandardGridConfig(this.width);
-    const itemW = (this.width - 2 * grid.margin) / this.racers.length;
+    const availableW = this.width - 2 * grid.margin;
 
     this.uiManager.updateLeaderboard(
       this.racers,
       {
         direction: "horizontal",
-        itemWidth: itemW,
-        itemHeight: 100,
+        itemWidth: 70,
+        itemHeight: 140,
+        gap: 6,
+        availableSpace: availableW,
+        usePositionOrder: this.raceStarted,
         iconScale: 0.8,
-        textX: (itemW - 5) / 2,
+        textX: 35,
         textAnchorX: 0.5,
         fontSize: 12,
         textFormat: (_, index) => (index + 1).toString(),

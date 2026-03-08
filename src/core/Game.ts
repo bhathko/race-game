@@ -88,12 +88,12 @@ export class Game {
     await Assets.load(ITEMS.sound.path);
     reportProgress();
 
-    // Create tree animation from the 4th row (index 3)
+    // Create tree animation from the sprite sheet (single row)
     this.treeAnimation = this.createFrames(
       treeSheet,
       ITEMS.tree.cols,
-      ITEMS.tree.rows, // Use config rows instead of hardcoded 5
-      3, // 4th row index
+      ITEMS.tree.rows,
+      0, // First (and only) row
     );
 
     const groundUnit = ITEMS.ground.unit;

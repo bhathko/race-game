@@ -150,17 +150,16 @@ export class TrackManager extends Container {
 
     // Markers & Trees
     const unitWidth = Math.max(viewWidth, CANVAS.MIN_UNIT_WIDTH);
+    const treeSize = Math.min(ITEMS.tree.width, grassStripHeight * 0.85);
     for (let m = 10; m <= distance; m += 10) {
       const x = TRACK.START_LINE_X + (m / 50) * unitWidth;
-      [0, 1].forEach((top) => {
+      [true, false].forEach((isTop) => {
         const tree = new AnimatedSprite(this.treeAnimation);
         tree.label = "distance-tree";
-        tree.anchor.set(0.5, top);
-        tree.width = tree.height = ITEMS.tree.width;
+        tree.anchor.set(0.5, 1);
+        tree.width = tree.height = treeSize;
         tree.x = x;
-        tree.y = top
-          ? (grassStripHeight - ITEMS.tree.height) / 2
-          : viewHeight - (grassStripHeight - ITEMS.tree.height) / 2;
+        tree.y = isTop ? grassStripHeight : viewHeight - grassStripHeight + treeSize;
         tree.animationSpeed = 0.1;
         tree.play();
         this.addChild(tree);

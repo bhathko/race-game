@@ -45,9 +45,9 @@ Each racer receives a `StrategyBehavior` object controlling stat multipliers, sp
 ## Key Features
 
 - **Nature-Themed Aesthetic:** Dirt racetrack with grass edges and animated pixel-art trees.
-- **Hand-Crafted UI:** Earthy color palette (Forest Green, Terracotta, Stone) with 3D multi-layered wooden buttons and organic textures.
+- **Hand-Crafted UI:** "Color Pencil Sketch" aesthetic featuring semi-transparent white/gray paper backgrounds, thick jittered (hand-drawn) black outlines, and sketchy drop shadows instead of primitive shapes.
 - **Loading Progress:** Real-time visual feedback with specialized responsive layouts for every orientation.
-- **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations (including specialized Landscape split-layouts) without progress loss.
+- **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations (including specialized Landscape split-layouts). Result scenes feature **Dynamic List Hiding** which gracefully hides the 4th+ place ranking list on vertically constrained screens to perfectly center and prioritize the Top 3 Podium.
 - **Comeback Engine:** Continuous rank-based multipliers keep races competitive through the finish.
 - **Funny Mode:** Optional blind trap-placement phase where players place Holes on the track. Racers that hit a Hole are stunned and must re-accelerate.
 

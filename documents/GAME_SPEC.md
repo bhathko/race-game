@@ -33,11 +33,13 @@ All rank-based multipliers use a continuous normalized rank `t = (rank - 1) / (t
 ### A. The Slingshot (Acceleration Multiplier)
 
 Trailing racers gain higher torque to recover from mistakes or stamina crashes.
+
 - **Formula:** `A_final = A_base × (1 + t × 0.56)`
 
 ### B. The Slipstream & Deep-Trailing Boost
 
 Chasers "slice" through resistance, allowing a higher top speed than the leader.
+
 - **Slipstream:** `V_max_base × (1 + t × 0.25)`
 - **Deep-Trailing:** Quadratic extra speed boost for bottom-half racers.
 
@@ -64,6 +66,7 @@ Racers walk from off-screen to the start line before the countdown begins.
 ### B. The Climax Phase (Final 20 %)
 
 Triggered when any racer enters the final 20 % of the track:
+
 - **Enhanced Recovery:** 1.5× recovery multiplier for all.
 - **Overdrive:** Speed boost for the top trailing racers within range of the leader.
 - **All-In Sprint:** Strategy constraints are ignored for a final dash.
@@ -80,12 +83,13 @@ Triggered when any racer enters the final 20 % of the track:
 ## 8. Visual Design & UI
 
 - **Theme:** Natural Earthy Aesthetic with Forest Green backgrounds.
-- **Redesign:** 3D multi-layered wooden buttons with organic grain and tactile click animations.
+- **Redesign Framework:** "Color Pencil Sketch" aesthetic featuring semi-transparent white/gray paper backgrounds, thick jittered (hand-drawn) black outlines, and sketchy drop shadows. Replaced previous heavy 3D wooden UI elements.
 - **Design System:** Centralized `PALETTE` and 12-column grid system.
 - **Responsive Layouts:**
   - **Desktop:** Unified centered ranking component (Podium + List).
   - **Mobile Portrait:** Bottom-docked ranking list, hidden racer names/stamina during race.
-  - **Mobile Landscape:** Specialized split-screen result view (Winner/Podium on left, List on right) to optimize for short screen height.
+  - **Mobile Landscape:** Specialized split-screen result view (Winner/Podium on left, List on right).
+  - **Dynamic List Hiding:** In all result scene orientations, if the screen height is insufficient to render the full ranking list (4th place onwards) without overlap, the list panel is dynamically hidden and the Top 3 Podium is re-centered automatically.
 - **Aesthetics:** **Animated pixel-art characters** with specialized idle and walk states.
 
 ## 9. Funny Mode (Trap Mechanic)
@@ -100,9 +104,9 @@ Optional mode where players place **Hole** (trap) obstacles.
 
 ### B. Hole Mechanics
 
-| Property        | Value                                                                |
-| :-------------- | :------------------------------------------------------------------- |
-| **Alignment**   | Aligned with racer feet using `RACER.Y_OFFSET`.                      |
-| **Trigger**     | Proximity-based detection.                                           |
-| **Effect**      | Momentary stun; racer must re-accelerate from 0.                     |
-| **Consumption** | Single-use — hole is removed after triggering.                       |
+| Property        | Value                                            |
+| :-------------- | :----------------------------------------------- |
+| **Alignment**   | Aligned with racer feet using `RACER.Y_OFFSET`.  |
+| **Trigger**     | Proximity-based detection.                       |
+| **Effect**      | Momentary stun; racer must re-accelerate from 0. |
+| **Consumption** | Single-use — hole is removed after triggering.   |

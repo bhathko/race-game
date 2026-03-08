@@ -14,36 +14,59 @@ export class MobileHorizontalResultScene extends BaseResultScene {
 
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
-    // Split layout: Winner on left, Ranking (List) on right
-    const leftX = leftRect.x + leftRect.width / 2;
-
-    // Winner title aligned to the right edge of the left column (next to leaderboard)
-    this.winnerText.anchor.set(1, 0.5);
-    this.winnerText.x = rightRect.x - grid.gutter;
-    this.winnerText.y = height * 0.15;
-    this.winnerText.style.fontSize = 28;
-    this.winnerText.style.align = "right";
-
-    // Podium remains centered in the left column area
-    const podiumW = Math.min(leftRect.width * 0.9, 280);
-    this.podium.resize(podiumW);
-    this.podium.scale.set(0.75);
-    this.podium.x = leftX - (podiumW * 0.75) / 2;
-    this.podium.y = height * 0.78;
-
     const topSpace = 20;
     const bottomSpace = 20;
     const sidebarH = height - topSpace - bottomSpace;
 
-    // Sidebar Wood Panel (Right side)
-    this.leaderboardSidebar.resize(rightRect.width, sidebarH);
-    this.leaderboardSidebar.x = rightRect.x;
-    this.leaderboardSidebar.y = topSpace;
+    // Check if list fits
+    const listStartY = 70;
+    const listEntriesCount = Math.max(0, this.ctx.finishedRacers.length - 3);
+    const requiredListH = listEntriesCount * 42;
+    const availableListH = sidebarH - listStartY - 15;
+    const canFitList = availableListH >= requiredListH && listEntriesCount > 0;
 
-    // Remove the large gap for the podium in the list
-    this.leaderboardSidebar.setListOffsetY(70);
+    this.leaderboardSidebar.visible = canFitList;
 
-    this.restartBtn.x = leftX;
+    if (canFitList) {
+      // ─── Split Layout (Sidebar shown on right) ───
+      const leftX = leftRect.x + leftRect.width / 2;
+
+      this.winnerText.anchor.set(1, 0.5);
+      this.winnerText.x = rightRect.x - grid.gutter;
+      this.winnerText.y = height * 0.15;
+      this.winnerText.style.align = "right";
+
+      const podiumW = Math.min(leftRect.width * 0.9, 280);
+      this.podium.resize(podiumW);
+      this.podium.scale.set(0.75);
+      this.podium.x = leftX - (podiumW * 0.75) / 2;
+      this.podium.y = height * 0.78;
+
+      this.leaderboardSidebar.resize(rightRect.width, sidebarH);
+      this.leaderboardSidebar.x = rightRect.x;
+      this.leaderboardSidebar.y = topSpace;
+      this.leaderboardSidebar.setShowList(true);
+      this.leaderboardSidebar.setListOffsetY(listStartY);
+
+      this.restartBtn.x = leftX;
+    } else {
+      // ─── Centered Layout (Sidebar hidden, Podium only) ───
+      const centerX = width / 2;
+
+      this.winnerText.anchor.set(0.5);
+      this.winnerText.x = centerX;
+      this.winnerText.y = height * 0.15;
+      this.winnerText.style.align = "center";
+
+      const podiumW = Math.min(width * 0.7, 400);
+      this.podium.resize(podiumW);
+      this.podium.scale.set(0.85);
+      this.podium.x = centerX - (podiumW * 0.85) / 2;
+      this.podium.y = height * 0.78;
+
+      this.restartBtn.x = centerX;
+    }
+
     this.restartBtn.y = height * 0.9;
     this.restartBtn.scale.set(0.6);
   }

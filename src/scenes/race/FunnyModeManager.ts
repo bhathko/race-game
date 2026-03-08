@@ -1,6 +1,6 @@
 import { Container, Text, TextStyle } from "pixi.js";
 import { Hole } from "../../entities";
-import { createWoodenButton } from "../../ui";
+import { createColorPencilButton } from "../../ui";
 import { COLORS, PALETTE, TRACK } from "../../config";
 import type { TrackLayoutData } from "../../core";
 import type { TrackManager } from "./TrackManager";
@@ -82,7 +82,7 @@ export class FunnyModeManager {
   }
 
   private createScrollButtons() {
-    this.scrollLeftBtn = createWoodenButton({
+    this.scrollLeftBtn = createColorPencilButton({
       label: "<",
       color: COLORS.BUTTON_PRIMARY,
       onClick: () => this.handleScroll("left"),
@@ -93,7 +93,7 @@ export class FunnyModeManager {
     this.scrollLeftBtn.x = 50;
     this.ui.addChild(this.scrollLeftBtn);
 
-    this.scrollRightBtn = createWoodenButton({
+    this.scrollRightBtn = createColorPencilButton({
       label: ">",
       color: COLORS.BUTTON_PRIMARY,
       onClick: () => this.handleScroll("right"),
@@ -131,7 +131,7 @@ export class FunnyModeManager {
     this.world.on("pointerdown", this.handlePointerDown, this);
     this.world.on("pointermove", this.handlePointerMove, this);
 
-    this.skipBtn = createWoodenButton({
+    this.skipBtn = createColorPencilButton({
       label: "SKIP",
       color: COLORS.BUTTON_NEUTRAL,
       onClick: () => this.handleSkip(),
@@ -143,7 +143,7 @@ export class FunnyModeManager {
     this.skipBtn.y = 130;
     this.ui.addChild(this.skipBtn);
 
-    this.startMatchBtn = createWoodenButton({
+    this.startMatchBtn = createColorPencilButton({
       label: "START MATCH",
       color: COLORS.BUTTON_SUCCESS,
       onClick: () => this.finish(),
@@ -179,7 +179,7 @@ export class FunnyModeManager {
       this.setupInstructionText.style.fill = PALETTE.STR_WHITE;
     } else {
       this.setupInstructionText.text = "All Traps Placed!";
-      this.setupInstructionText.style.fill = PALETTE.STR_SUCCESS;
+      this.setupInstructionText.style.fill = PALETTE.STR_WHITE;
     }
   }
 

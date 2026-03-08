@@ -76,7 +76,10 @@ export class DesktopRaceScene extends BaseRaceScene {
       {
         direction: "vertical",
         itemWidth: sidebarWidth,
-        itemHeight: 42,
+        itemHeight: 48,
+        gap: 6,
+        availableSpace: this.height - 60,
+        usePositionOrder: this.raceStarted,
         iconScale: 1,
         textX: 50,
         textAnchorX: 0,

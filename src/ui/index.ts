@@ -1,3 +1,2 @@
-export * from "./WoodenButton";
-export * from "./CuteButton";
+export * from "./ColorPencilButton";
 export * from "./LeaderboardSidebar";

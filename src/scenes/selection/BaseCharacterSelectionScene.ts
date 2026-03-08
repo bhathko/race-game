@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
 import { CHARACTERS, COLORS, RACER, PALETTE } from "../../config";
-import { createWoodenButton } from "../../ui";
+import { createColorPencilButton } from "../../ui";
 import type { RacerAnimations, SelectionContext } from "../../core/types";
 import type { Scene } from "../../core/Scene";
 
@@ -78,7 +78,7 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
 
     this.createCharacterGrid();
 
-    this.startBtn = createWoodenButton({
+    this.startBtn = createColorPencilButton({
       label: "START RACE!",
       color: COLORS.BUTTON_SUCCESS,
       onClick: () => this.handleStart(),
@@ -87,7 +87,7 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     this.startBtn.visible = false;
     this.addChild(this.startBtn);
 
-    this.backBtn = createWoodenButton({
+    this.backBtn = createColorPencilButton({
       label: "BACK",
       color: COLORS.BUTTON_DANGER,
       onClick: () => this.onBack(),

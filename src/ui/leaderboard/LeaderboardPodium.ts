@@ -57,21 +57,26 @@ export class LeaderboardPodium extends Container {
 
       const h = heights[rank as keyof typeof heights];
       const ped = new Graphics();
-      const bColor =
-        rank === 1 ? PALETTE.WOOD_LIGHT : rank === 2 ? PALETTE.WOOD_MID : PALETTE.WOOD_DARK;
       const mColor = rank === 1 ? COL.GOLD : rank === 2 ? COL.SILVER : COL.BRONZE;
 
-      // Pedestal body
-      ped.roundRect(-colW / 2 + 5, -h + 4, colW - 10, h, 6).fill({ color: 0, alpha: 0.25 });
-      ped.roundRect(-colW / 2 + 2, -h, colW - 10, h, 6).fill(bColor);
+      // Sketchy drop shadow
+      ped.roundRect(-colW / 2 + 5, -h + 4, colW - 6, h, 6).fill({ color: PALETTE.CHUNKY_SHADOW });
 
-      const capY = -h - 6;
-      // Pedestal cap
-      ped.roundRect(-colW / 2 + 2, capY + 4, colW - 4, 14, 4).fill({ color: 0, alpha: 0.3 });
+      // Main flat colored block
+      ped.roundRect(-colW / 2 + 2, -h, colW - 4, h, 8).fill(mColor);
+
+      // Sketchy outlines
       ped
-        .roundRect(-colW / 2 + 1, capY, colW - 4, 14, 4)
-        .fill(mColor)
-        .stroke({ color: rank === 1 ? COL.GOLD_DARK : 0, width: 1.5, alpha: 0.5 });
+        .roundRect(-colW / 2 + 2, -h, colW - 4, h, 8)
+        .stroke({ color: PALETTE.STR_BLACK, width: 3.5, join: "round" });
+      ped
+        .roundRect(-colW / 2 + 1, -h + 1, colW - 2, h - 1, 8)
+        .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.5, join: "round" });
+      ped
+        .roundRect(-colW / 2 + 3, -h - 1, colW - 6, h + 2, 8)
+        .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.3, join: "round" });
+
+      const topY = -h;
 
       col.addChild(ped);
 
@@ -79,37 +84,37 @@ export class LeaderboardPodium extends Container {
         text: rank.toString(),
         style: new TextStyle({
           fill: COL.TEXT_WHITE,
-          fontSize: rank === 1 ? 36 : 28,
+          fontSize: rank === 1 ? 40 : 32,
           fontWeight: "900",
+          stroke: { color: PALETTE.STR_BLACK, width: 4 },
         }),
       });
-      rText.alpha = 0.5;
       rText.anchor.set(0.5);
       rText.y = -h / 2;
       col.addChild(rText);
 
       const icon = this.createIcon(entry.character, this.animations);
       icon.scale.set(1.2);
-      icon.y = capY - 44;
+      icon.y = topY - 38;
       col.addChild(icon);
 
       const name = new Text({
         text: entry.name.split(" ")[1] || entry.name,
         style: new TextStyle({
           fill: COL.TEXT_WHITE,
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: "900",
-          stroke: { color: COL.TEXT_SHADOW, width: 3 },
+          stroke: { color: PALETTE.STR_BLACK, width: 4 },
           align: "center",
         }),
       });
       name.anchor.set(0.5, 0);
-      name.y = capY - 84;
+      name.y = topY - 78;
       col.addChild(name);
 
       if (rank === 1) {
         const glow = new Graphics()
-          .circle(0, capY - 44, 45)
+          .circle(0, topY - 38, 45)
           .fill({ color: COL.GOLD_GLOW, alpha: 0.12 });
         col.addChildAt(glow, 0);
         this.glowGraphics.push(glow);

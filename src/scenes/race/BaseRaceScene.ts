@@ -250,6 +250,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
           ? Math.max(...active.map((r) => r.x))
           : Math.max(...this.racers.map((r) => r.x));
     }
+    this.updateLeaderboard(delta);
     this.updateCamera(leaderX, delta);
     if (this.racers.length > 0 && this.racers.every((r) => r.isFinished())) this.endRace();
   }
@@ -333,7 +334,6 @@ export abstract class BaseRaceScene extends Container implements Scene {
         this.distance,
     );
     this.uiManager.updateDistance(distM, true);
-    this.updateLeaderboard(delta);
   }
 
   protected updateCamera(leaderX: number, delta: number) {
