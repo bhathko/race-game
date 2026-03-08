@@ -35,6 +35,8 @@ export class MobileHorizontalResultScene extends BaseResultScene {
       this.winnerText.x = rightRect.x - grid.gutter;
       this.winnerText.y = height * 0.15;
       this.winnerText.style.align = "right";
+      this.winnerText.style.fontSize = Math.min(32, height * 0.14);
+      this.winnerText.style.stroke = { color: 0x5d4037, width: Math.min(5, height * 0.018) };
 
       const podiumW = Math.min(leftRect.width * 0.9, 280);
       this.podium.resize(podiumW);
@@ -57,6 +59,8 @@ export class MobileHorizontalResultScene extends BaseResultScene {
       this.winnerText.x = centerX;
       this.winnerText.y = height * 0.15;
       this.winnerText.style.align = "center";
+      this.winnerText.style.fontSize = Math.min(36, height * 0.16);
+      this.winnerText.style.stroke = { color: 0x5d4037, width: Math.min(5, height * 0.018) };
 
       const podiumW = Math.min(width * 0.7, 400);
       this.podium.resize(podiumW);

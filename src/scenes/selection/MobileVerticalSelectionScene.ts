@@ -122,5 +122,8 @@ export class MobileVerticalSelectionScene extends BaseCharacterSelectionScene {
     this.startBtn.scale.set(0.7);
     this.startBtn.x = centerX;
     this.startBtn.y = height - 45;
+
+    // ─── Popup ───
+    this.repositionPopup(width, height);
   }
 }

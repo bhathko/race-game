@@ -116,15 +116,12 @@ export class TrackManager extends Container {
 
     // Start Line
     const startBlockSize = 16;
-    for (
-      let y = grassStripHeight;
-      y <= viewHeight - grassStripHeight - startBlockSize;
-      y += startBlockSize
-    ) {
+    for (let y = grassStripHeight; y < viewHeight - grassStripHeight; y += startBlockSize) {
+      const blockH = Math.min(startBlockSize, viewHeight - grassStripHeight - y);
       this.trackGraphics
-        .roundRect(TRACK.START_LINE_X - startBlockSize, y, startBlockSize, startBlockSize, 4)
+        .roundRect(TRACK.START_LINE_X - startBlockSize, y, startBlockSize, blockH, 4)
         .fill({ color: colorLight })
-        .roundRect(TRACK.START_LINE_X, y, startBlockSize, startBlockSize, 4)
+        .roundRect(TRACK.START_LINE_X, y, startBlockSize, blockH, 4)
         .fill({ color: colorRed });
     }
 
@@ -132,10 +129,11 @@ export class TrackManager extends Container {
     const finishBlockSize = 16;
     for (let col = 0; col < 2; col++) {
       const x = finishLineX + col * finishBlockSize;
-      for (let row = 0; row * finishBlockSize <= dirtHeight - finishBlockSize; row++) {
-        const y = grassStripHeight + row * finishBlockSize;
+      for (let y = grassStripHeight; y < grassStripHeight + dirtHeight; y += finishBlockSize) {
+        const row = Math.floor((y - grassStripHeight) / finishBlockSize);
+        const blockH = Math.min(finishBlockSize, grassStripHeight + dirtHeight - y);
         const color = (row + col) % 2 === 0 ? colorLight : colorDark;
-        this.trackGraphics.roundRect(x, y, finishBlockSize, finishBlockSize, 4).fill({ color });
+        this.trackGraphics.roundRect(x, y, finishBlockSize, blockH, 4).fill({ color });
       }
     }
 
@@ -185,7 +183,7 @@ export class TrackManager extends Container {
   /** Racer anchor Y — includes Y_OFFSET for bottom-anchored sprites. */
   public getLaneRacerY(laneIndex: number): number {
     if (!this.layout) return 0;
-    const yOffset = Math.min(RACER.Y_OFFSET, this.layout.laneHeight * 0.5);
+    const yOffset = Math.min(RACER.Y_OFFSET, this.layout.laneHeight * 0.3);
     return this.layout.grassStripHeight + (laneIndex + 0.5) * this.layout.laneHeight + yOffset;
   }
 

@@ -48,6 +48,8 @@ Each racer receives a `StrategyBehavior` object controlling stat multipliers, sp
 - **Hand-Crafted UI:** "Color Pencil Sketch" aesthetic featuring semi-transparent white/gray paper backgrounds, thick jittered (hand-drawn) black outlines, and sketchy drop shadows instead of primitive shapes.
 - **Loading Progress:** Real-time visual feedback with specialized responsive layouts for every orientation.
 - **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations (including specialized Landscape split-layouts). Result scenes feature **Dynamic List Hiding** which gracefully hides the 4th+ place ranking list on vertically constrained screens to perfectly center and prioritize the Top 3 Podium.
+- **Selection Confirmation Popup:** When all racers are selected, a centered modal overlay appears with START RACE and CANCEL buttons. CANCEL deselects the last character. In landscape mobile, this replaces the inline start button to save space.
+- **Landscape Race Optimizations:** Grass strips are reduced to 1 unit in landscape mode to maximize lane space. Racers are dynamically scaled (min 0.6) and precisely centered in their lanes using exact bottom-anchor math. The leaderboard sidebar uses pixel-based width calculation to prevent overflow.
 - **Comeback Engine:** Continuous rank-based multipliers keep races competitive through the finish.
 - **Funny Mode:** Optional blind trap-placement phase where players place Holes on the track. Racers that hit a Hole are stunned and must re-accelerate.
 

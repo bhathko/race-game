@@ -68,5 +68,8 @@ export class DesktopSelectionScene extends BaseCharacterSelectionScene {
     this.backBtn.x = grid.margin + 40;
     this.backBtn.y = 40;
     this.backBtn.scale.set(1.0);
+
+    // ─── Popup ───
+    this.repositionPopup(width, height);
   }
 }

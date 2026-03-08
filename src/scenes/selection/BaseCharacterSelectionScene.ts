@@ -26,6 +26,13 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
   protected backBtn: Container;
   protected statusText: Text;
 
+  // Confirmation popup
+  protected popupOverlay: Container;
+  protected popupPanel: Graphics;
+  protected popupTitle: Text;
+  protected popupStartBtn: Container;
+  protected popupCancelBtn: Container;
+
   protected selectionSprites: Map<string, Container> = new Map();
   protected lineupSprites: Container[] = [];
 
@@ -95,6 +102,50 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
       fontSize: 20,
     });
     this.addChild(this.backBtn);
+
+    // ── Confirmation Popup ──
+    this.popupOverlay = new Container();
+    this.popupOverlay.visible = false;
+    this.popupOverlay.eventMode = "static"; // blocks clicks to elements behind
+
+    const overlayBg = new Graphics();
+    overlayBg.rect(0, 0, 2000, 2000).fill({ color: 0x000000, alpha: 0.5 });
+    this.popupOverlay.addChild(overlayBg);
+
+    this.popupPanel = new Graphics();
+    this.popupOverlay.addChild(this.popupPanel);
+
+    this.popupTitle = new Text({
+      text: "Ready to Race!",
+      style: new TextStyle({
+        fill: PALETTE.STR_WHITE,
+        fontSize: 28,
+        fontWeight: "900",
+        stroke: { color: PALETTE.STR_BLACK, width: 5 },
+      }),
+    });
+    this.popupTitle.anchor.set(0.5);
+    this.popupOverlay.addChild(this.popupTitle);
+
+    this.popupStartBtn = createColorPencilButton({
+      label: "START RACE!",
+      color: COLORS.BUTTON_SUCCESS,
+      onClick: () => this.handleStart(),
+      width: 220,
+      fontSize: 24,
+    });
+    this.popupOverlay.addChild(this.popupStartBtn);
+
+    this.popupCancelBtn = createColorPencilButton({
+      label: "CANCEL",
+      color: COLORS.BUTTON_DANGER,
+      onClick: () => this.handlePopupCancel(),
+      width: 220,
+      fontSize: 24,
+    });
+    this.popupOverlay.addChild(this.popupCancelBtn);
+
+    this.addChild(this.popupOverlay);
 
     // Initial state refresh
     this.updateUI();
@@ -245,9 +296,11 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     if (remaining > 0) {
       this.statusText.text = `Select ${remaining} more racer${remaining > 1 ? "s" : ""}`;
       this.startBtn.visible = false;
+      this.popupOverlay.visible = false;
     } else {
       this.statusText.text = `Ready to race!`;
       this.startBtn.visible = true;
+      this.popupOverlay.visible = true;
     }
 
     this.repositionLineup();
@@ -261,6 +314,49 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     if (this.selectedKeys.length === this.playerCount) {
       this.onStartRace(this.selectedKeys, this.distance);
     }
+  }
+
+  private handlePopupCancel() {
+    if (this.selectedKeys.length > 0) {
+      this.selectedKeys.pop();
+      this.updateUI();
+    }
+  }
+
+  /** Reposition the popup overlay and panel. Call from resize(). */
+  protected repositionPopup(width: number, height: number) {
+    // Overlay background covers full screen
+    const overlayBg = this.popupOverlay.children[0] as Graphics;
+    overlayBg.clear().rect(0, 0, width, height).fill({ color: 0x000000, alpha: 0.5 });
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Panel
+    const panelW = Math.min(300, width * 0.6);
+    const panelH = Math.min(180, height * 0.65);
+    this.popupPanel.clear();
+    this.popupPanel
+      .roundRect(centerX - panelW / 2, centerY - panelH / 2, panelW, panelH, 16)
+      .fill({ color: 0xffffff, alpha: 0.92 })
+      .stroke({ color: PALETTE.STR_BLACK, width: 4, join: "round" })
+      .roundRect(centerX - panelW / 2 + 2, centerY - panelH / 2 - 1, panelW - 4, panelH + 2, 16)
+      .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.4, join: "round" });
+
+    // Title
+    this.popupTitle.x = centerX;
+    this.popupTitle.y = centerY - panelH * 0.28;
+    this.popupTitle.style.fontSize = Math.min(28, height * 0.09);
+
+    // Buttons
+    const btnScale = Math.min(0.7, height / 400);
+    this.popupStartBtn.scale.set(btnScale);
+    this.popupStartBtn.x = centerX;
+    this.popupStartBtn.y = centerY + 5;
+
+    this.popupCancelBtn.scale.set(btnScale);
+    this.popupCancelBtn.x = centerX;
+    this.popupCancelBtn.y = centerY + panelH * 0.3;
   }
 
   update(_delta: number) {}

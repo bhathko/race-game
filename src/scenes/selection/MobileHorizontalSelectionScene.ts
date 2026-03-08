@@ -32,20 +32,80 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
 
     this.bg.clear().rect(0, 0, width, height).fill({ color: 0x81c784 });
 
-    this.title.x = centerX;
-    this.title.y = 25;
-    this.title.style.fontSize = 20;
+    // ════════════════════════════════════════════════════════════
+    // VERTICAL LAYOUT (top to bottom, every pixel accounted for)
+    // ════════════════════════════════════════════════════════════
+    //
+    // Zone 1: BACK button + Title row         [0 → titleBottomY]
+    // Zone 2: Character Grid (dynamically scaled) [titleBottomY → statusTopY]
+    // Zone 3: Status Text                     [statusTopY → lineupTopY]
+    // Zone 4: Lineup cards + START button     [lineupTopY → height]
+    //
+    // ────────────────────────────────────────────────────────────
 
-    // Grid Layout (Upper section)
-    const gridScale = 0.6;
-    this.gridContainer.scale.set(gridScale);
+    // ── Zone 1: Title + Back Button ──
+    const titleFontSize = Math.min(20, height * 0.07);
+    this.title.x = centerX;
+    this.title.y = height * 0.06;
+    this.title.style.fontSize = titleFontSize;
+
+    const titleBottomY = this.title.y + titleFontSize / 2 + 6; // title center + half font + pad
+
+    this.backBtn.scale.set(0.45);
+    this.backBtn.x = grid.margin + 25;
+    this.backBtn.y = this.title.y;
+
+    // ── Zone 4 (from bottom): Lineup only (START is handled by popup) ──
+    // Move startBtn off-screen (updateUI overrides visible=false)
+    this.startBtn.x = -9999;
+    this.startBtn.y = -9999;
+
+    // Lineup cards draw UPWARD from their y. Each card is RACER.HEIGHT * lineupScale tall.
+    const lineupScale = this.getLineupScale();
+    const lineupCardH = RACER.HEIGHT * lineupScale;
+    const lineupAnchorY = height - 12; // more room since no start button below
+    const lineupTopY = lineupAnchorY - lineupCardH - 4;
+
+    this.lineupContainer.x = centerX;
+    this.lineupContainer.y = lineupAnchorY;
+    this.repositionLineup();
+
+    // ── Zone 3: Status Text ──
+    const statusFontSize = Math.min(14, height * 0.05);
+    const statusBottomY = lineupTopY - 2;
+    const statusTopY = statusBottomY - statusFontSize - 4;
+
+    this.statusText.x = centerX;
+    this.statusText.y = statusBottomY - statusFontSize / 2;
+    this.statusText.style.fontSize = statusFontSize;
+
+    // ── Zone 2: Character Grid (fills remaining space) ──
+    const gridTopPad = 4;
+    const gridBotPad = 4;
+    const availableGridH = statusTopY - titleBottomY - gridTopPad - gridBotPad;
+
+    const cardHalf = 50;
     const cardSize = 100;
-    const spacingX = cardSize + 15;
-    const spacingY = cardSize + 10;
+    const spacingX = cardSize + 12;
+    const spacingY = cardSize + 8;
     const cols = 5;
+    const totalItems = this.selectionSprites.size;
+    const rows = Math.ceil(totalItems / cols);
+
+    const rawGridH = (rows - 1) * spacingY + cardSize;
+
+    const maxGridScale = 0.55;
+    const fitScale = availableGridH / rawGridH;
+    const gridScale = Math.min(maxGridScale, fitScale);
+    this.gridContainer.scale.set(gridScale);
+
+    const actualGridH = rawGridH * gridScale;
+
+    const gridCenterY = titleBottomY + gridTopPad + (availableGridH - actualGridH) / 2;
+    this.gridContainer.x = centerX;
+    this.gridContainer.y = gridCenterY + cardHalf * gridScale;
 
     let i = 0;
-    const totalItems = this.selectionSprites.size;
     const itemsArray = Array.from(this.selectionSprites.values());
 
     for (let row = 0; i < totalItems; row++) {
@@ -60,26 +120,7 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
       }
     }
 
-    this.gridContainer.x = centerX;
-    this.gridContainer.y = 75; // More breathing room from the title
-
-    // Lineup Layout (Lower section)
-    this.lineupContainer.x = centerX;
-    // Position lineup relative to the bottom, but above the Start button area
-    this.lineupContainer.y = height - 70;
-    this.repositionLineup();
-
-    this.statusText.x = centerX;
-    this.statusText.y = this.lineupContainer.y - 60;
-    this.statusText.style.fontSize = 14;
-
-    // Controls
-    this.startBtn.scale.set(0.6);
-    this.startBtn.x = width - grid.margin - 50;
-    this.startBtn.y = height - 40;
-
-    this.backBtn.scale.set(0.5);
-    this.backBtn.x = grid.margin + 30;
-    this.backBtn.y = 25;
+    // ── Popup ──
+    this.repositionPopup(width, height);
   }
 }

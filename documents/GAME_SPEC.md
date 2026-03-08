@@ -90,6 +90,8 @@ Triggered when any racer enters the final 20 % of the track:
   - **Mobile Portrait:** Bottom-docked ranking list, hidden racer names/stamina during race.
   - **Mobile Landscape:** Specialized split-screen result view (Winner/Podium on left, List on right).
   - **Dynamic List Hiding:** In all result scene orientations, if the screen height is insufficient to render the full ranking list (4th place onwards) without overlap, the list panel is dynamically hidden and the Top 3 Podium is re-centered automatically.
+  - **Selection Confirmation Popup:** When all racers are selected, a centered modal overlay with START RACE and CANCEL buttons replaces inline controls. CANCEL deselects the last character.
+  - **Landscape Race Track:** Grass strips reduced to 1 unit, racers dynamically scaled (min 0.6×) and precisely centered using bottom-anchor math, leaderboard sidebar uses pixel-based width to prevent overflow.
 - **Aesthetics:** **Animated pixel-art characters** with specialized idle and walk states.
 
 ## 9. Funny Mode (Trap Mechanic)

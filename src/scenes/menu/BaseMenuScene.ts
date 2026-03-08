@@ -16,11 +16,8 @@ export abstract class BaseMenuScene extends Container {
   public selectedDistance = 50;
   public isFunnyMode = false;
 
-  // Use a hardcoded version or import from package.json if configured.
-  // For safety in this environment ensuring no build errors, I'll use a constant for now or try import.
-  // The user plan said "Import version from package.json".
-  // Let's try to just define it as a string for now, to be safe.
-  protected version: string = "v0.0.0";
+  // Version injected by Vite from package.json at build time
+  protected version: string = `v${__APP_VERSION__}`;
 
   protected bg: Graphics;
   protected title: Text;
