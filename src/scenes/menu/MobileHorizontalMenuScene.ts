@@ -34,17 +34,20 @@ export class MobileHorizontalMenuScene extends BaseMenuScene {
     this.countLabel.y = height * 0.3;
     this.countValue.x = leftX;
     this.countValue.y = height * 0.48;
+    this.countValue.scale.set(0.6);
     this.countStepper.x = leftX;
     this.countStepper.y = height * 0.48;
-    this.countStepper.scale.set(0.7);
+    this.countStepper.scale.set(0.55);
 
     this.distLabel.x = rightX;
     this.distLabel.y = height * 0.3;
+    this.distLabel.scale.set(0.8);
     this.distValue.x = rightX;
     this.distValue.y = height * 0.48;
+    this.distValue.scale.set(0.5); // "200m" needs more scale-down than "2"
     this.distStepper.x = rightX;
     this.distStepper.y = height * 0.48;
-    this.distStepper.scale.set(0.7);
+    this.distStepper.scale.set(0.55);
 
     this.funnyBtn.x = centerX;
     this.funnyBtn.y = height * 0.72;
