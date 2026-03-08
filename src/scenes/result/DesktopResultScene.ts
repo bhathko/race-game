@@ -17,7 +17,8 @@ export class DesktopResultScene extends BaseResultScene {
     // ─── Winner Title ───
     this.winnerText.x = centerX;
     this.winnerText.y = height * 0.12;
-    this.winnerText.style.fontSize = 64;
+    this.winnerText.style.fontSize = Math.min(64, width * 0.08);
+    this.winnerText.style.stroke = { color: 0x5d4037, width: Math.min(8, width * 0.01) };
 
     // ─── Layout Constants ───
     const btnH = 60;
