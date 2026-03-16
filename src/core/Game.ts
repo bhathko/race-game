@@ -54,7 +54,7 @@ export class Game {
 
   private async loadAssets(onProgress: (progress: number) => void) {
     const charKeys = Object.keys(CHARACTERS);
-    const totalAssets = charKeys.length * 2 + 5; // idle/walk for each + 5 items
+    const totalAssets = charKeys.length * 3 + 5; // idle/walk/jump for each + 5 items
     let loadedCount = 0;
 
     const reportProgress = () => {
@@ -69,10 +69,13 @@ export class Game {
       reportProgress();
       const walkSheet = await Assets.load(char.walk.path);
       reportProgress();
+      const jumpSheet = await Assets.load(char.jump.path);
+      reportProgress();
 
       this.characterAnimations.set(key, {
         idle: this.createFrames(idleSheet, char.idle.frames, 1, 0),
         walk: this.createFrames(walkSheet, char.walk.frames, 1, 0),
+        jump: this.createFrames(jumpSheet, char.jump.frames, 1, 0),
       });
     }
 

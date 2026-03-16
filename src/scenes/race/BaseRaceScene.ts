@@ -87,6 +87,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.addChild(this.worldMask);
 
     this.world = new Container();
+    this.world.sortableChildren = true;
     this.world.mask = this.worldMask;
     this.addChild(this.world);
 
@@ -289,20 +290,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.elapsedTime += delta;
     const active = this.racers.filter((r) => !r.isFinished());
     if (this.isFunnyMode) {
-      for (let i = this.holes.length - 1; i >= 0; i--) {
-        const h = this.holes[i];
-        for (const r of active) {
-          if (
-            Math.abs(r.x - h.x) < 50 &&
-            (r.laneIndex === h.laneIndex || Math.abs(r.y - h.y) < 10)
-          ) {
-            r.applyHoleEffect();
-            this.world.removeChild(h);
-            this.holes.splice(i, 1);
-            break;
-          }
-        }
-      }
+      this.updateHoleCollisions(active, delta);
     }
     const ranked = [...active].sort((a, b) => b.x - a.x);
     if (!this.trackLayout) return;
@@ -346,6 +334,33 @@ export abstract class BaseRaceScene extends Container implements Scene {
       -this.world.x +
       (targetX - -this.world.x) * (1 - Math.pow(1 - VISUALS.CAMERA_SMOOTHING, delta))
     );
+  }
+
+  private updateHoleCollisions(active: Racer[], delta: number) {
+    const fadeDuration = GAMEPLAY.HOLE_ANIMATION.SINK_DURATION;
+    for (let i = this.holes.length - 1; i >= 0; i--) {
+      const h = this.holes[i];
+      if (h.fading) {
+        h.fadeTimer -= delta;
+        if (h.fadeTimer <= 0) {
+          this.world.removeChild(h);
+          this.holes.splice(i, 1);
+        }
+        continue;
+      }
+      for (const r of active) {
+        if (
+          Math.abs(r.x - h.x) < 10 &&
+          (r.laneIndex === h.laneIndex || Math.abs(r.y - h.y) < 10)
+        ) {
+          r.applyHoleEffect();
+          h.fading = true;
+          h.fadeTimer = fadeDuration;
+          h.zIndex = 1000;
+          break;
+        }
+      }
+    }
   }
 
   protected endRace() {

@@ -18,6 +18,9 @@ export class ColorPencilButton extends Container {
   public bg: Graphics;
   public content: Text;
   private _onClick: () => void;
+  private _baseScaleX: number = 1;
+  private _baseScaleY: number = 1;
+  private _isDown: boolean = false;
 
   constructor(opts: ColorPencilButtonOptions) {
     super();
@@ -54,32 +57,30 @@ export class ColorPencilButton extends Container {
     this.eventMode = "static";
     this.cursor = "pointer";
 
-    let baseScaleX = 1;
-    let baseScaleY = 1;
-    let isDown = false;
-
     this.on("pointerdown", () => {
-      baseScaleX = this.scale.x;
-      baseScaleY = this.scale.y;
-      this.scale.set(baseScaleX * 0.93, baseScaleY * 0.93);
+      // Guard: if already pressed, don't re-capture the shrunk scale
+      if (this._isDown) return;
+      this._baseScaleX = this.scale.x;
+      this._baseScaleY = this.scale.y;
+      this.scale.set(this._baseScaleX * 0.93, this._baseScaleY * 0.93);
       this.bg.y = 4;
       this.content.y = 1;
-      isDown = true;
+      this._isDown = true;
     });
     this.on("pointerup", () => {
-      this.scale.set(baseScaleX, baseScaleY);
+      this.scale.set(this._baseScaleX, this._baseScaleY);
       this.bg.y = 0;
       this.content.y = -3;
-      if (isDown) {
-        isDown = false;
+      if (this._isDown) {
+        this._isDown = false;
         this._onClick();
       }
     });
     this.on("pointerupoutside", () => {
-      this.scale.set(baseScaleX, baseScaleY);
+      this.scale.set(this._baseScaleX, this._baseScaleY);
       this.bg.y = 0;
       this.content.y = -3;
-      isDown = false;
+      this._isDown = false;
     });
   }
 

@@ -73,6 +73,6 @@ export class RacerDrama {
   }
 
   public applyHoleStun() {
-    this.holeStunTimer = 60;
+    this.holeStunTimer = GAMEPLAY.DRAMA.HOLE_STUN_DURATION;
   }
 }

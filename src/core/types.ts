@@ -14,6 +14,7 @@ export type LayoutMode = (typeof LayoutMode)[keyof typeof LayoutMode];
 export interface RacerAnimations {
   idle: Texture[];
   walk: Texture[];
+  jump: Texture[];
 }
 
 /** Three-slice vertical texture set (top edge, tiled middle, bottom edge). */

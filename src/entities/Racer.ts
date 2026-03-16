@@ -9,6 +9,11 @@ import { calculateComebackMultipliers } from "./racer/ComebackEngine";
 
 export type { RacerAnimations, RacerStrategy };
 
+const HOLE_PHASE_NONE = 0;
+const HOLE_PHASE_SINKING = 1;
+const HOLE_PHASE_HIDDEN = 2;
+const HOLE_PHASE_RECOVERING = 3;
+
 export interface RacerStats {
   accel: number;
   topSpeed: number;
@@ -39,6 +44,11 @@ export class Racer extends Container {
 
   private finished: boolean = false;
   private elapsedFrames: number = 0;
+
+  // Hole stun death-sequence state
+  private holePhase: number = HOLE_PHASE_NONE;
+  private holePhaseTimer: number = 0;
+  private baseSpriteY: number = 0;
   public leadFrames: number = 0;
 
   constructor(
@@ -115,6 +125,7 @@ export class Racer extends Container {
   private setAnimation(key: keyof RacerAnimations) {
     if (this.sprite.textures === this.animations[key]) return;
     this.sprite.textures = this.animations[key];
+    this.sprite.loop = true;
     this.sprite.play();
   }
 
@@ -142,10 +153,17 @@ export class Racer extends Container {
 
     if (this.dramaSys.isStunned()) {
       this.moveSys.targetSpeed = 0;
-      this.moveSys.update(delta, 0.1, GAMEPLAY.PHYSICS); // Slow down/stay at zero
+      this.moveSys.update(delta, 0.1, GAMEPLAY.PHYSICS);
       this.x = this.moveSys.x;
-      this.setAnimation("idle");
+      this.updateHoleSequence(delta);
       return;
+    }
+
+    // If we just exited stun, make sure visuals are clean
+    if (this.holePhase !== HOLE_PHASE_NONE) {
+      this.holePhase = HOLE_PHASE_NONE;
+      this.sprite.y = this.baseSpriteY;
+      this.sprite.alpha = 1;
     }
 
     const mults = calculateComebackMultipliers(this, {
@@ -208,7 +226,62 @@ export class Racer extends Container {
     this.moveSys.currentSpeed = 0;
     this.moveSys.targetSpeed = 0;
     this.dramaSys.applyHoleStun();
-    this.setAnimation("idle");
+
+    // Start the sink-into-hole sequence
+    this.holePhase = HOLE_PHASE_SINKING;
+    this.holePhaseTimer = 0;
+    this.baseSpriteY = this.sprite.y;
+
+    // Keep current animation (walk/idle) while sinking
+  }
+
+  private updateHoleSequence(delta: number) {
+    this.holePhaseTimer += delta;
+
+    switch (this.holePhase) {
+      case HOLE_PHASE_SINKING: {
+        const { SINK_DURATION, FADE_START_THRESHOLD, SINK_OFFSET_PX } = GAMEPLAY.HOLE_ANIMATION;
+        const t = Math.min(this.holePhaseTimer / SINK_DURATION, 1);
+        const eased = t * t; // ease-in quad — slow start, fast at end
+        const shrink = 1 - eased; // 1 → 0
+        this.sprite.scale.set(shrink);
+        this.sprite.y = this.baseSpriteY + eased * SINK_OFFSET_PX;
+        // Fade out after sinking past initial depth
+        const fadeStart = FADE_START_THRESHOLD;
+        this.sprite.alpha = t < fadeStart ? 1 : 1 - (t - fadeStart) / (1 - fadeStart);
+        if (this.holePhaseTimer >= SINK_DURATION) {
+          this.holePhase = HOLE_PHASE_HIDDEN;
+          this.holePhaseTimer = 0;
+          this.sprite.visible = false;
+          this.sprite.alpha = 0;
+        }
+        break;
+      }
+      case HOLE_PHASE_HIDDEN: {
+        // Stay invisible for a beat
+        if (this.holePhaseTimer >= GAMEPLAY.HOLE_ANIMATION.HIDDEN_DURATION) {
+          this.holePhase = HOLE_PHASE_RECOVERING;
+          this.holePhaseTimer = 0;
+          // Reappear: restore scale, position, switch to idle
+          this.sprite.visible = true;
+          this.sprite.scale.set(1);
+          this.sprite.y = this.baseSpriteY;
+          this.setAnimation("idle");
+        }
+        break;
+      }
+      case HOLE_PHASE_RECOVERING: {
+        // Blink alpha rapidly to signal recovery invincibility
+        const { FLASH_INTERVAL, FLASH_DURATION } = GAMEPLAY.HOLE_ANIMATION;
+        const flashCycle = Math.floor(this.holePhaseTimer / FLASH_INTERVAL);
+        this.sprite.alpha = flashCycle % 2 === 0 ? 1.0 : 0.3;
+        if (this.holePhaseTimer >= FLASH_DURATION) {
+          this.holePhase = HOLE_PHASE_NONE;
+          this.sprite.alpha = 1;
+        }
+        break;
+      }
+    }
   }
 
   get stumbleCount() {

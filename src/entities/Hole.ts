@@ -3,6 +3,8 @@ import { Container, Graphics } from "pixi.js";
 export class Hole extends Container {
   private graphic: Graphics;
   public laneIndex: number = -1;
+  public fading: boolean = false;
+  public fadeTimer: number = 0;
 
   constructor(radiusX: number = 30, radiusY: number = 20) {
     super();
