@@ -1,5 +1,8 @@
 import { LayoutMode } from "./types";
 
+/** Portrait screens narrower than this use the vertical (phone portrait) layouts. */
+const PORTRAIT_DESKTOP_MIN_WIDTH = 1024;
+
 /**
  * Determines the layout mode based on the screen width and height.
  * @param width Screen width.
@@ -7,9 +10,11 @@ import { LayoutMode } from "./types";
  * @returns The layout mode.
  */
 export function determineMode(width: number, height: number): LayoutMode {
-  const isMobile = width < 600 || height < 500;
   const isPortrait = height > width;
+  // Upright tablets (e.g. iPad 768×1024) are too narrow for the side-by-side desktop layouts
+  if (isPortrait && width < PORTRAIT_DESKTOP_MIN_WIDTH) return LayoutMode.MobileVertical;
 
+  const isMobile = width < 600 || height < 500;
   if (!isMobile) return LayoutMode.Desktop;
   return isPortrait ? LayoutMode.MobileVertical : LayoutMode.MobileHorizontal;
 }
@@ -32,7 +37,8 @@ export interface GridConfig {
  * @returns Object containing x and width.
  */
 export function getGridRect(startCol: number, span: number, config: GridConfig) {
-  const colWidth = (config.width - 2 * config.margin - (config.columns - 1) * config.gutter) / config.columns;
+  const colWidth =
+    (config.width - 2 * config.margin - (config.columns - 1) * config.gutter) / config.columns;
   const x = config.margin + startCol * (colWidth + config.gutter);
   const width = span * colWidth + (span - 1) * config.gutter;
   return { x, width };

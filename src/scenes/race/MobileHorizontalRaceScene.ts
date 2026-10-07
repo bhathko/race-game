@@ -1,21 +1,30 @@
 import { BaseRaceScene } from "./BaseRaceScene";
 import type { RaceState } from "./BaseRaceScene";
-import { COLORS, RACER } from "../../config";
+import { COLORS } from "../../config";
 import type { RaceContext } from "../../core";
 import { createTrackLayout } from "../../core";
 
+const SIDEBAR_PAD = 6;
+const MAX_ITEM_H = 40;
+const MIN_ITEM_H = 30;
+/** Landscape uses a single grass unit top and bottom to maximize lane space. */
+const LANDSCAPE_GRASS_UNITS = 1;
+
 export class MobileHorizontalRaceScene extends BaseRaceScene {
+  private lbTop: number = SIDEBAR_PAD;
+
   constructor(ctx: RaceContext, existingState?: RaceState) {
     super(ctx, existingState);
   }
 
   public resize(width: number, height: number) {
     this.isPortrait = false;
+    this.screenW = width;
+    this.screenH = height;
 
     // ── Sidebar dimensions (right side of screen) ──
     // Reserve ~30% of screen width for sidebar, rest for the track
     const sidebarW = Math.floor(width * 0.3);
-    const sidebarPad = 6;
 
     this.gameViewW = width - sidebarW;
     this.gameViewH = height;
@@ -31,9 +40,14 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
       .rect(this.gameViewW, 0, sidebarW, height)
       .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
 
+    // The grass strips are too thin for the distance counter here, so it heads the sidebar
+    const distanceFont = Math.min(28, height * 0.08);
+    this.placeDistanceText(this.gameViewW + sidebarW / 2, SIDEBAR_PAD, distanceFont);
+    this.lbTop = SIDEBAR_PAD + distanceFont * 1.3 + SIDEBAR_PAD;
+
     const lbContainer = this.uiManager.getLeaderboardContainer();
-    lbContainer.x = this.gameViewW + sidebarPad;
-    lbContainer.y = 6;
+    lbContainer.x = this.gameViewW + SIDEBAR_PAD;
+    lbContainer.y = this.lbTop;
 
     const title = lbContainer.getChildByLabel("leaderboard-title");
     if (title) {
@@ -45,29 +59,10 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
       this.gameViewH,
       this.racers.length,
       this.distance,
+      LANDSCAPE_GRASS_UNITS,
     );
-
-    // Override grass strips for landscape — use minimal grass to maximize lane space
-    const minGrass = 16; // 1 unit instead of 4
-    if (layout.grassStripHeight > minGrass) {
-      const savedSpace = (layout.grassStripHeight - minGrass) * 2;
-      layout.grassStripHeight = minGrass;
-      layout.dirtHeight += savedSpace;
-      layout.laneHeight = layout.dirtHeight / this.racers.length;
-    }
-
     this.setupTracks(layout);
-    this.racers.forEach((r) => r.setMobileMode(true));
-
-    // Scale racers to fit lanes, but enforce a minimum so they're always visible
-    const targetRacerH = layout.laneHeight * 0.85;
-    const minScale = 0.6;
-    const idealScale = targetRacerH / RACER.HEIGHT;
-    const racerScale = Math.max(minScale, Math.min(1, idealScale));
-    this.racers.forEach((r) => r.scale.set(racerScale));
-
-    // repositionRacers now uses scale-aware centering for bottom-anchored sprites
-    this.trackManager.repositionRacers(this.racers);
+    this.fitRacersToLanes(layout, false, 0.6);
     this.updateLeaderboard(60);
 
     const countdown = this.uiManager.getCountdownText();
@@ -75,31 +70,25 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
       countdown.x = this.gameViewW / 2;
       countdown.y = height / 2;
     }
-
-    const distance = this.uiManager.getRemainingDistanceText();
-    if (distance) {
-      distance.x = this.gameViewW / 2;
-      distance.y = 6;
-      distance.style.fontSize = Math.min(36, height * 0.12);
-      distance.style.stroke = { color: COLORS.TEXT_MARKER, width: Math.min(4, height * 0.014) };
-    }
   }
 
   protected updateLeaderboard(delta: number) {
     // Actual available pixel width for the leaderboard
-    const sidebarPad = 6;
-    const usableW = this.width - this.gameViewW - sidebarPad * 2;
-    const itemH = 40;
+    const usableW = this.screenW - this.gameViewW - SIDEBAR_PAD * 2;
+    const gap = 3;
+    const availableSpace = this.screenH - this.lbTop - SIDEBAR_PAD;
+    // Shrink cards a little to keep a single column; only very short screens fall back to two
+    const fitH = Math.floor((availableSpace + gap) / Math.max(1, this.racers.length) - gap);
+    const itemH = Math.max(MIN_ITEM_H, Math.min(MAX_ITEM_H, fitH));
 
     this.uiManager.updateLeaderboard(
-      this.racers,
+      this.getLeaderboardOrder(),
       {
         direction: "vertical",
         itemWidth: usableW,
         itemHeight: itemH,
-        gap: 3,
-        availableSpace: this.height - 16,
-        usePositionOrder: this.raceStarted,
+        gap,
+        availableSpace,
         iconScale: 0.55,
         textX: 35,
         textAnchorX: 0,

@@ -3,21 +3,32 @@ import { PALETTE } from "../../config";
 import type { RacerAnimations } from "../../core";
 import type { RankEntry } from "./types";
 
+export const LIST_CARD_H = 36;
+export const LIST_GAP = 6;
+export const LIST_COLUMN_GAP = 8;
+/** Horizontal padding the list keeps inside its panel (18px each side). */
+export const LIST_SIDE_PADDING = 36;
+
 export class LeaderboardList extends Container {
   constructor(
     entries: RankEntry[],
     width: number,
     animations: Map<string, RacerAnimations> | null,
+    columns: number = 1,
   ) {
     super();
     const rest = entries.slice(3);
-    const cardW = width - 36;
-    const cardH = 36;
-    const gap = 6;
+    const cardW = (width - LIST_SIDE_PADDING - LIST_COLUMN_GAP * (columns - 1)) / columns;
+    const cardH = LIST_CARD_H;
+    const rows = Math.ceil(rest.length / columns);
 
     rest.forEach((entry, idx) => {
+      // Column-major so places read top-to-bottom, then continue in the next column
+      const col = Math.floor(idx / rows);
+      const row = idx % rows;
       const card = new Container();
-      card.y = idx * (cardH + gap);
+      card.x = col * (cardW + LIST_COLUMN_GAP);
+      card.y = row * (cardH + LIST_GAP);
       this.addChild(card);
 
       const body = new Graphics()

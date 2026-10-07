@@ -4,6 +4,8 @@ import { COLORS } from "../../config";
 import type { RaceContext } from "../../core";
 import { getGridRect, getStandardGridConfig, createTrackLayout } from "../../core";
 
+const TITLE_GAP = 10;
+
 export class DesktopRaceScene extends BaseRaceScene {
   constructor(ctx: RaceContext, existingState?: RaceState) {
     super(ctx, existingState);
@@ -11,6 +13,8 @@ export class DesktopRaceScene extends BaseRaceScene {
 
   public resize(width: number, height: number) {
     this.isPortrait = false;
+    this.screenW = width;
+    this.screenH = height;
     const grid = getStandardGridConfig(width);
     const trackRect = getGridRect(0, 10, grid);
     const sidebarRect = getGridRect(10, 2, grid);
@@ -39,6 +43,7 @@ export class DesktopRaceScene extends BaseRaceScene {
 
     const title = lbContainer.getChildByLabel("leaderboard-title");
     if (title) {
+      title.visible = true;
       title.x = 0;
       title.y = 0;
     }
@@ -50,8 +55,7 @@ export class DesktopRaceScene extends BaseRaceScene {
       this.distance,
     );
     this.setupTracks(layout);
-    this.racers.forEach((r) => r.setMobileMode(false));
-    this.trackManager.repositionRacers(this.racers);
+    this.fitRacersToLanes(layout, true, 0.5);
     this.updateLeaderboard(60);
 
     const countdown = this.uiManager.getCountdownText();
@@ -60,26 +64,25 @@ export class DesktopRaceScene extends BaseRaceScene {
       countdown.y = this.gameViewH / 2;
     }
 
-    const distance = this.uiManager.getRemainingDistanceText();
-    if (distance) {
-      distance.x = this.gameViewW / 2;
-      distance.y = 20;
-    }
+    // Keep the counter inside the top grass strip so it never covers a racer
+    this.placeDistanceText(this.gameViewW / 2, 2, Math.min(48, layout.grassStripHeight * 0.72));
   }
 
   protected updateLeaderboard(delta: number) {
-    const grid = getStandardGridConfig(this.width);
+    const grid = getStandardGridConfig(this.screenW);
     const sidebarWidth = getGridRect(10, 2, grid).width;
+    const title = this.uiManager.getLeaderboardContainer().getChildByLabel("leaderboard-title");
+    const startY = title ? title.height + TITLE_GAP : 0;
 
     this.uiManager.updateLeaderboard(
-      this.racers,
+      this.getLeaderboardOrder(),
       {
         direction: "vertical",
         itemWidth: sidebarWidth,
         itemHeight: 48,
         gap: 6,
-        availableSpace: this.height - 60,
-        usePositionOrder: this.raceStarted,
+        startY,
+        availableSpace: this.screenH - 40 - startY,
         iconScale: 1,
         textX: 50,
         textAnchorX: 0,

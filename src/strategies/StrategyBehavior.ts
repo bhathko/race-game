@@ -4,8 +4,8 @@ import { GAMEPLAY } from "../config";
 
 /**
  * Strategy Pattern — each racer is assigned a StrategyBehavior that
- * determines how it manages stamina, when it sprints, and how it
- * recovers from fatigue.
+ * determines how it manages stamina, when it sprints, and which part
+ * of the race it is strongest in.
  *
  * Adding a new strategy requires only implementing this interface
  * and registering it in the STRATEGY_REGISTRY below.
@@ -21,22 +21,34 @@ export interface StrategyBehavior {
     endurance: number;
   }>;
 
-  /** Decide whether the racer should sprint this frame. */
+  /**
+   * Signature strengths. Each strategy is best in a different phase of the race,
+   * so lead changes happen for visible reasons instead of hidden rubber-banding.
+   */
+  readonly traits: Readonly<{
+    /** Extra top speed during the early phase of the race. */
+    earlySpeed: number;
+    /** Extra top speed while sprinting in the final stretch. */
+    kickSpeed: number;
+    /** Multiplier on the slipstream bonus. */
+    draftMult: number;
+    /** Multiplier on stamina drained while sprinting. */
+    drainMult: number;
+  }>;
+
+  /** Decide whether the racer wants to sprint this frame. */
   shouldSprint(ctx: SprintContext): boolean;
 
-  /** Speed factor while in tired/recovery state (fraction of V_max). */
-  tiredSpeedFactor(): number;
-
-  /** Stamina threshold to exit the tired state. */
-  tiredExitThreshold(maxStamina: number): number;
+  /** Fraction of max stamina a tired racer must recover before running normally again. */
+  readonly tiredExitFraction: number;
 }
 
 /** Context provided to the strategy's sprint decision each frame. */
 export interface SprintContext {
   staminaPct: number; // 0-100
   raceProgress: number; // 0-1 (fraction of total distance covered)
-  inClimaxPhase: boolean;
-  inSprintZone: boolean; // near finish line
+  /** The finish is within reach of this racer's remaining stamina: time for the final kick. */
+  inFinalStretch: boolean;
 }
 
 // ── Strategy types ──────────────────────────────────────────────────────────
@@ -46,11 +58,12 @@ export type RacerStrategy = "aggressive" | "pacer" | "conservative" | "closer";
 // ── Concrete Strategies ─────────────────────────────────────────────────────
 
 const S = GAMEPLAY.STRATEGIES;
-const P = GAMEPLAY.PHYSICS;
+
+const NO_TRAITS = { earlySpeed: 0, kickSpeed: 0, draftMult: 1, drainMult: 1 } as const;
 
 /**
- * "Aggressive" — sprint hard, crash fast, recover quickly, repeat.
- * High speed, decent accel, LOW endurance — burns bright.
+ * "Aggressive" — front-runner. Explosive start, then hangs on.
+ * Fast and quick off the line, but low endurance makes it fade late.
  */
 const aggressiveStrategy: StrategyBehavior = {
   name: "aggressive",
@@ -59,16 +72,16 @@ const aggressiveStrategy: StrategyBehavior = {
     accel: S.AGGRESSIVE_ACCEL_MULT,
     endurance: S.AGGRESSIVE_ENDURANCE_MULT,
   },
+  traits: { ...NO_TRAITS, earlySpeed: S.AGGRESSIVE_EARLY_SPEED },
   shouldSprint(ctx) {
-    return ctx.inSprintZone || ctx.staminaPct > S.AGGRESSIVE_SPRINT_THRESHOLD;
+    return ctx.inFinalStretch || ctx.staminaPct > S.AGGRESSIVE_SPRINT_THRESHOLD;
   },
-  tiredSpeedFactor: () => S.AGGRESSIVE_TIRED_SPEED,
-  tiredExitThreshold: (max) => max * S.AGGRESSIVE_TIRED_EXIT,
+  tiredExitFraction: S.AGGRESSIVE_TIRED_EXIT,
 };
 
 /**
  * "Pacer" — rhythmic push-rest cycles.
- * Balanced stats, slightly above average endurance.
+ * Balanced stats; the most stamina-efficient sprinter.
  */
 const pacerStrategy: StrategyBehavior = {
   name: "pacer",
@@ -77,16 +90,16 @@ const pacerStrategy: StrategyBehavior = {
     accel: S.PACER_ACCEL_MULT,
     endurance: S.PACER_ENDURANCE_MULT,
   },
+  traits: { ...NO_TRAITS, drainMult: S.PACER_DRAIN_MULT },
   shouldSprint(ctx) {
-    return ctx.inSprintZone || ctx.staminaPct > S.PACER_SPRINT_THRESHOLD;
+    return ctx.inFinalStretch || ctx.staminaPct > S.PACER_SPRINT_THRESHOLD;
   },
-  tiredSpeedFactor: () => P.TIRED_SPEED_FACTOR,
-  tiredExitThreshold: (max) => max,
+  tiredExitFraction: S.PACER_TIRED_EXIT,
 };
 
 /**
- * "Conservative" — cruise most of the race, save for last 35 %.
- * Slow but tough — high endurance, low speed.
+ * "Conservative" — stalker. Rides the slipstream of the pack and only bursts
+ * while it has a big reserve, so it arrives at the final kick with plenty left.
  */
 const conservativeStrategy: StrategyBehavior = {
   name: "conservative",
@@ -95,16 +108,16 @@ const conservativeStrategy: StrategyBehavior = {
     accel: S.CONSERVATIVE_ACCEL_MULT,
     endurance: S.CONSERVATIVE_ENDURANCE_MULT,
   },
+  traits: { ...NO_TRAITS, draftMult: S.CONSERVATIVE_DRAFT_MULT },
   shouldSprint(ctx) {
-    return ctx.inSprintZone || ctx.raceProgress > 1 - S.CONSERVATIVE_PUSH_FRACTION;
+    return ctx.inFinalStretch || ctx.staminaPct > S.CONSERVATIVE_SPRINT_THRESHOLD;
   },
-  tiredSpeedFactor: () => P.TIRED_SPEED_FACTOR,
-  tiredExitThreshold: (max) => max,
+  tiredExitFraction: S.CONSERVATIVE_TIRED_EXIT,
 };
 
 /**
- * "Closer" — cruise until climax phase, then go all-out.
- * Fast accel for the surge, decent endurance for the push.
+ * "Closer" — runs a steady, even pace keeping its tank almost full (only tiny
+ * top-up bursts), then unleashes the longest kick in the field with a top-speed bonus.
  */
 const closerStrategy: StrategyBehavior = {
   name: "closer",
@@ -113,11 +126,11 @@ const closerStrategy: StrategyBehavior = {
     accel: S.CLOSER_ACCEL_MULT,
     endurance: S.CLOSER_ENDURANCE_MULT,
   },
+  traits: { ...NO_TRAITS, kickSpeed: S.CLOSER_KICK_SPEED },
   shouldSprint(ctx) {
-    return ctx.inSprintZone || ctx.inClimaxPhase || ctx.raceProgress > 1 - S.CLOSER_PUSH_FRACTION;
+    return ctx.inFinalStretch || ctx.staminaPct > S.CLOSER_SPRINT_THRESHOLD;
   },
-  tiredSpeedFactor: () => P.TIRED_SPEED_FACTOR,
-  tiredExitThreshold: (max) => max,
+  tiredExitFraction: S.CLOSER_TIRED_EXIT,
 };
 
 // ── Strategy Registry ───────────────────────────────────────────────────────

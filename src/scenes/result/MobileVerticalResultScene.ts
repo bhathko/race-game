@@ -15,59 +15,24 @@ export class MobileVerticalResultScene extends BaseResultScene {
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
     // ─── Winner Title ───
-    this.winnerText.x = centerX;
-    this.winnerText.y = height * 0.1;
-    this.winnerText.style.fontSize = Math.min(42, width * 0.1);
-    this.winnerText.style.stroke = { color: 0x5d4037, width: Math.min(6, width * 0.014) };
+    const titleBottom = this.layoutWinnerTitle(
+      centerX,
+      Math.min(24, height * 0.03),
+      Math.min(42, width * 0.1, height * 0.055),
+      Math.min(6, width * 0.014),
+    );
 
-    // ─── Layout Constants ───
+    // ─── Restart Button ───
     const btnH = 50;
     const bottomMargin = 15;
     const btnY = height - bottomMargin - btnH / 2;
-
-    // Sidebar occupies space between title and button
-    const sidebarTop = height * 0.18;
-    const sidebarH = btnY - btnH / 2 - 10 - sidebarTop;
-
-    // ─── Sidebar Wood Panel ───
-    this.leaderboardSidebar.resize(rankingRect.width, sidebarH);
-    this.leaderboardSidebar.x = rankingRect.x;
-    this.leaderboardSidebar.y = sidebarTop;
-
-    // ─── Podium & List Layout ───
-    const titleAreaH = 50; // "Ranking" title + padding
-    const podiumExtent = 180; // podium draws 180px above its y
-    const podiumGap = 15; // gap between podium bottom and list
-
-    // Dynamic list overflow calculation
-    const listEntriesCount = Math.max(0, this.ctx.finishedRacers.length - 3);
-    const requiredListH = listEntriesCount * 42; // 36px card + 6px gap
-
-    // Check if list fits in the remaining sidebar space
-    const idealListStartY = titleAreaH + podiumExtent + podiumGap;
-    const availableListH = sidebarH - idealListStartY - 15; // 15px bottom padding
-    const canFitList = availableListH >= requiredListH && listEntriesCount > 0;
-
-    this.leaderboardSidebar.setShowList(canFitList);
-
-    let podiumRelY: number;
-    if (canFitList) {
-      podiumRelY = titleAreaH + podiumExtent;
-      this.leaderboardSidebar.setListOffsetY(podiumRelY + podiumGap);
-    } else {
-      // If list hidden, vertically center the podium in the available space below the title
-      const availablePodiumArea = sidebarH - titleAreaH - 10;
-      const verticalCenterOffset = (availablePodiumArea - podiumExtent) / 2;
-      podiumRelY = titleAreaH + Math.max(0, verticalCenterOffset) + podiumExtent;
-    }
-
-    this.podium.resize(rankingRect.width);
-    this.podium.x = rankingRect.x;
-    this.podium.y = sidebarTop + podiumRelY;
-
-    // ─── Restart Button ───
     this.restartBtn.x = centerX;
     this.restartBtn.y = btnY;
     this.restartBtn.scale.set(0.8);
+
+    // ─── Ranking panel between the title and the button ───
+    const panelTop = titleBottom + 8;
+    const panelH = btnY - btnH / 2 - 10 - panelTop;
+    this.layoutStackedRanking(rankingRect.x, rankingRect.width, panelTop, panelH);
   }
 }

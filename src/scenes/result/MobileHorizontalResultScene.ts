@@ -3,6 +3,9 @@ import { PALETTE } from "../../config";
 import type { ResultContext } from "../../core";
 import { getGridRect, getStandardGridConfig } from "../../core";
 
+const PANEL_MARGIN = 20;
+const LIST_START_Y = 70;
+
 export class MobileHorizontalResultScene extends BaseResultScene {
   constructor(ctx: ResultContext) {
     super(ctx);
@@ -14,63 +17,50 @@ export class MobileHorizontalResultScene extends BaseResultScene {
 
     this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
 
-    const topSpace = 20;
-    const bottomSpace = 20;
-    const sidebarH = height - topSpace - bottomSpace;
+    const sidebarH = height - PANEL_MARGIN * 2;
 
-    // Check if list fits
-    const listStartY = 70;
-    const listEntriesCount = Math.max(0, this.ctx.finishedRacers.length - 3);
-    const requiredListH = listEntriesCount * 42;
-    const availableListH = sidebarH - listStartY - 15;
-    const canFitList = availableListH >= requiredListH && listEntriesCount > 0;
-
+    // Places 4+ go in the right-hand panel: one column, or two if the panel is wide enough
+    const availableListH = sidebarH - LIST_START_Y - 10;
+    let columns = 0;
+    if (this.listEntryCount > 0) {
+      for (let cols = 1; cols <= this.maxListColumns(rightRect.width); cols++) {
+        if (this.listHeight(cols) <= availableListH) {
+          columns = cols;
+          break;
+        }
+      }
+    }
+    const canFitList = columns > 0;
     this.leaderboardSidebar.visible = canFitList;
 
+    // Split layout: winner + podium on the left, list on the right. Otherwise everything centered.
+    const columnX = canFitList ? leftRect.x + leftRect.width / 2 : width / 2;
+    const columnW = canFitList ? leftRect.width : width;
+
+    this.layoutWinnerTitle(
+      columnX,
+      8,
+      Math.min(canFitList ? 32 : 36, height * 0.09),
+      Math.min(5, height * 0.018),
+    );
+
+    const podiumScale = canFitList ? 0.75 : 0.85;
+    const podiumW = Math.min(columnW * (canFitList ? 0.9 : 0.7), canFitList ? 280 : 400);
+    this.podium.resize(podiumW);
+    this.podium.scale.set(podiumScale);
+    this.podium.x = columnX - (podiumW * podiumScale) / 2;
+    this.podium.y = height * 0.78;
+
     if (canFitList) {
-      // ─── Split Layout (Sidebar shown on right) ───
-      const leftX = leftRect.x + leftRect.width / 2;
-
-      this.winnerText.anchor.set(1, 0.5);
-      this.winnerText.x = rightRect.x - grid.gutter;
-      this.winnerText.y = height * 0.15;
-      this.winnerText.style.align = "right";
-      this.winnerText.style.fontSize = Math.min(32, height * 0.14);
-      this.winnerText.style.stroke = { color: 0x5d4037, width: Math.min(5, height * 0.018) };
-
-      const podiumW = Math.min(leftRect.width * 0.9, 280);
-      this.podium.resize(podiumW);
-      this.podium.scale.set(0.75);
-      this.podium.x = leftX - (podiumW * 0.75) / 2;
-      this.podium.y = height * 0.78;
-
       this.leaderboardSidebar.resize(rightRect.width, sidebarH);
       this.leaderboardSidebar.x = rightRect.x;
-      this.leaderboardSidebar.y = topSpace;
+      this.leaderboardSidebar.y = PANEL_MARGIN;
+      this.leaderboardSidebar.setListColumns(columns);
       this.leaderboardSidebar.setShowList(true);
-      this.leaderboardSidebar.setListOffsetY(listStartY);
-
-      this.restartBtn.x = leftX;
-    } else {
-      // ─── Centered Layout (Sidebar hidden, Podium only) ───
-      const centerX = width / 2;
-
-      this.winnerText.anchor.set(0.5);
-      this.winnerText.x = centerX;
-      this.winnerText.y = height * 0.15;
-      this.winnerText.style.align = "center";
-      this.winnerText.style.fontSize = Math.min(36, height * 0.16);
-      this.winnerText.style.stroke = { color: 0x5d4037, width: Math.min(5, height * 0.018) };
-
-      const podiumW = Math.min(width * 0.7, 400);
-      this.podium.resize(podiumW);
-      this.podium.scale.set(0.85);
-      this.podium.x = centerX - (podiumW * 0.85) / 2;
-      this.podium.y = height * 0.78;
-
-      this.restartBtn.x = centerX;
+      this.leaderboardSidebar.setListOffsetY(LIST_START_Y);
     }
 
+    this.restartBtn.x = columnX;
     this.restartBtn.y = height * 0.9;
     this.restartBtn.scale.set(0.6);
   }

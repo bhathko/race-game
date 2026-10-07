@@ -4,7 +4,7 @@ A dynamic, fully responsive web-based racing game built with **Pixi.js v8**, **T
 
 The game features a **Responsive Architecture** that seamlessly adapts gameplay and UI across Desktop, Mobile Portrait, and Mobile Landscape modes with robust state preservation during device rotation.
 
-For a detailed technical breakdown of the balancing logic and architecture, see the [Design Spec](documents/spec.md) and the [Development & Design Guide](documents/DEVELOPMENT.md).
+For a detailed technical breakdown of the balancing logic and architecture, see the [Design Spec](documents/GAME_SPEC.md) and the [Development & Design Guide](documents/DEVELOPMENT.md).
 
 ## Getting Started
 
@@ -96,7 +96,7 @@ Each main scene acts as a **Controller** that manages specialized layout subclas
 
 ### Strategy Pattern
 
-Each racer is assigned one of four **stamina strategies** (Aggressive, Pacer, Conservative, Closer) that determine its racing personality, stat multipliers, and sprint thresholds.
+Each racer is assigned one of four **stamina strategies** (Aggressive, Pacer, Conservative, Closer) that determine its racing personality, stat multipliers, sprint thresholds, and a signature strength in a different phase of the race (fast start, efficiency, slipstream, final kick). The strategies are balanced by headless simulation to win a similar share at every distance.
 
 ### Factory Pattern
 
@@ -104,21 +104,24 @@ The `RacerFactory` centralizes the complex process of character shuffling, rando
 
 ## Gameplay Systems
 
-### The Comeback Engine (Dynamic Balancing)
+### Catch-Up (Dynamic Balancing)
 
-Prevents the leader from pulling away unchallenged using continuous normalized rank scaling:
+Small bonuses with visible causes keep the pack together. Rank-based bonuses scale with field size so 2–4 racer races stay readable:
 
-- **Slingshot** — Trailing racers gain up to +56 % acceleration.
-- **Slipstream** — Chasers gain a higher max-speed ceiling (up to 1.25×).
-- **Respite** — Trailing racers recover stamina up to 2.5× faster.
-- **Rubber-band** — Speed boost proportional to distance behind the leader.
-- **Second Wind** — Massive burst for deeply trailing racers (bottom 25 %).
+- **Slipstream** — Tucking in behind the racer ahead gives a small speed bonus (white speed lines).
+- **Rubber-band** — A modest speed boost once a racer falls clearly behind the leader.
+- **Slingshot / Respite** — Trailing racers accelerate and recover stamina a little faster.
+- **Second Wind** — A short burst for racers stuck at the back (cyan speed lines).
 
 ### Drama Mechanics
 
-- **Climax Phase** — Final 20 % of the track triggers double recovery and sprint bonuses.
-- **Pace Wave** — Sinusoidal speed oscillation unique to each racer.
-- **Stumble** — Random momentary slowdowns (leaders stumble more often).
+- **Final Kick** — Each racer goes all-in once the finish is within reach of its remaining stamina.
+- **Pace Wave** — Gentle speed "breathing" unique to each racer.
+- **Stumble** — Random trip-hops (leaders stumble more often).
+- **Effects** — Dust, speed lines and sweat drops show why a racer speeds up or slows down.
+- **Pack Camera** — Frames the leader and the chasing pack together.
+
+Races use a fixed world scale (`TRACK.PX_PER_METER`), so they take the same time on every screen and survive rotation mid-race.
 
 ## Tech Stack
 

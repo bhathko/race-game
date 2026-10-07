@@ -9,7 +9,8 @@ export interface LeaderboardLayoutConfig {
   itemHeight: number;
   gap: number;
   availableSpace: number;
-  usePositionOrder: boolean;
+  /** Offset of the first card (e.g. to clear a title above the list). */
+  startY?: number;
   textFormat: (racer: Racer, index: number) => string;
   iconScale: number;
   textX: number;
@@ -27,7 +28,7 @@ export class RaceUIManager {
   private hasSnapped: boolean = false;
 
   public leaderboardUpdateTimer: number = 0;
-  public readonly LEADERBOARD_THROTTLE: number = 30;
+  public readonly LEADERBOARD_THROTTLE: number = 20;
   public sortedRacersCache: Racer[] = [];
 
   constructor(ui: Container) {
@@ -156,21 +157,20 @@ export class RaceUIManager {
     return this.remainingDistanceText;
   }
 
-  public updateLeaderboard(racers: Racer[], config: LeaderboardLayoutConfig, delta: number) {
-    if (this.leaderboardUpdateTimer > 0) {
+  /**
+   * @param orderedRacers Racers in display order (standings during the race, lanes before it).
+   *   Re-read only every LEADERBOARD_THROTTLE frames so cards don't jitter on every overtake.
+   */
+  public updateLeaderboard(orderedRacers: Racer[], config: LeaderboardLayoutConfig, delta: number) {
+    if (this.leaderboardUpdateTimer > 0 && this.sortedRacersCache.length === orderedRacers.length) {
       this.leaderboardUpdateTimer -= delta;
     } else {
-      if (config.usePositionOrder) {
-        // During race: sort by position (furthest ahead first)
-        this.sortedRacersCache = [...racers].sort((a, b) => b.x - a.x);
-      } else {
-        // Before race: sort by lane index (ascending)
-        this.sortedRacersCache = [...racers].sort((a, b) => a.laneIndex - b.laneIndex);
-      }
+      this.sortedRacersCache = orderedRacers;
       this.leaderboardUpdateTimer = this.LEADERBOARD_THROTTLE;
     }
 
     const isVertical = config.direction === "vertical";
+    const startY = config.startY ?? 0;
     const totalRacers = this.sortedRacersCache.length;
     if (totalRacers === 0) return;
     const gap = config.gap;
@@ -214,7 +214,7 @@ export class RaceUIManager {
     // On the first layout, snap positions instantly (no lerp)
     const snap = !this.hasSnapped;
     if (snap) this.hasSnapped = true;
-    const lerpSpeed = snap ? 1.0 : 0.15;
+    const lerpSpeed = snap ? 1.0 : 1 - Math.pow(1 - 0.2, delta);
 
     this.sortedRacersCache.forEach((racer, index) => {
       const itemConfig = this.leaderboardItems.get(racer);
@@ -228,12 +228,12 @@ export class RaceUIManager {
         const col = Math.floor(index / rows);
         const row = index % rows;
         targetX = col * (cardW + gap);
-        targetY = row * (cardH + gap);
+        targetY = startY + row * (cardH + gap);
       } else {
         const col = index % cols;
         const row = Math.floor(index / cols);
         targetX = col * (cardW + gap);
-        targetY = row * (cardH + gap);
+        targetY = startY + row * (cardH + gap);
       }
 
       if (snap) {

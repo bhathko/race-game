@@ -343,10 +343,14 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
       .roundRect(centerX - panelW / 2 + 2, centerY - panelH / 2 - 1, panelW - 4, panelH + 2, 16)
       .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.4, join: "round" });
 
-    // Title
+    // Title (shrinks to stay inside the panel on narrow phones)
     this.popupTitle.x = centerX;
     this.popupTitle.y = centerY - panelH * 0.28;
     this.popupTitle.style.fontSize = Math.min(28, height * 0.09);
+    this.popupTitle.scale.set(1);
+    const titleRoom = panelW - 28;
+    if (this.popupTitle.width > titleRoom)
+      this.popupTitle.scale.set(titleRoom / this.popupTitle.width);
 
     // Buttons
     const btnScale = Math.min(0.7, height / 400);

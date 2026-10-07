@@ -63,8 +63,9 @@ export class RaceScene extends Container implements Scene {
     if (this.currentLayout) {
       existingState = this.currentLayout.getState();
       this.removeChild(this.currentLayout);
-      // We don't destroy children because we want to preserve racers
-      this.currentLayout.destroy({ children: false });
+      // Racers and holes carry over to the new layout; everything else is rebuilt
+      this.currentLayout.detachPersistentObjects();
+      this.currentLayout.destroy({ children: true });
     }
 
     this.currentMode = mode;

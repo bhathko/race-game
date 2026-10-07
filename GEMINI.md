@@ -1,12 +1,12 @@
 # Choice Race — Project Overview
 
-A dynamic web-based racing game built with **Pixi.js v8**, **TypeScript**, and **Vite**. The game features randomized racer stats, stamina management, and a competitive "Comeback Engine" that keeps every race exciting until the finish line.
+A dynamic web-based racing game built with **Pixi.js v8**, **TypeScript**, and **Vite**. The game features randomized racer stats, stamina management, strategy-driven lead changes, and light, visible catch-up mechanics that keep every race close until the finish line.
 
 ## Project Structure
 
 The project utilizes the **Barrel Pattern** (`index.ts` files) to centralize module access and clean up import statements.
 
-- `documents/`: Project documentation (`spec.md`, `DEVELOPMENT.md`).
+- `documents/`: Project documentation (`GAME_SPEC.md`, `DEVELOPMENT.md`).
 - `src/main.ts`: Entry point — creates the Pixi Application and Game controller.
 - `src/config.ts`: Grouped configuration constants.
 - `src/core/`: Core engine components and shared types.
@@ -36,7 +36,7 @@ Scenes are implemented as controllers that manage specialized layout views:
 
 ### Strategy Pattern (`src/strategies/`)
 
-Each racer receives a `StrategyBehavior` object controlling stat multipliers, sprint decisions, and recovery pacing.
+Each racer receives a `StrategyBehavior` object controlling stat multipliers, sprint decisions, recovery, and a signature trait (early speed, drain efficiency, slipstream, final kick).
 
 ### Factory Pattern (`src/factories/`)
 
@@ -47,10 +47,11 @@ Each racer receives a `StrategyBehavior` object controlling stat multipliers, sp
 - **Nature-Themed Aesthetic:** Dirt racetrack with grass edges and animated pixel-art trees.
 - **Hand-Crafted UI:** "Color Pencil Sketch" aesthetic featuring semi-transparent white/gray paper backgrounds, thick jittered (hand-drawn) black outlines, and sketchy drop shadows instead of primitive shapes.
 - **Loading Progress:** Real-time visual feedback with specialized responsive layouts for every orientation.
-- **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations (including specialized Landscape split-layouts). Result scenes feature **Dynamic List Hiding** which gracefully hides the 4th+ place ranking list on vertically constrained screens to perfectly center and prioritize the Top 3 Podium.
+- **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations (including specialized Landscape split-layouts). Result scenes lay out the 4th+ ranking list in one or two columns (shrinking the podium slightly if needed) and only hide it as a last resort. Upright tablets use the vertical layouts.
 - **Selection Confirmation Popup:** When all racers are selected, a centered modal overlay appears with START RACE and CANCEL buttons. CANCEL deselects the last character. In landscape mobile, this replaces the inline start button to save space.
-- **Landscape Race Optimizations:** Grass strips are reduced to 1 unit in landscape mode to maximize lane space. Racers are dynamically scaled (min 0.6) and precisely centered in their lanes using exact bottom-anchor math. The leaderboard sidebar uses pixel-based width calculation to prevent overflow.
-- **Comeback Engine:** Continuous rank-based multipliers keep races competitive through the finish.
+- **Race Layout:** Fixed world scale (`TRACK.PX_PER_METER`) so races take the same time on every screen and survive rotation. Racers are scaled to fit their lanes and centered on their visible art; landscape uses 1-unit grass strips. A pack camera frames the leader and chasers together.
+- **Catch-Up & Strategies:** Small, visible catch-up bonuses (slipstream, rubber-band) scaled by field size, plus a reach-based final kick. `stepRace()` (`src/scenes/race/RaceEngine.ts`) is shared by the game and headless balance simulations.
+- **Racer Effects:** Dust, speed lines, sweat drops and stumble hops (`src/entities/racer/RacerEffects.ts`).
 - **Funny Mode:** Optional blind trap-placement phase where players place Holes on the track. Racers that hit a Hole are stunned and must re-accelerate.
 
 ## Building and Running

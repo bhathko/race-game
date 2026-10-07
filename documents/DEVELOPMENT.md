@@ -10,7 +10,7 @@ The core goal of Choice Race is to create **"Calculated Chaos."** Unlike traditi
 
 ### A. Dynamic Drama
 
-We utilize a **Negative Feedback Loop** (often called "Rubber-banding"). As a racer gains a lead, the game subtly increases the resistance they face (higher stumble chance, standard recovery) while granting trailing racers "buffs" (Slingshot, Slipstream, Respite). This ensures that the pack stays tight and the outcome remains uncertain.
+We utilize a light **Negative Feedback Loop**. Leaders stumble a little more often, while chasers get small, visible help (slipstream speed lines, a modest rubber-band, faster recovery). These bonuses scale with field size and stay small, so the better racer usually wins but upsets still happen, and speed changes never look arbitrary.
 
 ### B. Strategic Variety
 

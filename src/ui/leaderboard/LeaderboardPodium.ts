@@ -36,7 +36,7 @@ export class LeaderboardPodium extends Container {
   }
 
   private refresh() {
-    this.removeChildren();
+    this.removeChildren().forEach((c) => c.destroy({ children: true }));
     this.glowGraphics = [];
 
     const top3 = this.entries.slice(0, 3);

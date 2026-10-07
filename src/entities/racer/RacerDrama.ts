@@ -4,6 +4,7 @@ export class RacerDrama {
   public paceFrequency: number;
   public pacePhase: number;
   public stumbleTimer: number = 0;
+  public stumbleDuration: number = 0;
   public holeStunTimer: number = 0;
   public trailingFrames: number = 0;
   public secondWindTimer: number = 0;
@@ -31,6 +32,7 @@ export class RacerDrama {
         this.stumbleTimer =
           DRAMA.STUMBLE_DURATION_MIN +
           Math.random() * (DRAMA.STUMBLE_DURATION_MAX - DRAMA.STUMBLE_DURATION_MIN);
+        this.stumbleDuration = this.stumbleTimer;
       }
     }
 
@@ -60,8 +62,14 @@ export class RacerDrama {
     }
   }
 
-  public getStumbleSpeedFactor(): number {
-    return this.stumbleTimer > 0 ? GAMEPLAY.DRAMA.STUMBLE_SPEED_FACTOR : 1;
+  /** 0 → 1 progress through the current stumble, or -1 when not stumbling. */
+  public getStumbleProgress(): number {
+    if (this.stumbleTimer <= 0 || this.stumbleDuration <= 0) return -1;
+    return 1 - this.stumbleTimer / this.stumbleDuration;
+  }
+
+  public hasSecondWind(): boolean {
+    return this.secondWindTimer > 0;
   }
 
   public getSecondWindSpeedFactor(): number {

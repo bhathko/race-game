@@ -43,12 +43,19 @@ export class FunnyModeManager {
     if (config.holes) this.holes = config.holes;
   }
 
+  /** Traps placed so far and whose turn it is — carried over when the layout is rebuilt. */
+  public getProgress(): { holes: Hole[]; playerIndex: number } | null {
+    if (!this.setupPhase) return null;
+    return { holes: this.holes, playerIndex: this.currentSetupPlayerIndex };
+  }
+
   public resize(layout: TrackLayoutData) {
     this.layout = layout;
     if (!this.setupPhase) return;
 
     if (this.setupInstructionText) {
       this.setupInstructionText.x = this.layout.viewWidth / 2;
+      this.fitInstruction();
     }
     if (this.skipBtn) {
       this.skipBtn.x = this.layout.viewWidth / 2;
@@ -105,11 +112,8 @@ export class FunnyModeManager {
   }
 
   public startSetup() {
+    // Progress (startIndex / holes) comes from the constructor config, so a resumed setup keeps it
     this.setupPhase = true;
-    if (this.holes.length === 0) {
-      this.currentSetupPlayerIndex = 0;
-      this.holes = [];
-    }
 
     const style = new TextStyle({
       fill: PALETTE.STR_WHITE,
@@ -170,6 +174,9 @@ export class FunnyModeManager {
         this.scrollRightBtn.y = this.layout.viewHeight / 2;
       }
     }
+
+    // Resuming after an orientation change may already have every trap placed
+    this.checkCompletion();
   }
 
   private updateInstruction() {
@@ -181,6 +188,16 @@ export class FunnyModeManager {
       this.setupInstructionText.text = "All Traps Placed!";
       this.setupInstructionText.style.fill = PALETTE.STR_WHITE;
     }
+    this.fitInstruction();
+  }
+
+  /** Shrink the instruction banner so it never runs off narrow screens. */
+  private fitInstruction() {
+    const text = this.setupInstructionText;
+    if (!text) return;
+    text.scale.set(1);
+    const maxW = this.layout.viewWidth - 32;
+    if (text.width > maxW) text.scale.set(maxW / text.width);
   }
 
   private handlePointerDown(e: any) {

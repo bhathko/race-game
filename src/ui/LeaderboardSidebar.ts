@@ -19,6 +19,7 @@ export class LeaderboardSidebar extends Container {
   private animations: Map<string, RacerAnimations> | null;
   private showList = true;
   private listOffsetY = 70;
+  private listColumns = 1;
 
   constructor(
     entries: RankEntry[],
@@ -62,14 +63,19 @@ export class LeaderboardSidebar extends Container {
   private refresh() {
     this.bg.clear();
     if (this.list) {
-      this.list.destroy();
+      this.list.destroy({ children: true });
       this.list = null;
     }
 
     this.drawBackground();
 
     if (this.showList) {
-      this.list = new LeaderboardList(this.entries, this.sidebarW, this.animations);
+      this.list = new LeaderboardList(
+        this.entries,
+        this.sidebarW,
+        this.animations,
+        this.listColumns,
+      );
       this.addChild(this.list);
     }
     this.layout();
@@ -130,6 +136,10 @@ export class LeaderboardSidebar extends Container {
   }
   public setShowList(v: boolean) {
     this.showList = v;
+    this.refresh();
+  }
+  public setListColumns(columns: number) {
+    this.listColumns = Math.max(1, columns);
     this.refresh();
   }
 }

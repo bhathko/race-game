@@ -32,6 +32,7 @@ export class MobileHorizontalMenuScene extends BaseMenuScene {
     // Split count and distance into two columns
     this.countLabel.x = leftX;
     this.countLabel.y = height * 0.3;
+    this.countLabel.scale.set(0.8);
     this.countValue.x = leftX;
     this.countValue.y = height * 0.48;
     this.countValue.scale.set(0.6);

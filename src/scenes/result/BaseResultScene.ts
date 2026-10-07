@@ -2,8 +2,24 @@ import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { COLORS, PALETTE } from "../../config";
 import { LeaderboardSidebar, createColorPencilButton } from "../../ui";
 import { LeaderboardPodium } from "../../ui/leaderboard/LeaderboardPodium";
+import {
+  LIST_CARD_H,
+  LIST_GAP,
+  LIST_COLUMN_GAP,
+  LIST_SIDE_PADDING,
+} from "../../ui/leaderboard/LeaderboardList";
 import type { RankEntry } from "../../ui";
 import type { ResultContext } from "../../core";
+
+/** Podium height above its baseline (pedestal + icon + name label). */
+export const PODIUM_EXTENT = 180;
+const MIN_PODIUM_SCALE = 0.8;
+/** Narrowest list card that still fits "8th: The Turtle". */
+const MIN_LIST_CARD_W = 170;
+/** "Ranking" title area at the top of the panel. */
+const PANEL_TITLE_H = 50;
+const PODIUM_LIST_GAP = 15;
+const PANEL_BOTTOM_PAD = 10;
 
 export abstract class BaseResultScene extends Container {
   protected ctx: ResultContext;
@@ -74,6 +90,81 @@ WINS!`,
   }
 
   public abstract resize(width: number, height: number): void;
+
+  /** Number of places shown in the list below the podium (4th onwards). */
+  protected get listEntryCount(): number {
+    return Math.max(0, this.ctx.finishedRacers.length - 3);
+  }
+
+  /** Height of the 4th+ list laid out in the given number of columns. */
+  protected listHeight(columns: number): number {
+    const rows = Math.ceil(this.listEntryCount / columns);
+    return rows * (LIST_CARD_H + LIST_GAP) - LIST_GAP;
+  }
+
+  /** Most list columns that fit in a panel of this width. */
+  protected maxListColumns(panelW: number): number {
+    return panelW - LIST_SIDE_PADDING >= MIN_LIST_CARD_W * 2 + LIST_COLUMN_GAP ? 2 : 1;
+  }
+
+  /**
+   * Size the two-line "X WINS!" title from its measured height, centered at x,
+   * starting at `top`. Returns its bottom edge.
+   */
+  protected layoutWinnerTitle(x: number, top: number, fontSize: number, strokeWidth: number) {
+    this.winnerText.anchor.set(0.5);
+    this.winnerText.style.align = "center";
+    this.winnerText.style.fontSize = fontSize;
+    this.winnerText.style.stroke = { color: 0x5d4037, width: strokeWidth };
+    this.winnerText.x = x;
+    this.winnerText.y = top + this.winnerText.height / 2;
+    return top + this.winnerText.height;
+  }
+
+  /**
+   * Podium stacked above the 4th+ list inside the ranking panel (desktop and portrait).
+   * Tries one column, then two, then a slightly smaller podium; hides the list only as a last resort.
+   */
+  protected layoutStackedRanking(panelX: number, panelW: number, panelTop: number, panelH: number) {
+    this.leaderboardSidebar.resize(panelW, panelH);
+    this.leaderboardSidebar.x = panelX;
+    this.leaderboardSidebar.y = panelTop;
+
+    let columns = 0;
+    let podiumScale = 1;
+    if (this.listEntryCount > 0) {
+      for (let cols = 1; cols <= this.maxListColumns(panelW); cols++) {
+        const podiumRoom =
+          panelH - PANEL_TITLE_H - PODIUM_LIST_GAP - this.listHeight(cols) - PANEL_BOTTOM_PAD;
+        const scale = Math.min(1, podiumRoom / PODIUM_EXTENT);
+        if (scale >= MIN_PODIUM_SCALE) {
+          columns = cols;
+          podiumScale = scale;
+          break;
+        }
+      }
+    }
+
+    let podiumBaseY: number;
+    if (columns > 0) {
+      podiumBaseY = PANEL_TITLE_H + PODIUM_EXTENT * podiumScale;
+      this.leaderboardSidebar.setListColumns(columns);
+      this.leaderboardSidebar.setShowList(true);
+      this.leaderboardSidebar.setListOffsetY(podiumBaseY + PODIUM_LIST_GAP);
+    } else {
+      // No room for the list: center the podium in the space below the title
+      this.leaderboardSidebar.setShowList(false);
+      const room = panelH - PANEL_TITLE_H - PANEL_BOTTOM_PAD;
+      podiumScale = Math.max(MIN_PODIUM_SCALE, Math.min(1, room / PODIUM_EXTENT));
+      const extent = PODIUM_EXTENT * podiumScale;
+      podiumBaseY = PANEL_TITLE_H + Math.max(0, (room - extent) / 2) + extent;
+    }
+
+    this.podium.resize(panelW);
+    this.podium.scale.set(podiumScale);
+    this.podium.x = panelX + (panelW * (1 - podiumScale)) / 2;
+    this.podium.y = panelTop + podiumBaseY;
+  }
 
   update(delta: number) {
     if (this.podium) {

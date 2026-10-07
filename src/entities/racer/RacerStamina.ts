@@ -22,7 +22,8 @@ export class RacerStamina extends Container {
     this.strategyBehavior = strategyBehavior;
 
     this.staminaBarBg = new Graphics();
-    this.staminaBarBg.rect(-RACER.WIDTH / 2, 0, RACER.WIDTH, 5);
+    this.y = RACER.STAMINA_BAR_Y;
+    this.staminaBarBg.rect(-RACER.STAMINA_BAR_WIDTH / 2, 0, RACER.STAMINA_BAR_WIDTH, 4);
     this.staminaBarBg.fill({ color: COLORS.STAMINA_BG });
     this.addChild(this.staminaBarBg);
 
@@ -31,22 +32,31 @@ export class RacerStamina extends Container {
     this.updateBar();
   }
 
+  public get fraction(): number {
+    return this.stamina / this.maxStamina;
+  }
+
+  /** How many frames of sprinting the current stamina allows. */
+  public sprintFramesLeft(drainMult: number): number {
+    if (this.isTired) return 0;
+    const { SPRINT_DRAIN, PASSIVE_STAMINA_DRAIN } = GAMEPLAY.PHYSICS;
+    return this.stamina / ((SPRINT_DRAIN * drainMult + PASSIVE_STAMINA_DRAIN) / this.endurance);
+  }
+
   public update(
     delta: number,
     recoveryMult: number,
+    drainMult: number,
     raceProgress: number,
-    inClimaxPhase: boolean,
-    distToFinish: number,
+    inFinalStretch: boolean,
   ) {
     const { PHYSICS } = GAMEPLAY;
-    const inSprintZone = distToFinish < PHYSICS.SPRINT_DISTANCE;
-    const staminaPct = (this.stamina / this.maxStamina) * 100;
+    const staminaPct = this.fraction * 100;
 
     let shouldSprint = this.strategyBehavior.shouldSprint({
       staminaPct,
       raceProgress,
-      inClimaxPhase,
-      inSprintZone,
+      inFinalStretch,
     });
 
     // Sprint constraints
@@ -61,39 +71,39 @@ export class RacerStamina extends Container {
     }
 
     if (shouldSprint && !this.isSprinting) this.staminaAtSprintStart = this.stamina;
-    this.isSprinting = shouldSprint;
+    this.isSprinting = shouldSprint && !this.isTired;
 
-    const passiveDrain = PHYSICS.PASSIVE_STAMINA_DRAIN / this.endurance;
+    const recoveryRate = PHYSICS.STAMINA_RECOVERY_RATE * this.endurance * recoveryMult;
 
     if (this.isTired) {
-      const recoveryRate = PHYSICS.STAMINA_RECOVERY_RATE * this.endurance * recoveryMult;
-      this.stamina = Math.min(this.maxStamina, this.stamina + recoveryRate * delta);
-      if (this.stamina >= this.strategyBehavior.tiredExitThreshold(this.maxStamina)) {
+      // Catching breath: recover faster than normal, but only back to the strategy's threshold
+      this.stamina = Math.min(
+        this.maxStamina,
+        this.stamina + recoveryRate * PHYSICS.TIRED_RECOVERY_MULT * delta,
+      );
+      if (this.stamina >= this.strategyBehavior.tiredExitFraction * this.maxStamina) {
         this.isTired = false;
-        this.isSprinting = false;
       }
-    } else {
-      if (this.isSprinting) {
-        const depletionRate = PHYSICS.STAMINA_DEPLETION_RATE / this.endurance;
-        this.stamina = Math.max(0, this.stamina - (depletionRate + passiveDrain) * delta);
-      } else {
-        const recoveryRate = PHYSICS.STAMINA_RECOVERY_RATE * this.endurance * recoveryMult;
-        this.stamina = Math.min(this.maxStamina, this.stamina + recoveryRate * delta);
-      }
+    } else if (this.isSprinting) {
+      const drain =
+        (PHYSICS.SPRINT_DRAIN * drainMult + PHYSICS.PASSIVE_STAMINA_DRAIN) / this.endurance;
+      this.stamina = Math.max(0, this.stamina - drain * delta);
       if (this.stamina <= 0) {
         this.isTired = true;
         this.tiredCount++;
         this.isSprinting = false;
       }
+    } else {
+      this.stamina = Math.min(this.maxStamina, this.stamina + recoveryRate * delta);
     }
     this.updateBar();
   }
 
   public updateBar() {
     this.staminaBar.clear();
-    const width = (this.stamina / this.maxStamina) * RACER.WIDTH;
+    const width = this.fraction * RACER.STAMINA_BAR_WIDTH;
     const color = this.isTired ? COLORS.STAMINA_TIRED : COLORS.STAMINA_GOOD;
-    this.staminaBar.rect(-RACER.WIDTH / 2, 0, width, 5);
+    this.staminaBar.rect(-RACER.STAMINA_BAR_WIDTH / 2, 0, width, 4);
     this.staminaBar.fill({ color });
   }
 

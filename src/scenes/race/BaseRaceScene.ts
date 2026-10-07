@@ -3,7 +3,7 @@ import { sound } from "@pixi/sound";
 import type { IMediaInstance } from "@pixi/sound";
 import { Racer, Hole } from "../../entities";
 import { createRacers } from "../../factories";
-import { RACER, TRACK, GAMEPLAY, VISUALS } from "../../config";
+import { RACER, TRACK, GAMEPLAY, VISUALS, COLORS } from "../../config";
 import type {
   Scene,
   RaceContext,
@@ -15,6 +15,10 @@ import type {
 import { TrackManager } from "./TrackManager";
 import { FunnyModeManager } from "./FunnyModeManager";
 import { RaceUIManager } from "./RaceUIManager";
+import { stepRace } from "./RaceEngine";
+
+/** A racer must lead its neighbour by this much before they swap places on the leaderboard. */
+const LEADERBOARD_SWAP_MARGIN_PX = 12;
 
 export interface RaceState {
   racers: Racer[];
@@ -58,6 +62,9 @@ export abstract class BaseRaceScene extends Container implements Scene {
 
   protected gameViewW: number = 0;
   protected gameViewH: number = 0;
+  /** Full screen size from the last resize (Container.width/height are content bounds, not the screen). */
+  protected screenW: number = 0;
+  protected screenH: number = 0;
   protected isPortrait: boolean = false;
 
   protected entranceFinished: boolean = false;
@@ -67,6 +74,11 @@ export abstract class BaseRaceScene extends Container implements Scene {
   protected musicInstance: IMediaInstance | null = null;
   protected targetMusicVolume: number = 0;
   protected currentMusicVolume: number = 0;
+
+  /** Order currently shown on the leaderboard (see getLeaderboardOrder). */
+  private boardOrder: Racer[] = [];
+  /** First camera update after (re)building a layout snaps instead of easing. */
+  private cameraSnapped: boolean = false;
 
   protected isFunnyMode: boolean = false;
   protected setupPhase: boolean = false;
@@ -148,7 +160,19 @@ export abstract class BaseRaceScene extends Container implements Scene {
     }
   }
 
+  /**
+   * Detach the objects that outlive a layout (racers, holes) so the layout itself
+   * can be fully destroyed on an orientation change.
+   */
+  public detachPersistentObjects() {
+    this.racers.forEach((r) => r.removeFromParent());
+    this.holes.forEach((h) => h.removeFromParent());
+    this.funnyModeManager?.getProgress()?.holes.forEach((h) => h.removeFromParent());
+  }
+
   public getState(): RaceState {
+    // Mid-setup, the traps placed so far live in the funny-mode manager
+    const setup = this.funnyModeManager?.getProgress() ?? null;
     return {
       racers: this.racers,
       finishedRacers: this.finishedRacers,
@@ -160,11 +184,62 @@ export abstract class BaseRaceScene extends Container implements Scene {
       musicInstance: this.musicInstance,
       currentMusicVolume: this.currentMusicVolume,
       targetMusicVolume: this.targetMusicVolume,
-      holes: this.holes,
+      holes: setup ? setup.holes : this.holes,
       setupPhase: this.setupPhase,
       setupFinished: this.setupFinished,
-      currentSetupPlayerIndex: this.currentSetupPlayerIndex,
+      currentSetupPlayerIndex: setup ? setup.playerIndex : this.currentSetupPlayerIndex,
     };
+  }
+
+  /**
+   * Racers in the order the leaderboard should show them (lane order before the start).
+   * Neck-and-neck racers only swap places on the board once one is clearly ahead,
+   * so the cards don't reshuffle on every pixel of jitter.
+   */
+  protected getLeaderboardOrder(): Racer[] {
+    if (!this.raceStarted) return [...this.racers].sort((a, b) => a.laneIndex - b.laneIndex);
+
+    const active = this.racers.filter((r) => !r.isFinished());
+    const kept = this.boardOrder.filter((r) => !r.isFinished());
+    const order = kept.length === active.length ? kept : active.sort((a, b) => b.x - a.x);
+    for (let pass = 0; pass < order.length; pass++) {
+      let swapped = false;
+      for (let i = 0; i < order.length - 1; i++) {
+        if (order[i + 1].x - order[i].x > LEADERBOARD_SWAP_MARGIN_PX) {
+          [order[i], order[i + 1]] = [order[i + 1], order[i]];
+          swapped = true;
+        }
+      }
+      if (!swapped) break;
+    }
+    this.boardOrder = [...this.finishedRacers, ...order];
+    return this.boardOrder;
+  }
+
+  /**
+   * Scale racers so the visible character (plus its name label and stamina bar when shown)
+   * fits inside a lane, then re-center them in their lanes.
+   */
+  protected fitRacersToLanes(layout: TrackLayoutData, showLabels: boolean, minScale: number) {
+    const artH = RACER.ART_FEET - RACER.ART_TOP;
+    // With labels: label above the head (~16px) and stamina bar under the feet (~8px)
+    const contentH = showLabels ? artH + 34 : artH + 6;
+    const scale = Math.max(minScale, Math.min(1, (layout.laneHeight * 0.92) / contentH));
+    this.racers.forEach((r) => {
+      r.setMobileMode(!showLabels);
+      r.scale.set(scale);
+    });
+    this.trackManager.repositionRacers(this.racers);
+  }
+
+  /** Position and size the "remaining distance" counter. */
+  protected placeDistanceText(x: number, y: number, fontSize: number) {
+    const text = this.uiManager.getRemainingDistanceText();
+    if (!text) return;
+    text.x = x;
+    text.y = y;
+    text.style.fontSize = fontSize;
+    text.style.stroke = { color: COLORS.TEXT_MARKER, width: Math.max(3, fontSize / 10) };
   }
 
   protected setupTracks(layout: TrackLayoutData) {
@@ -195,6 +270,9 @@ export abstract class BaseRaceScene extends Container implements Scene {
       layout: this.trackLayout,
       trackManager: this.trackManager,
       onSetupFinished: (holes) => this.onFunnyModeSetupFinished(holes),
+      // Resume trap placement after an orientation change
+      startIndex: this.currentSetupPlayerIndex,
+      holes: this.holes,
     });
     this.funnyModeManager.startSetup();
   }
@@ -227,7 +305,6 @@ export abstract class BaseRaceScene extends Container implements Scene {
       return;
     }
 
-    let leaderX = 0;
     if (!this.entranceFinished) {
       let allAtStart = true;
       this.racers.forEach((r) => {
@@ -237,22 +314,15 @@ export abstract class BaseRaceScene extends Container implements Scene {
         this.entranceFinished = true;
         this.uiManager.updateCountdown(this.countdownTimer, true);
       }
-      leaderX = Math.max(0, ...this.racers.map((r) => r.x));
     } else if (!this.raceStarted) {
       this.countdownTimer -= delta / 60;
       if (this.countdownTimer <= 0) this.startRace();
       else this.uiManager.updateCountdown(this.countdownTimer, true);
-      leaderX = Math.max(0, ...this.racers.map((r) => r.x));
     } else {
       this.updateRace(delta);
-      const active = this.racers.filter((r) => !r.isFinished());
-      leaderX =
-        active.length > 0
-          ? Math.max(...active.map((r) => r.x))
-          : Math.max(...this.racers.map((r) => r.x));
     }
     this.updateLeaderboard(delta);
-    this.updateCamera(leaderX, delta);
+    this.updateCamera(delta);
     if (this.racers.length > 0 && this.racers.every((r) => r.isFinished())) this.endRace();
   }
 
@@ -288,52 +358,52 @@ export abstract class BaseRaceScene extends Container implements Scene {
 
   private updateRace(delta: number) {
     this.elapsedTime += delta;
-    const active = this.racers.filter((r) => !r.isFinished());
-    if (this.isFunnyMode) {
-      this.updateHoleCollisions(active, delta);
-    }
-    const ranked = [...active].sort((a, b) => b.x - a.x);
     if (!this.trackLayout) return;
-    const totalPx = this.trackLayout.finishLineX - TRACK.START_LINE_X;
-    const inClimax = active.some(
-      (r) => r.x >= this.trackLayout!.finishLineX - totalPx * GAMEPLAY.BALANCE.CLIMAX_THRESHOLD,
+    const { finishLineX } = this.trackLayout;
+    if (this.isFunnyMode) {
+      this.updateHoleCollisions(
+        this.racers.filter((r) => !r.isFinished()),
+        delta,
+      );
+    }
+    stepRace(
+      this.racers,
+      this.finishedRacers,
+      this.elapsedTime,
+      delta,
+      finishLineX,
+      finishLineX - TRACK.START_LINE_X,
     );
-    this.racers.forEach((r) => {
-      if (!r.isFinished()) {
-        r.update(
-          delta,
-          this.elapsedTime,
-          ranked[0]?.x || 0,
-          this.trackLayout!.finishLineX,
-          ranked.indexOf(r) + 1 || 1,
-          totalPx,
-          inClimax,
-          active.length,
-        );
-        if (r.x >= this.trackLayout!.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET) {
-          r.x = this.trackLayout!.finishLineX - RACER.WIDTH + RACER.COLLISION_OFFSET;
-          r.setFinished(this.elapsedTime);
-          this.finishedRacers.push(r);
-        }
-      }
-    });
-    const distM = Math.ceil(
-      (Math.max(0, this.trackLayout.finishLineX - (ranked[0]?.x || this.racers[0].x)) / totalPx) *
-        this.distance,
-    );
+    const active = this.racers.filter((r) => !r.isFinished());
+    const leaderX = active.length > 0 ? Math.max(...active.map((r) => r.x)) : finishLineX;
+    const distM = Math.ceil(Math.max(0, finishLineX - leaderX) / TRACK.PX_PER_METER);
     this.uiManager.updateDistance(distM, true);
   }
 
-  protected updateCamera(leaderX: number, delta: number) {
-    if (!this.trackLayout) return;
-    const targetX = Math.max(
-      0,
-      Math.min(leaderX - this.gameViewW / 2, this.trackLayout.trackWidth - this.gameViewW),
-    );
-    this.world.x = -(
-      -this.world.x +
-      (targetX - -this.world.x) * (1 - Math.pow(1 - VISUALS.CAMERA_SMOOTHING, delta))
-    );
+  /**
+   * Pack camera: frames the leader and the chasing pack together when they fit,
+   * otherwise keeps the leader near the right edge so the chasers stay in shot.
+   */
+  protected updateCamera(delta: number) {
+    if (!this.trackLayout || this.racers.length === 0) return;
+    const active = this.racers.filter((r) => !r.isFinished());
+    const group = active.length > 0 ? active : this.racers;
+    let lead = -Infinity;
+    let last = Infinity;
+    for (const r of group) {
+      lead = Math.max(lead, r.x);
+      last = Math.min(last, r.x);
+    }
+
+    const view = this.gameViewW;
+    const pad = Math.max(VISUALS.CAMERA_LEAD_PAD_MIN, view * VISUALS.CAMERA_LEAD_PAD_FRACTION);
+    const target = lead - last + pad * 2 <= view ? (lead + last) / 2 - view / 2 : lead + pad - view;
+    const targetX = Math.max(0, Math.min(target, this.trackLayout.trackWidth - view));
+
+    const camX = -this.world.x;
+    const ease = this.cameraSnapped ? 1 - Math.pow(1 - VISUALS.CAMERA_SMOOTHING, delta) : 1;
+    this.world.x = -(camX + (targetX - camX) * ease);
+    this.cameraSnapped = true;
   }
 
   private updateHoleCollisions(active: Racer[], delta: number) {
@@ -349,10 +419,7 @@ export abstract class BaseRaceScene extends Container implements Scene {
         continue;
       }
       for (const r of active) {
-        if (
-          Math.abs(r.x - h.x) < 10 &&
-          (r.laneIndex === h.laneIndex || Math.abs(r.y - h.y) < 10)
-        ) {
+        if (Math.abs(r.x - h.x) < 10 && (r.laneIndex === h.laneIndex || Math.abs(r.y - h.y) < 10)) {
           r.applyHoleEffect();
           h.fading = true;
           h.fadeTimer = fadeDuration;

@@ -5,7 +5,8 @@ import type { StrategyBehavior, RacerStrategy } from "../strategies";
 import { RacerStamina } from "./racer/RacerStamina";
 import { RacerDrama } from "./racer/RacerDrama";
 import { RacerMovement } from "./racer/RacerMovement";
-import { calculateComebackMultipliers } from "./racer/ComebackEngine";
+import { RacerEffects } from "./racer/RacerEffects";
+import { calculatePaceModifiers } from "./racer/ComebackEngine";
 
 export type { RacerAnimations, RacerStrategy };
 
@@ -19,6 +20,22 @@ export interface RacerStats {
   topSpeed: number;
   endurance: number;
 }
+
+/** Everything a racer needs to know about the race for one frame. */
+export interface RaceFrameContext {
+  delta: number;
+  leaderX: number;
+  finishX: number;
+  /** Pixels from the start line to the finish line. */
+  totalDist: number;
+  rank: number;
+  totalRacers: number;
+  /** Pixels to the nearest racer ahead, or null when leading. */
+  gapAhead: number | null;
+}
+
+const STUMBLE_HOP_PX = 10;
+const STUMBLE_TILT = 0.2;
 
 export class Racer extends Container {
   public racerName: string;
@@ -36,6 +53,7 @@ export class Racer extends Container {
   private staminaSys: RacerStamina;
   private dramaSys: RacerDrama;
   private moveSys: RacerMovement;
+  private fx: RacerEffects;
 
   // Stats
   public acceleration: number;
@@ -48,8 +66,14 @@ export class Racer extends Container {
   // Hole stun death-sequence state
   private holePhase: number = HOLE_PHASE_NONE;
   private holePhaseTimer: number = 0;
-  private baseSpriteY: number = 0;
-  public leadFrames: number = 0;
+  /** Sprite scale that makes a 48px frame render at RACER.WIDTH — the hole animation scales relative to it. */
+  private spriteBaseScale: number = 1;
+
+  // Per-frame pace state (exposed for effects / debugging)
+  public isDrafting: boolean = false;
+  public isKicking: boolean = false;
+  /** Once a racer commits to its final kick it keeps sprinting to the line. */
+  private wasKicking: boolean = false;
 
   constructor(
     name: string,
@@ -74,26 +98,30 @@ export class Racer extends Container {
 
     this.dramaSys = new RacerDrama();
     this.moveSys = new RacerMovement();
+    this.fx = new RacerEffects();
+    this.addChild(this.fx.back);
 
     this.sprite = new AnimatedSprite(this.animations.idle);
     this.sprite.anchor.set(0.5, 1);
     this.sprite.width = RACER.WIDTH;
     this.sprite.height = RACER.HEIGHT;
+    this.spriteBaseScale = this.sprite.scale.x;
     this.sprite.animationSpeed = 0.1;
     this.sprite.play();
     this.addChild(this.sprite);
+    this.addChild(this.fx.front);
 
     this.labelText = new Text({
       text: name,
       style: new TextStyle({
         fill: "#ffffff",
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: "bold",
         dropShadow: { alpha: 0.5, angle: Math.PI / 6, blur: 2, color: "#000000", distance: 2 },
       }),
     });
     this.labelText.anchor.set(0.5);
-    this.labelText.y = -RACER.HEIGHT - 10;
+    this.labelText.y = RACER.LABEL_Y;
     this.addChild(this.labelText);
 
     this.x = -100; // Start off-screen
@@ -129,27 +157,16 @@ export class Racer extends Container {
     this.sprite.play();
   }
 
-  update(
-    delta: number,
-    _time: number,
-    leaderX: number,
-    finishX: number,
-    rank: number,
-    totalDist: number,
-    inClimax: boolean,
-    totalRacers: number,
-  ) {
+  update(ctx: RaceFrameContext) {
+    const { delta } = ctx;
     if (this.finished) {
       this.setAnimation("idle");
       return;
     }
     this.elapsedFrames += delta;
 
-    const isLeader = rank === 1;
-    if (isLeader) this.leadFrames += delta;
-
     // Always update drama system so timers (stumble, stun, second wind) can decrement
-    this.dramaSys.update(delta, isLeader, (rank - 1) / Math.max(1, totalRacers - 1));
+    this.dramaSys.update(delta, ctx.rank === 1, (ctx.rank - 1) / Math.max(1, ctx.totalRacers - 1));
 
     if (this.dramaSys.isStunned()) {
       this.moveSys.targetSpeed = 0;
@@ -162,44 +179,59 @@ export class Racer extends Container {
     // If we just exited stun, make sure visuals are clean
     if (this.holePhase !== HOLE_PHASE_NONE) {
       this.holePhase = HOLE_PHASE_NONE;
-      this.sprite.y = this.baseSpriteY;
+      this.sprite.y = 0;
       this.sprite.alpha = 1;
     }
 
-    const mults = calculateComebackMultipliers(this, {
-      rank,
-      totalRacers,
-      distFromLeader: leaderX - this.x,
-      totalDistance: totalDist,
-      inClimaxPhase: inClimax,
+    const { PHYSICS, EFFORT, DRAMA } = GAMEPLAY;
+    const distToFinish = ctx.finishX - this.x;
+    const distCovered = ctx.totalDist - distToFinish;
+    const raceProgress = Math.min(1, Math.max(0, distCovered / ctx.totalDist));
+    // Final kick: go all-in once the line is within reach of the stamina left in the tank
+    const sprintReach =
+      this.staminaSys.sprintFramesLeft(this.strategyBehavior.traits.drainMult) *
+      this.topSpeed *
+      EFFORT.SPRINT;
+    const inFinalStretch =
+      this.staminaSys.isSprinting && this.wasKicking
+        ? true
+        : distToFinish <= Math.max(PHYSICS.MIN_KICK_PX, sprintReach * PHYSICS.KICK_REACH_MARGIN);
+    this.wasKicking = inFinalStretch;
+
+    const mods = calculatePaceModifiers(this, this.strategyBehavior, {
+      rank: ctx.rank,
+      totalRacers: ctx.totalRacers,
+      distFromLeader: ctx.leaderX - this.x,
+      gapAhead: ctx.gapAhead,
+      totalDistance: ctx.totalDist,
+      distCovered,
+      inFinalStretch,
+      isSprinting: this.staminaSys.isSprinting,
       elapsedFrames: this.elapsedFrames,
       paceFrequency: this.dramaSys.paceFrequency,
       pacePhase: this.dramaSys.pacePhase,
     });
+    this.isDrafting = mods.isDrafting;
+    this.isKicking = mods.isKicking;
 
-    this.staminaSys.update(
-      delta,
-      mults.recoveryMult,
-      1 - (finishX - this.x) / totalDist,
-      inClimax,
-      finishX - this.x,
-    );
+    this.staminaSys.update(delta, mods.recoveryMult, mods.drainMult, raceProgress, inFinalStretch);
 
-    let baseTopSpeed = mults.effectiveTopSpeed * this.dramaSys.getSecondWindSpeedFactor();
+    const effort = this.staminaSys.isTired
+      ? EFFORT.TIRED
+      : this.staminaSys.isSprinting
+        ? EFFORT.SPRINT
+        : EFFORT.CRUISE;
+    // Dropping below half stamina slowly saps top speed, so endurance matters all race long
+    const fatigue = 1 - PHYSICS.FATIGUE_FADE * Math.max(0, 1 - this.staminaSys.fraction * 2);
+    const secondWind = this.dramaSys.hasSecondWind() ? GAMEPLAY.SECOND_WIND.SPEED_MULT : 1;
 
-    if (this.staminaSys.isTired) {
-      this.moveSys.targetSpeed = baseTopSpeed * this.strategyBehavior.tiredSpeedFactor();
-    } else {
-      const factor = this.staminaSys.isSprinting
-        ? GAMEPLAY.PHYSICS.SPRINT_SPEED_FACTOR
-        : GAMEPLAY.PHYSICS.CRUISING_SPEED_FACTOR;
-      this.moveSys.targetSpeed = baseTopSpeed * factor;
-    }
+    const stumble = this.dramaSys.getStumbleProgress();
+    this.moveSys.targetSpeed =
+      stumble >= 0
+        ? this.topSpeed * DRAMA.STUMBLE_SPEED_FACTOR
+        : this.topSpeed * mods.topSpeedMult * secondWind * effort * fatigue;
 
-    if (this.dramaSys.stumbleTimer > 0)
-      this.moveSys.targetSpeed = baseTopSpeed * GAMEPLAY.DRAMA.STUMBLE_SPEED_FACTOR;
-
-    this.moveSys.update(delta, mults.effectiveAccel, GAMEPLAY.PHYSICS);
+    this.moveSys.update(delta, mods.effectiveAccel, PHYSICS);
     this.x = this.moveSys.x;
 
     if (this.moveSys.currentSpeed > 0.5) {
@@ -208,12 +240,32 @@ export class Racer extends Container {
     } else {
       this.setAnimation("idle");
     }
+
+    // Stumble: a little trip-hop with a forward tilt
+    const hop = stumble >= 0 ? Math.sin(stumble * Math.PI) : 0;
+    this.sprite.y = -hop * STUMBLE_HOP_PX;
+    this.sprite.rotation = hop * STUMBLE_TILT;
+
+    this.fx.update(delta, {
+      speed: this.moveSys.currentSpeed,
+      sprinting: this.staminaSys.isSprinting,
+      // Sweat when exhausted, or when digging deep on a nearly empty tank
+      tired:
+        this.staminaSys.isTired || (this.staminaSys.isSprinting && this.staminaSys.fraction < 0.15),
+      drafting: mods.isDrafting,
+      kicking: mods.isKicking,
+      secondWind: this.dramaSys.hasSecondWind(),
+      stumbling: stumble >= 0,
+    });
   }
 
   setFinished(time: number) {
     this.finished = true;
     this.finishTime = time;
     this.staminaSys.setVisible(false);
+    this.sprite.y = 0;
+    this.sprite.rotation = 0;
+    this.fx.clear();
     this.setAnimation("idle");
   }
 
@@ -226,11 +278,12 @@ export class Racer extends Container {
     this.moveSys.currentSpeed = 0;
     this.moveSys.targetSpeed = 0;
     this.dramaSys.applyHoleStun();
+    this.fx.clear();
+    this.sprite.rotation = 0;
 
     // Start the sink-into-hole sequence
     this.holePhase = HOLE_PHASE_SINKING;
     this.holePhaseTimer = 0;
-    this.baseSpriteY = this.sprite.y;
 
     // Keep current animation (walk/idle) while sinking
   }
@@ -244,8 +297,8 @@ export class Racer extends Container {
         const t = Math.min(this.holePhaseTimer / SINK_DURATION, 1);
         const eased = t * t; // ease-in quad — slow start, fast at end
         const shrink = 1 - eased; // 1 → 0
-        this.sprite.scale.set(shrink);
-        this.sprite.y = this.baseSpriteY + eased * SINK_OFFSET_PX;
+        this.sprite.scale.set(this.spriteBaseScale * shrink);
+        this.sprite.y = eased * SINK_OFFSET_PX;
         // Fade out after sinking past initial depth
         const fadeStart = FADE_START_THRESHOLD;
         this.sprite.alpha = t < fadeStart ? 1 : 1 - (t - fadeStart) / (1 - fadeStart);
@@ -264,8 +317,8 @@ export class Racer extends Container {
           this.holePhaseTimer = 0;
           // Reappear: restore scale, position, switch to idle
           this.sprite.visible = true;
-          this.sprite.scale.set(1);
-          this.sprite.y = this.baseSpriteY;
+          this.sprite.scale.set(this.spriteBaseScale);
+          this.sprite.y = 0;
           this.setAnimation("idle");
         }
         break;

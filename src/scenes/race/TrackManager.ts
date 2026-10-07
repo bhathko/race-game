@@ -1,6 +1,7 @@
 import { Container, Graphics, TilingSprite, AnimatedSprite, Text, Texture } from "pixi.js";
-import { ITEMS, TRACK, TRACK_COLORS, CANVAS, RACER } from "../../config";
+import { ITEMS, TRACK, TRACK_COLORS, RACER } from "../../config";
 import type { GroundTextures, GrassTextures, TrackLayoutData } from "../../core";
+import { metersToWorldX } from "../../core/TrackLayout";
 
 export class TrackManager extends Container {
   private trackGraphics: Graphics;
@@ -65,7 +66,6 @@ export class TrackManager extends Container {
     this.layout = layout;
     const {
       trackWidth,
-      viewWidth,
       viewHeight,
       distance,
       racerCount,
@@ -146,11 +146,10 @@ export class TrackManager extends Container {
       )
       .forEach((c) => this.removeChild(c));
 
-    // Markers & Trees
-    const unitWidth = Math.max(viewWidth, CANVAS.MIN_UNIT_WIDTH);
+    // Distance trees every 10m, in the same world scale as the finish line
     const treeSize = Math.min(ITEMS.tree.width, grassStripHeight * 0.85);
     for (let m = 10; m <= distance; m += 10) {
-      const x = TRACK.START_LINE_X + (m / 50) * unitWidth;
+      const x = metersToWorldX(m);
       [true, false].forEach((isTop) => {
         const tree = new AnimatedSprite(this.treeAnimation);
         tree.label = "distance-tree";
@@ -181,15 +180,14 @@ export class TrackManager extends Container {
   }
 
   /**
-   * Racer Y position — centers a bottom-anchored (0.5, 1) sprite in a lane.
+   * Racer Y position — centers the visible character art of a bottom-anchored (0.5, 1) sprite in a lane.
    * @param racerScale The racer's current container scale (default 1.0)
    */
   public getLaneRacerY(laneIndex: number, racerScale: number = 1): number {
     if (!this.layout) return 0;
     const laneCenter = this.layout.grassStripHeight + (laneIndex + 0.5) * this.layout.laneHeight;
-    // For a bottom-anchored sprite, y must be shifted down by half the visible height
-    const visibleHalfH = (RACER.HEIGHT * racerScale) / 2;
-    return laneCenter + visibleHalfH;
+    const artCenter = (RACER.ART_TOP + RACER.ART_FEET) / 2;
+    return laneCenter - artCenter * racerScale;
   }
 
   public getNearestLaneIndex(localY: number): number | null {
