@@ -1,7 +1,9 @@
 import { BaseMenuScene } from "./BaseMenuScene";
-import { PALETTE } from "../../config";
+import { UI } from "../../config";
 import type { MenuContext } from "../../core";
 import { getStandardGridConfig } from "../../core";
+
+const CARD_GAP = 14;
 
 export class MobileVerticalMenuScene extends BaseMenuScene {
   constructor(ctx: MenuContext) {
@@ -11,54 +13,33 @@ export class MobileVerticalMenuScene extends BaseMenuScene {
     const centerX = width / 2;
     const grid = getStandardGridConfig(width);
 
-    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
-    // Title Positioning & Scaling
-    this.title.x = centerX;
-    this.title.y = Math.max(height * 0.12, 50); // Ensure at least 50px from top
-    this.title.style.fontSize = 40;
-    this.title.scale.set(1); // Reset scale first
+    this.placeTitle(
+      centerX,
+      Math.max(height * 0.12, 50),
+      Math.min(44, width * 0.11),
+      width - grid.margin * 2,
+    );
 
-    // Check if title is too wide
-    const maxTitleWidth = width - 2 * grid.margin;
-    if (this.title.width > maxTitleWidth) {
-      const scale = maxTitleWidth / this.title.width;
-      this.title.scale.set(scale);
-    }
+    // Three settings cards stacked
+    const cardW = Math.min(440, width - grid.margin * 2);
+    const cardH = Math.min(140, height * 0.15);
+    const top = height * 0.21;
+    this.layoutCards(
+      [0, 1, 2].map((i) => ({
+        cx: centerX,
+        cy: top + cardH / 2 + i * (cardH + CARD_GAP),
+        w: cardW,
+        h: cardH,
+      })),
+    );
 
-    const labelY1 = height * 0.25;
-    const valueY1 = height * 0.35;
-    this.countLabel.x = centerX;
-    this.countLabel.y = labelY1;
-    this.countLabel.style.fontSize = 22;
-    this.countValue.x = centerX;
-    this.countValue.y = valueY1;
-    this.countValue.style.fontSize = 48;
-    this.countStepper.x = centerX;
-    this.countStepper.y = valueY1;
-    this.countStepper.scale.set(0.85);
-
-    const labelY2 = height * 0.47;
-    const valueY2 = height * 0.57;
-    this.distLabel.x = centerX;
-    this.distLabel.y = labelY2;
-    this.distLabel.style.fontSize = 22;
-    this.distValue.x = centerX;
-    this.distValue.y = valueY2;
-    this.distValue.style.fontSize = 48;
-    this.distStepper.x = centerX;
-    this.distStepper.y = valueY2;
-    this.distStepper.scale.set(0.85);
-
-    this.funnyBtn.x = centerX;
-    this.funnyBtn.y = height * 0.71;
-    this.funnyBtn.scale.set(0.85);
-
+    const listBottom = top + cardH * 3 + CARD_GAP * 2;
     this.startBtn.x = centerX;
-    this.startBtn.y = height * 0.84;
-    this.startBtn.scale.set(0.8);
+    this.startBtn.y = Math.min(height * 0.86, listBottom + (height - listBottom) / 2);
+    this.startBtn.scale.set(Math.min(1, (width - grid.margin * 2) / 300));
 
-    // Version Text
     this.versionText.x = width - grid.margin;
     this.versionText.y = height - grid.margin / 2;
   }

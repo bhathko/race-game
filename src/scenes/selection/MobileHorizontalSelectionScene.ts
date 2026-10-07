@@ -1,7 +1,8 @@
 import { BaseCharacterSelectionScene } from "./BaseCharacterSelectionScene";
-import { RACER } from "../../config";
+import { RACER, UI } from "../../config";
 import type { SelectionContext } from "../../core";
 import { getStandardGridConfig } from "../../core";
+import { setFontSize } from "../../ui";
 
 export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene {
   constructor(ctx: SelectionContext, initialSelectedKeys: string[] = []) {
@@ -30,7 +31,7 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
     const centerX = width / 2;
     const grid = getStandardGridConfig(width);
 
-    this.bg.clear().rect(0, 0, width, height).fill({ color: 0x81c784 });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
     // ════════════════════════════════════════════════════════════
     // VERTICAL LAYOUT (top to bottom, every pixel accounted for)
@@ -47,7 +48,7 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
     const titleFontSize = Math.min(20, height * 0.07);
     this.title.x = centerX;
     this.title.y = height * 0.06;
-    this.title.style.fontSize = titleFontSize;
+    setFontSize(this.title, titleFontSize);
 
     const titleBottomY = this.title.y + titleFontSize / 2 + 6; // title center + half font + pad
 
@@ -77,7 +78,7 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
 
     this.statusText.x = centerX;
     this.statusText.y = statusBottomY - statusFontSize / 2;
-    this.statusText.style.fontSize = statusFontSize;
+    setFontSize(this.statusText, statusFontSize);
 
     // ── Zone 2: Character Grid (fills remaining space) ──
     const gridTopPad = 4;
@@ -86,8 +87,9 @@ export class MobileHorizontalSelectionScene extends BaseCharacterSelectionScene 
 
     const cardHalf = 50;
     const cardSize = 100;
-    const spacingX = cardSize + 12;
-    const spacingY = cardSize + 8;
+    // Leave room for the selection frame around selected tiles
+    const spacingX = cardSize + 18;
+    const spacingY = cardSize + 16;
     const cols = 5;
     const totalItems = this.selectionSprites.size;
     const rows = Math.ceil(totalItems / cols);

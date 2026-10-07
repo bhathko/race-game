@@ -1,12 +1,13 @@
 import { BaseCharacterSelectionScene } from "./BaseCharacterSelectionScene";
-import { RACER } from "../../config";
+import { RACER, UI } from "../../config";
 import type { SelectionContext } from "../../core";
 import { getStandardGridConfig } from "../../core";
+import { setFontSize } from "../../ui";
 
 const LINEUP_SCALE = 1.5;
 const LINEUP_SPACING = 160;
 const GRID_COLS = 8;
-const GRID_SPACING = 110;
+const GRID_SPACING = 122;
 const GRID_CARD = 100;
 const BACK_BTN_HALF_W = 60;
 
@@ -31,7 +32,7 @@ export class DesktopSelectionScene extends BaseCharacterSelectionScene {
     const grid = getStandardGridConfig(width);
     const availW = width - 2 * grid.margin;
 
-    this.bg.clear().rect(0, 0, width, height).fill({ color: 0x81c784 }); // Nature green
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
     // Back button top-left; the title shrinks if it would run into it
     this.backBtn.x = grid.margin + BACK_BTN_HALF_W;
@@ -40,7 +41,7 @@ export class DesktopSelectionScene extends BaseCharacterSelectionScene {
 
     this.title.x = centerX;
     this.title.y = 60;
-    this.title.style.fontSize = 48;
+    setFontSize(this.title, 48);
     this.title.scale.set(1);
     const titleRoom = width - 2 * (grid.margin + BACK_BTN_HALF_W * 2 + 12);
     if (this.title.width > titleRoom) this.title.scale.set(titleRoom / this.title.width);
@@ -55,7 +56,7 @@ export class DesktopSelectionScene extends BaseCharacterSelectionScene {
 
     this.statusText.x = centerX;
     this.statusText.y = this.lineupContainer.y + 100;
-    this.statusText.style.fontSize = 24;
+    setFontSize(this.statusText, 24);
 
     // Character grid: one row of 8, scaled to fit
     let i = 0;

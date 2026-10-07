@@ -73,9 +73,13 @@ Each strategy is strongest in a different phase of the race, so lead changes hap
 
 ## 8. Visual Design & UI
 
-- **Theme:** Natural Earthy Aesthetic with Forest Green backgrounds.
-- **Redesign Framework:** "Color Pencil Sketch" aesthetic featuring semi-transparent white/gray paper backgrounds, thick jittered (hand-drawn) black outlines, and sketchy drop shadows. Replaced previous heavy 3D wooden UI elements.
-- **Design System:** Centralized `PALETTE` and 12-column grid system.
+- **Theme:** Console-home layout (rounded cards, pill buttons, sentence case) in a **controller palette**: a black body with the four face-button colors as accents, around a grassy, pixel-art race track.
+- **Color roles:** blue = confirm / main action (Start, Start race, Back to menu), red = back / cancel, green = selection frame, pink = toggle on. Neutral buttons and cards are dark grey with a thin border. The countdown runs red → pink → green → blue ("GO!"), and four colored dots sit under the menu title.
+- **Buttons (`GameButton`):** Rounded pills with a soft shadow; white labels on colored pills (all pass 3:1 large-text contrast). Hover shows a pulsing green selection frame; pressing shrinks the pill slightly.
+- **Selection:** Selected character tiles and the race leader get the green frame (selected tiles pulse).
+- **Text (`TextStyles`):** Bundled **M PLUS Rounded 1c** (SIL OFL, Latin subset, Bold + ExtraBold, `public/assets/fonts/`). Styles: _title_ / _heading_ (light ExtraBold), _body_ (light Bold), _label_ (muted grey), _overlay_ (white with a soft shadow, for text over the track), _onAccent_ (white on colored buttons), _ink_ (dark, for the dirt track and podium blocks). `setFontSize()` keeps shadows proportional when layouts resize text.
+- **Menu:** Three settings cards (Racers, Distance, Funny mode) in a row on wide screens, stacked in portrait.
+- **Design System:** Centralized `UI` palette (black / dark greys, light text, blue / red / green / pink accents, podium gold / silver / bronze) and `FONT` in `ThemeConfig.ts`, plus the 12-column grid system.
 - **Responsive Layouts:**
   - **Desktop:** Unified centered ranking component (Podium + List).
   - **Mobile Portrait:** Bottom-docked ranking list, hidden racer names/stamina during race.

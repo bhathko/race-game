@@ -1,10 +1,10 @@
-import { PALETTE } from "../../config";
+import { UI } from "../../config";
 import { BaseLoadingScene } from "./BaseLoadingScene";
 import { getGridRect, getStandardGridConfig } from "../../core";
 
 export class DesktopLoadingScene extends BaseLoadingScene {
   public resize(width: number, height: number): void {
-    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
     const grid = getStandardGridConfig(width);
     const rect = getGridRect(3, 6, grid); // Span middle 6 columns
@@ -20,9 +20,14 @@ export class DesktopLoadingScene extends BaseLoadingScene {
 
     this.progressBg.clear();
     this.progressBg
-      .roundRect(-this.barWidth / 2, -this.barHeight / 2, this.barWidth, this.barHeight, 8)
-      .fill({ color: PALETTE.BLACK, alpha: 0.3 })
-      .stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
+      .roundRect(
+        -this.barWidth / 2,
+        -this.barHeight / 2,
+        this.barWidth,
+        this.barHeight,
+        this.barHeight / 2,
+      )
+      .fill({ color: UI.SURFACE });
 
     this.progressBg.x = centerX;
     this.progressBg.y = centerY;

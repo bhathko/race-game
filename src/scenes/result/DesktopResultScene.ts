@@ -1,5 +1,5 @@
 import { BaseResultScene } from "./BaseResultScene";
-import { PALETTE } from "../../config";
+import { UI } from "../../config";
 import type { ResultContext } from "../../core";
 import { getGridRect, getStandardGridConfig } from "../../core";
 
@@ -12,14 +12,13 @@ export class DesktopResultScene extends BaseResultScene {
     const grid = getStandardGridConfig(width);
     const rankingRect = getGridRect(3, 6, grid); // Middle 6 columns
 
-    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
     // ─── Winner Title (sized by height too, so short windows never clip it) ───
     const titleBottom = this.layoutWinnerTitle(
       centerX,
       10,
       Math.min(64, width * 0.08, height * 0.07),
-      Math.min(8, width * 0.01),
     );
 
     // ─── Restart Button ───

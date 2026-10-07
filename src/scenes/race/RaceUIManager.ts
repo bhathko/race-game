@@ -1,6 +1,15 @@
-import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
+import { Container, Graphics, Text, AnimatedSprite } from "pixi.js";
 import { Racer } from "../../entities";
-import { PALETTE, COLORS } from "../../config";
+import { COLORS, UI } from "../../config";
+import { textStyle, setFontSize } from "../../ui";
+
+/** Countdown runs through the four face-button colors: 3 red, 2 pink, 1 green, GO! blue. */
+const COUNTDOWN_COLORS: Record<string, number> = {
+  "3": UI.RED,
+  "2": UI.PINK,
+  "1": UI.GREEN,
+  "GO!": UI.BLUE,
+};
 import type { RacerAnimations } from "../../core";
 
 export interface LeaderboardLayoutConfig {
@@ -38,59 +47,20 @@ export class RaceUIManager {
     this.leaderboardContainer = new Container();
     this.ui.addChild(this.leaderboardContainer);
 
-    const titleStyle = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 24,
-      fontWeight: "900",
-      stroke: { color: PALETTE.STR_BLACK, width: 4 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 2,
-        blur: 0,
-        color: PALETTE.STR_BLACK,
-        distance: 4,
-      },
-    });
-    const title = new Text({ text: "RANKING", style: titleStyle });
+    const title = new Text({ text: "Ranking", style: textStyle("heading", 24) });
     title.label = "leaderboard-title";
     this.leaderboardContainer.addChild(title);
   }
 
   public initCountdown() {
-    const style = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 120,
-      fontWeight: "900",
-      stroke: { color: COLORS.TEXT_MARKER, width: 12 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 6,
-        blur: 0,
-        color: PALETTE.STR_BLACK,
-        distance: 8,
-      },
-    });
-    this.countdownText = new Text({ text: "", style });
+    this.countdownText = new Text({ text: "", style: textStyle("overlay", 130) });
     this.countdownText.anchor.set(0.5);
     this.countdownText.visible = false;
     this.ui.addChild(this.countdownText);
   }
 
   public initDistance() {
-    const style = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 80,
-      fontWeight: "900",
-      stroke: { color: COLORS.TEXT_MARKER, width: 8 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 4,
-        blur: 4,
-        color: PALETTE.STR_BLACK,
-        distance: 6,
-      },
-    });
-    this.remainingDistanceText = new Text({ text: "", style });
+    this.remainingDistanceText = new Text({ text: "", style: textStyle("overlay", 48) });
     this.remainingDistanceText.anchor.set(0.5, 0);
     this.ui.addChild(this.remainingDistanceText);
   }
@@ -113,15 +83,7 @@ export class RaceUIManager {
       icon.animationSpeed = 0.1;
       icon.play();
       container.addChild(icon);
-      const text = new Text({
-        text: racer.racerName,
-        style: new TextStyle({
-          fill: PALETTE.STR_WHITE,
-          fontSize: 16,
-          fontWeight: "900",
-          stroke: { color: PALETTE.STR_BLACK, width: 3 },
-        }),
-      });
+      const text = new Text({ text: racer.racerName, style: textStyle("body", 16) });
       text.label = "item-text";
       container.addChild(text);
       this.leaderboardContainer.addChild(container);
@@ -132,7 +94,11 @@ export class RaceUIManager {
   public updateCountdown(seconds: number, visible: boolean, textOverride?: string) {
     if (!this.countdownText) return;
     this.countdownText.visible = visible;
-    this.countdownText.text = textOverride || Math.ceil(seconds).toString();
+    const label = textOverride || Math.ceil(seconds).toString();
+    if (this.countdownText.text !== label) {
+      this.countdownText.text = label;
+      this.countdownText.style.fill = COUNTDOWN_COLORS[label] ?? UI.WHITE;
+    }
   }
 
   public updateDistance(distanceM: number, visible: boolean) {
@@ -246,14 +212,23 @@ export class RaceUIManager {
 
       const bg = itemConfig.children.find((c) => c.label === "item-bg") as Graphics | undefined;
       if (bg) {
-        let color: number = COLORS.RANK_DEFAULT;
-        if (index === 0) color = COLORS.RANK_GOLD;
-        else if (index === 1) color = COLORS.RANK_SILVER;
-        else if (index === 2) color = COLORS.RANK_BRONZE;
+        // Dark cards; the leader gets the green selection frame, 2nd/3rd a silver/bronze edge
+        const w = cardW - 2;
+        const h = cardH - 2;
+        const r = Math.min(12, h * 0.3);
         bg.clear()
-          .roundRect(0, 0, cardW - 2, cardH - 2, 6)
-          .fill({ color: PALETTE.BLACK, alpha: 0.5 })
-          .stroke({ color, width: index < 3 ? 3 : 1.5 });
+          .roundRect(0, 1.5, w, h, r)
+          .fill({ color: UI.SHADOW, alpha: 0.06 })
+          .roundRect(0, 0, w, h, r)
+          .fill({ color: index === 0 ? UI.FRAME_TINT : UI.SURFACE });
+        if (index === 0) bg.roundRect(0, 0, w, h, r).stroke({ color: UI.FRAME, width: 3 });
+        else if (index >= 3) bg.roundRect(0, 0, w, h, r).stroke({ color: UI.LINE, width: 1.5 });
+        else if (index < 3) {
+          bg.roundRect(0, 0, w, h, r).stroke({
+            color: index === 1 ? COLORS.RANK_SILVER : COLORS.RANK_BRONZE,
+            width: 2,
+          });
+        }
       }
 
       const icon = itemConfig.children.find((c) => c.label === "item-icon") as
@@ -282,12 +257,11 @@ export class RaceUIManager {
           text.y = cardH * 0.82;
           text.anchor.set(0.5, 0.5);
         }
-        if (text.style instanceof TextStyle) {
-          text.style.fontSize = Math.min(
-            config.fontSize,
-            isVertical ? cardH * 0.35 : Math.max(9, cardW * 0.2),
-          );
-        }
+        const size = Math.min(
+          config.fontSize,
+          isVertical ? cardH * 0.35 : Math.max(9, cardW * 0.2),
+        );
+        if (text.style.fontSize !== size) setFontSize(text, size);
       }
     });
   }

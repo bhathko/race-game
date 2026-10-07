@@ -37,7 +37,9 @@ export class MobileVerticalRaceScene extends BaseRaceScene {
     sidebarBg
       .clear()
       .rect(0, this.gameViewH, width, this.lbH)
-      .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
+      .fill({ color: COLORS.SIDEBAR_BG })
+      .rect(0, this.gameViewH, width, 1)
+      .fill({ color: COLORS.SIDEBAR_WOOD });
 
     const lbContainer = this.uiManager.getLeaderboardContainer();
     lbContainer.x = grid.margin;

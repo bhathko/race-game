@@ -20,11 +20,11 @@ Every racer isn't just a set of stats; they have a **Personality**. By using the
 - **Closers** create late-game "come-from-behind" victories.
 - This variety ensures that every race tells a different story.
 
-### C. Natural Earthy Aesthetic & Design System
+### C. Controller-Palette UI & Design System
 
-We consciously paired a high-performance **WebGPU/Pixi.js** engine with a natural, organic aesthetic. To ensure this remains maintainable, we implemented a **Design Token System** (`PALETTE` in `src/config.ts`).
+We pair a high-performance **WebGPU/Pixi.js** engine with a console-style UI in a game-controller palette (black body, red / pink / green / blue accents) around a pixel-art nature track. To keep it maintainable, we use a **Design Token System** (`UI`, `FONT` and `PALETTE` in `src/configs/ThemeConfig.ts`).
 
-The UI uses a **Natural Palette** (Forest Green, Terracotta, Stone) and custom-drawn 3D wooden components. By centralizing these values into tokens and avoiding raw hex strings in scene code, we can perform global theme updates instantly.
+The UI uses black screens, dark cards and light text; blue confirms, red goes back, green frames the selection and pink marks a toggle that is on. Pill buttons (`GameButton`) and shared text styles (`TextStyles`, bundled M PLUS Rounded 1c font) keep it consistent. By centralizing these values into tokens and avoiding raw hex strings in scene code, we can perform global theme updates instantly.
 
 ---
 

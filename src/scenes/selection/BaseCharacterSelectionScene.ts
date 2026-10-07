@@ -1,6 +1,12 @@
-import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
-import { CHARACTERS, COLORS, RACER, PALETTE } from "../../config";
-import { createColorPencilButton } from "../../ui";
+import { Container, Graphics, Text, AnimatedSprite } from "pixi.js";
+import { CHARACTERS, COLORS, RACER, UI } from "../../config";
+import { createGameButton, textStyle, setFontSize } from "../../ui";
+
+/** Character tiles are 100×100, centered on their container. */
+const TILE = 100;
+const TILE_RADIUS = 16;
+/** Gap between a selected tile and its selection frame. */
+const RING_GAP = 5;
 import type { RacerAnimations, SelectionContext } from "../../core/types";
 import type { Scene } from "../../core/Scene";
 
@@ -34,6 +40,8 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
   protected popupCancelBtn: Container;
 
   protected selectionSprites: Map<string, Container> = new Map();
+  private selectionRings: Graphics[] = [];
+  private ringClock = 0;
   protected lineupSprites: Container[] = [];
 
   constructor(ctx: SelectionContext, initialSelectedKeys: string[] = []) {
@@ -48,31 +56,13 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     this.bg = new Graphics();
     this.addChild(this.bg);
 
-    const titleStyle = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 48,
-      fontWeight: "900",
-      stroke: { color: COLORS.SIDEBAR_WOOD, width: 6 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 4,
-        blur: 4,
-        color: PALETTE.STR_BLACK,
-        distance: 4,
-      },
-    });
-    this.title = new Text({ text: "CHOOSE YOUR RACERS", style: titleStyle });
+    this.title = new Text({ text: "Choose your racers", style: textStyle("title", 44) });
     this.title.anchor.set(0.5);
     this.addChild(this.title);
 
     this.statusText = new Text({
       text: `Select ${this.playerCount} racers`,
-      style: new TextStyle({
-        fill: PALETTE.STR_WHITE,
-        fontSize: 24,
-        fontWeight: "bold",
-        stroke: { color: PALETTE.STR_BLACK, width: 4 },
-      }),
+      style: textStyle("label", 22),
     });
     this.statusText.anchor.set(0.5);
     this.addChild(this.statusText);
@@ -85,8 +75,8 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
 
     this.createCharacterGrid();
 
-    this.startBtn = createColorPencilButton({
-      label: "START RACE!",
+    this.startBtn = createGameButton({
+      label: "Start race",
       color: COLORS.BUTTON_SUCCESS,
       onClick: () => this.handleStart(),
       width: 240,
@@ -94,8 +84,8 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     this.startBtn.visible = false;
     this.addChild(this.startBtn);
 
-    this.backBtn = createColorPencilButton({
-      label: "BACK",
+    this.backBtn = createGameButton({
+      label: "Back",
       color: COLORS.BUTTON_DANGER,
       onClick: () => this.onBack(),
       width: 120,
@@ -109,26 +99,18 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     this.popupOverlay.eventMode = "static"; // blocks clicks to elements behind
 
     const overlayBg = new Graphics();
-    overlayBg.rect(0, 0, 2000, 2000).fill({ color: 0x000000, alpha: 0.5 });
+    overlayBg.rect(0, 0, 2000, 2000).fill({ color: UI.SHADOW, alpha: 0.6 });
     this.popupOverlay.addChild(overlayBg);
 
     this.popupPanel = new Graphics();
     this.popupOverlay.addChild(this.popupPanel);
 
-    this.popupTitle = new Text({
-      text: "Ready to Race!",
-      style: new TextStyle({
-        fill: PALETTE.STR_WHITE,
-        fontSize: 28,
-        fontWeight: "900",
-        stroke: { color: PALETTE.STR_BLACK, width: 5 },
-      }),
-    });
+    this.popupTitle = new Text({ text: "Ready to race!", style: textStyle("heading", 28) });
     this.popupTitle.anchor.set(0.5);
     this.popupOverlay.addChild(this.popupTitle);
 
-    this.popupStartBtn = createColorPencilButton({
-      label: "START RACE!",
+    this.popupStartBtn = createGameButton({
+      label: "Start race",
       color: COLORS.BUTTON_SUCCESS,
       onClick: () => this.handleStart(),
       width: 220,
@@ -136,8 +118,8 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     });
     this.popupOverlay.addChild(this.popupStartBtn);
 
-    this.popupCancelBtn = createColorPencilButton({
-      label: "CANCEL",
+    this.popupCancelBtn = createGameButton({
+      label: "Cancel",
       color: COLORS.BUTTON_DANGER,
       onClick: () => this.handlePopupCancel(),
       width: 220,
@@ -162,9 +144,6 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
       item.cursor = "pointer";
 
       const bg = new Graphics();
-      bg.roundRect(-50, -50, 100, 100, 10)
-        .fill({ color: PALETTE.BLACK, alpha: 0.3 })
-        .stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
       item.addChild(bg);
 
       const sprite = new AnimatedSprite(anims.idle);
@@ -175,17 +154,19 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
       sprite.play();
       item.addChild(sprite);
 
-      const nameText = new Text({
-        text: charData.name,
-        style: new TextStyle({
-          fill: PALETTE.STR_WHITE,
-          fontSize: 14,
-          fontWeight: "bold",
-        }),
-      });
+      const nameText = new Text({ text: charData.name, style: textStyle("body", 15) });
       nameText.anchor.set(0.5);
-      nameText.y = 40;
+      nameText.y = 38;
       item.addChild(nameText);
+
+      // Green selection frame (pulses in update())
+      const half = TILE / 2 + RING_GAP;
+      const ring = new Graphics()
+        .roundRect(-half, -half, half * 2, half * 2, TILE_RADIUS + RING_GAP)
+        .stroke({ color: UI.FRAME, width: 4 });
+      ring.visible = false;
+      item.addChild(ring);
+      this.selectionRings.push(ring);
 
       item.on("pointerdown", () => this.toggleSelection(key));
 
@@ -213,22 +194,11 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     this.selectionSprites.forEach((item, key) => {
       const bg = item.children[0] as Graphics;
       const isSelected = this.selectedKeys.includes(key);
-      bg.clear();
-
-      const bgColor = isSelected ? PALETTE.WOOD_LIGHT : PALETTE.WOOD_DARK;
-      const strokeColor = isSelected ? PALETTE.WHITE : PALETTE.WOOD_PALE;
-      const strokeWidth = isSelected ? 4 : 2;
-
-      bg.roundRect(-50, -50, 100, 100, 12)
-        .fill({ color: bgColor, alpha: 0.9 })
-        .stroke({
-          color: strokeColor,
-          width: strokeWidth,
-          alpha: isSelected ? 1 : 0.5,
-        });
+      this.drawTile(bg, isSelected);
+      item.children[3].visible = isSelected;
 
       const sprite = item.children[1] as AnimatedSprite;
-      const targetSize = isSelected ? 80 : 70;
+      const targetSize = isSelected ? 78 : 70;
       sprite.width = targetSize;
       sprite.height = targetSize;
     });
@@ -251,16 +221,14 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
 
         const anims = this.characterAnimations.get(key)!;
         const card = new Graphics();
-        card
-          .roundRect(
-            -RACER.WIDTH / 2 - 5,
-            -RACER.HEIGHT - 5,
-            RACER.WIDTH + 10,
-            RACER.HEIGHT + 15,
-            8,
-          )
-          .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.9 })
-          .stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
+        this.drawSoftCard(
+          card,
+          -RACER.WIDTH / 2 - 5,
+          -RACER.HEIGHT - 5,
+          RACER.WIDTH + 10,
+          RACER.HEIGHT + 15,
+          14,
+        );
         racerContainer.addChild(card);
 
         const sprite = new AnimatedSprite(anims.idle);
@@ -271,18 +239,13 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
         sprite.play();
         racerContainer.addChild(sprite);
       } else {
-        const box = new Graphics();
-        box
-          .roundRect(-RACER.WIDTH / 2, -RACER.HEIGHT, RACER.WIDTH, RACER.HEIGHT, 8)
-          .fill({ color: PALETTE.WOOD_DARK, alpha: 0.6 })
-          .stroke({ color: PALETTE.WOOD_PALE, width: 2, alpha: 0.5 });
+        const box = new Graphics()
+          .roundRect(-RACER.WIDTH / 2, -RACER.HEIGHT, RACER.WIDTH, RACER.HEIGHT, 14)
+          .fill({ color: UI.SURFACE, alpha: 0.6 })
+          .stroke({ color: UI.LINE, width: 2, alpha: 0.6 });
         racerContainer.addChild(box);
 
-        const posText = new Text({
-          text: (i + 1).toString(),
-          style: new TextStyle({ fill: PALETTE.STR_WHITE, fontSize: 24, fontWeight: "bold" }),
-        });
-        posText.alpha = 0.3;
+        const posText = new Text({ text: (i + 1).toString(), style: textStyle("label", 28) });
         posText.anchor.set(0.5);
         posText.y = -RACER.HEIGHT / 2;
         racerContainer.addChild(posText);
@@ -306,6 +269,29 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
     this.repositionLineup();
   }
 
+  /** Rounded card with a soft shadow and a thin border. */
+  private drawSoftCard(g: Graphics, x: number, y: number, w: number, h: number, radius: number) {
+    g.clear();
+    for (let i = 3; i >= 1; i--) {
+      g.roundRect(x - i, y + i * 1.5, w + i * 2, h + i, radius + i).fill({
+        color: UI.SHADOW,
+        alpha: 0.045,
+      });
+    }
+    g.roundRect(x, y, w, h, radius)
+      .fill({ color: UI.SURFACE })
+      .stroke({ color: UI.LINE, width: 2 });
+  }
+
+  /** Character tile: a dark card; selected tiles get a green tint (the frame is a separate ring). */
+  private drawTile(bg: Graphics, selected: boolean) {
+    const half = TILE / 2;
+    this.drawSoftCard(bg, -half, -half, TILE, TILE, TILE_RADIUS);
+    if (selected) {
+      bg.roundRect(-half, -half, TILE, TILE, TILE_RADIUS).fill({ color: UI.FRAME_TINT });
+    }
+  }
+
   protected abstract getLineupScale(): number;
   protected abstract repositionLineup(): void;
   public abstract resize(width: number, height: number): void;
@@ -327,41 +313,42 @@ export abstract class BaseCharacterSelectionScene extends Container implements S
   protected repositionPopup(width: number, height: number) {
     // Overlay background covers full screen
     const overlayBg = this.popupOverlay.children[0] as Graphics;
-    overlayBg.clear().rect(0, 0, width, height).fill({ color: 0x000000, alpha: 0.5 });
+    overlayBg.clear().rect(0, 0, width, height).fill({ color: UI.SHADOW, alpha: 0.6 });
 
     const centerX = width / 2;
     const centerY = height / 2;
 
     // Panel
-    const panelW = Math.min(300, width * 0.6);
-    const panelH = Math.min(180, height * 0.65);
-    this.popupPanel.clear();
-    this.popupPanel
-      .roundRect(centerX - panelW / 2, centerY - panelH / 2, panelW, panelH, 16)
-      .fill({ color: 0xffffff, alpha: 0.92 })
-      .stroke({ color: PALETTE.STR_BLACK, width: 4, join: "round" })
-      .roundRect(centerX - panelW / 2 + 2, centerY - panelH / 2 - 1, panelW - 4, panelH + 2, 16)
-      .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.4, join: "round" });
+    const panelW = Math.min(320, width * 0.8);
+    const panelH = Math.min(260, height * 0.8);
+    const panelX = centerX - panelW / 2;
+    const panelY = centerY - panelH / 2;
+    this.drawSoftCard(this.popupPanel, panelX, panelY, panelW, panelH, 24);
 
     // Title (shrinks to stay inside the panel on narrow phones)
     this.popupTitle.x = centerX;
-    this.popupTitle.y = centerY - panelH * 0.28;
-    this.popupTitle.style.fontSize = Math.min(28, height * 0.09);
+    this.popupTitle.y = panelY + panelH * 0.19;
+    setFontSize(this.popupTitle, Math.min(28, height * 0.09));
     this.popupTitle.scale.set(1);
     const titleRoom = panelW - 28;
     if (this.popupTitle.width > titleRoom)
       this.popupTitle.scale.set(titleRoom / this.popupTitle.width);
 
     // Buttons
-    const btnScale = Math.min(0.7, height / 400);
+    const btnScale = Math.min(0.8, height / 450, (panelW - 40) / 220);
     this.popupStartBtn.scale.set(btnScale);
     this.popupStartBtn.x = centerX;
-    this.popupStartBtn.y = centerY + 5;
+    this.popupStartBtn.y = panelY + panelH * 0.49;
 
     this.popupCancelBtn.scale.set(btnScale);
     this.popupCancelBtn.x = centerX;
-    this.popupCancelBtn.y = centerY + panelH * 0.3;
+    this.popupCancelBtn.y = panelY + panelH * 0.77;
   }
 
-  update(_delta: number) {}
+  update(delta: number) {
+    // Gentle pulse on the green selection frames
+    this.ringClock += delta;
+    const alpha = 0.65 + 0.35 * Math.sin(this.ringClock * 0.1);
+    for (const ring of this.selectionRings) ring.alpha = alpha;
+  }
 }

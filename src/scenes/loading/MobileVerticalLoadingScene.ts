@@ -1,10 +1,11 @@
-import { PALETTE } from "../../config";
+import { UI } from "../../config";
+import { setFontSize } from "../../ui";
 import { BaseLoadingScene } from "./BaseLoadingScene";
 import { getGridRect, getStandardGridConfig } from "../../core";
 
 export class MobileVerticalLoadingScene extends BaseLoadingScene {
   public resize(width: number, height: number): void {
-    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
     const grid = getStandardGridConfig(width);
     const rect = getGridRect(1, 10, grid); // Span middle 10 columns
@@ -14,16 +15,21 @@ export class MobileVerticalLoadingScene extends BaseLoadingScene {
 
     this.loadingText.x = centerX;
     this.loadingText.y = centerY - 100;
-    this.loadingText.style.fontSize = 28;
+    setFontSize(this.loadingText, 28);
 
     this.barWidth = rect.width;
     this.barHeight = 24;
 
     this.progressBg.clear();
     this.progressBg
-      .roundRect(-this.barWidth / 2, -this.barHeight / 2, this.barWidth, this.barHeight, 8)
-      .fill({ color: PALETTE.BLACK, alpha: 0.3 })
-      .stroke({ color: PALETTE.WHITE, width: 2, alpha: 0.5 });
+      .roundRect(
+        -this.barWidth / 2,
+        -this.barHeight / 2,
+        this.barWidth,
+        this.barHeight,
+        this.barHeight / 2,
+      )
+      .fill({ color: UI.SURFACE });
 
     this.progressBg.x = centerX;
     this.progressBg.y = centerY;
@@ -33,7 +39,7 @@ export class MobileVerticalLoadingScene extends BaseLoadingScene {
 
     this.percentageText.x = centerX;
     this.percentageText.y = centerY + 50;
-    this.percentageText.style.fontSize = 20;
+    setFontSize(this.percentageText, 20);
 
     this.updateBar();
   }

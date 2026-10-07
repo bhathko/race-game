@@ -1,6 +1,6 @@
-import { Container, Graphics, Text, TextStyle } from "pixi.js";
-import { COLORS, PALETTE } from "../../config";
-import { LeaderboardSidebar, createColorPencilButton } from "../../ui";
+import { Container, Graphics, Text } from "pixi.js";
+import { COLORS } from "../../config";
+import { LeaderboardSidebar, createGameButton, textStyle, setFontSize } from "../../ui";
 import { LeaderboardPodium } from "../../ui/leaderboard/LeaderboardPodium";
 import {
   LIST_CARD_H,
@@ -20,6 +20,7 @@ const MIN_LIST_CARD_W = 170;
 const PANEL_TITLE_H = 50;
 const PODIUM_LIST_GAP = 15;
 const PANEL_BOTTOM_PAD = 10;
+const PODIUM_INSET = 16;
 
 export abstract class BaseResultScene extends Container {
   protected ctx: ResultContext;
@@ -40,26 +41,9 @@ export abstract class BaseResultScene extends Container {
 
     const winner = ctx.finishedRacers[0];
 
-    const titleStyle = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 56,
-      fontWeight: "900",
-      fontFamily: '"Fredoka One", "Comic Sans MS", "Segoe UI", sans-serif',
-      stroke: { color: COLORS.SIDEBAR_WOOD, width: 8 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 4,
-        blur: 4,
-        color: PALETTE.STR_BLACK,
-        distance: 8,
-      },
-      align: "center",
-    });
-
     this.winnerText = new Text({
-      text: `${winner.racerName}
-WINS!`,
-      style: titleStyle,
+      text: `${winner.racerName}\nwins!`,
+      style: textStyle("title", 56, { align: "center", lineHeight: 56 * 1.1 }),
     });
     this.winnerText.anchor.set(0.5);
     this.addChild(this.winnerText);
@@ -80,8 +64,8 @@ WINS!`,
     this.podium = new LeaderboardPodium(entries, 400, ctx.characterAnimations);
     this.addChild(this.podium);
 
-    this.restartBtn = createColorPencilButton({
-      label: "BACK TO MENU",
+    this.restartBtn = createGameButton({
+      label: "Back to menu",
       color: COLORS.BUTTON_PRIMARY,
       onClick: () => this.onRestart(),
       width: 320,
@@ -111,11 +95,10 @@ WINS!`,
    * Size the two-line "X WINS!" title from its measured height, centered at x,
    * starting at `top`. Returns its bottom edge.
    */
-  protected layoutWinnerTitle(x: number, top: number, fontSize: number, strokeWidth: number) {
+  protected layoutWinnerTitle(x: number, top: number, fontSize: number) {
     this.winnerText.anchor.set(0.5);
-    this.winnerText.style.align = "center";
-    this.winnerText.style.fontSize = fontSize;
-    this.winnerText.style.stroke = { color: 0x5d4037, width: strokeWidth };
+    setFontSize(this.winnerText, fontSize);
+    this.winnerText.style.lineHeight = fontSize * 1.1;
     this.winnerText.x = x;
     this.winnerText.y = top + this.winnerText.height / 2;
     return top + this.winnerText.height;
@@ -126,10 +109,6 @@ WINS!`,
    * Tries one column, then two, then a slightly smaller podium; hides the list only as a last resort.
    */
   protected layoutStackedRanking(panelX: number, panelW: number, panelTop: number, panelH: number) {
-    this.leaderboardSidebar.resize(panelW, panelH);
-    this.leaderboardSidebar.x = panelX;
-    this.leaderboardSidebar.y = panelTop;
-
     let columns = 0;
     let podiumScale = 1;
     if (this.listEntryCount > 0) {
@@ -144,6 +123,23 @@ WINS!`,
         }
       }
     }
+
+    // Shrink the panel to its content and center it in the available space (no half-empty panel)
+    if (columns > 0) {
+      const contentH =
+        PANEL_TITLE_H +
+        PODIUM_EXTENT * podiumScale +
+        PODIUM_LIST_GAP +
+        this.listHeight(columns) +
+        PANEL_BOTTOM_PAD * 2;
+      if (contentH < panelH) {
+        panelTop += (panelH - contentH) / 2;
+        panelH = contentH;
+      }
+    }
+    this.leaderboardSidebar.resize(panelW, panelH);
+    this.leaderboardSidebar.x = panelX;
+    this.leaderboardSidebar.y = panelTop;
 
     let podiumBaseY: number;
     if (columns > 0) {
@@ -160,9 +156,11 @@ WINS!`,
       podiumBaseY = PANEL_TITLE_H + Math.max(0, (room - extent) / 2) + extent;
     }
 
-    this.podium.resize(panelW);
+    // Inset the podium so its blocks don't touch the panel edges
+    const podiumW = panelW - PODIUM_INSET * 2;
+    this.podium.resize(podiumW);
     this.podium.scale.set(podiumScale);
-    this.podium.x = panelX + (panelW * (1 - podiumScale)) / 2;
+    this.podium.x = panelX + PODIUM_INSET + (podiumW * (1 - podiumScale)) / 2;
     this.podium.y = panelTop + podiumBaseY;
   }
 

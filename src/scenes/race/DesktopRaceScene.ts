@@ -31,11 +31,9 @@ export class DesktopRaceScene extends BaseRaceScene {
     sidebarBg
       .clear()
       .rect(this.gameViewW, 0, width - this.gameViewW, height)
-      .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
-
-    for (let x = this.gameViewW + 5; x < width; x += 15) {
-      sidebarBg.rect(x, 0, 2, height).fill({ color: COLORS.SIDEBAR_WOOD, alpha: 0.3 });
-    }
+      .fill({ color: COLORS.SIDEBAR_BG })
+      .rect(this.gameViewW, 0, 1, height)
+      .fill({ color: COLORS.SIDEBAR_WOOD });
 
     const lbContainer = this.uiManager.getLeaderboardContainer();
     lbContainer.x = sidebarRect.x;

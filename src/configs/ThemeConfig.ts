@@ -42,6 +42,44 @@ export const PALETTE = {
   STR_SUCCESS: "#4caf50",
 } as const;
 
+/**
+ * Controller palette: a black body with the four face-button colors as accents.
+ * Each accent has one job — blue confirms, red goes back, green frames the selection,
+ * pink marks a toggle that is on.
+ */
+export const UI = {
+  BG: 0x17181c,
+  SURFACE: 0x26282f,
+  SURFACE_ALT: 0x30333b,
+  LINE: 0x3b3f4a,
+  TEXT: 0xf3f4f6,
+  TEXT_MUTED: 0x9ba0ac,
+  /** Dark text for light grounds (the dirt track, podium blocks). */
+  INK: 0x17181c,
+  SHADOW: 0x000000,
+  WHITE: 0xffffff,
+  BLUE: 0x3d84e6,
+  RED: 0xe8434c,
+  GREEN: 0x3ccfae,
+  PINK: 0xdb5aa2,
+  /** Selection frame (green) and the tint behind a selected card. */
+  FRAME: 0x3ccfae,
+  FRAME_TINT: 0x1f3b37,
+  GOLD: 0xffc93c,
+  SILVER: 0xc7ced9,
+  BRONZE: 0xe6955a,
+} as const;
+
+/** Bundled UI font: M PLUS Rounded 1c (SIL Open Font License), Latin subset, two weights. */
+export const FONT = {
+  FAMILY: "M PLUS Rounded 1c",
+  STACK: '"M PLUS Rounded 1c", "Arial Rounded MT Bold", "Helvetica Neue", sans-serif',
+  FILES: [
+    { path: "assets/fonts/MPLUSRounded1c-Bold.ttf", weight: "700" },
+    { path: "assets/fonts/MPLUSRounded1c-ExtraBold.ttf", weight: "800" },
+  ],
+} as const;
+
 export const TRACK_COLORS = {
   CREAM: 0xfff9c4,
   DARK_BROWN: PALETTE.WOOD_PALE,
@@ -50,13 +88,13 @@ export const TRACK_COLORS = {
 
 export const COLORS = {
   BACKGROUND: PALETTE.GREY_DARK,
-  SIDEBAR_BG: PALETTE.WOOD_MID,
-  SIDEBAR_WOOD: PALETTE.WOOD_DARK,
+  SIDEBAR_BG: UI.BG,
+  SIDEBAR_WOOD: UI.LINE,
   SIDEBAR_STROKE: PALETTE.WOOD_PALE,
-  RANK_GOLD: PALETTE.GOLD,
-  RANK_SILVER: PALETTE.SILVER,
-  RANK_BRONZE: PALETTE.BRONZE,
-  RANK_DEFAULT: PALETTE.WOOD_PALE,
+  RANK_GOLD: UI.GOLD,
+  RANK_SILVER: UI.SILVER,
+  RANK_BRONZE: UI.BRONZE,
+  RANK_DEFAULT: UI.LINE,
   TRACK_LINES: PALETTE.GREY_LIGHT,
   START_LINE: 0x5555ff,
   FINISH_LINE: PALETTE.WHITE,
@@ -70,12 +108,12 @@ export const COLORS = {
   TEXT_SUBTLE: PALETTE.STR_GREY_SUBTLE,
   TEXT_HIGHLIGHT: PALETTE.STR_SUCCESS,
   TEXT_MARKER: PALETTE.STR_WOOD_EXTRA_PALE,
-  // Update buttons to cute palette
-  BUTTON_PRIMARY: PALETTE.CUTE_ORANGE,
-  BUTTON_NEUTRAL: PALETTE.CUTE_BLUE,
-  BUTTON_WARN: PALETTE.CUTE_YELLOW,
-  BUTTON_DANGER: PALETTE.CUTE_PINK,
-  BUTTON_SUCCESS: PALETTE.CUTE_MINT,
+  // Controller buttons: blue confirms, red goes back, pink = toggle on, dark grey for the rest
+  BUTTON_PRIMARY: UI.BLUE,
+  BUTTON_NEUTRAL: UI.SURFACE,
+  BUTTON_WARN: UI.PINK,
+  BUTTON_DANGER: UI.RED,
+  BUTTON_SUCCESS: UI.BLUE,
   BUTTON_TEXT: PALETTE.STR_WHITE,
   RACERS: [0xff7043, 0x66bb6a, 0x42a5f5, 0xab47bc, 0xffee58, 0x26c6da, 0xffa726, 0xec407a],
 } as const;

@@ -1,7 +1,8 @@
 import { BaseCharacterSelectionScene } from "./BaseCharacterSelectionScene";
-import { RACER } from "../../config";
+import { RACER, UI } from "../../config";
 import type { SelectionContext } from "../../core";
 import { getStandardGridConfig } from "../../core";
+import { setFontSize } from "../../ui";
 
 /** Phone width the portrait layout was designed for. */
 const DESIGN_WIDTH = 390;
@@ -53,7 +54,7 @@ export class MobileVerticalSelectionScene extends BaseCharacterSelectionScene {
     const centerX = width / 2;
     const grid = getStandardGridConfig(width);
 
-    this.bg.clear().rect(0, 0, width, height).fill({ color: 0x81c784 });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
     // The layout below is designed for a ~390px-wide phone ("design units").
     // Larger portrait screens (e.g. upright tablets) scale it up to fill the space.
@@ -95,7 +96,7 @@ export class MobileVerticalSelectionScene extends BaseCharacterSelectionScene {
     // Title below back button
     this.title.x = centerX;
     this.title.y = titleY * uiScale;
-    this.title.style.fontSize = 22 * uiScale;
+    setFontSize(this.title, 22 * uiScale);
 
     // ─── Character Selection Grid ───
     this.gridContainer.scale.set(gridScale * uiScale);
@@ -117,7 +118,7 @@ export class MobileVerticalSelectionScene extends BaseCharacterSelectionScene {
     // ─── Status Text ───
     this.statusText.x = centerX;
     this.statusText.y = statusY * uiScale;
-    this.statusText.style.fontSize = 16 * uiScale;
+    setFontSize(this.statusText, 16 * uiScale);
 
     // ─── Selected Lineup ───
     this.lineupContainer.scale.set(uiScale);

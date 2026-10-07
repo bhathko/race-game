@@ -1,5 +1,5 @@
 import { BaseResultScene } from "./BaseResultScene";
-import { PALETTE } from "../../config";
+import { UI } from "../../config";
 import type { ResultContext } from "../../core";
 import { getGridRect, getStandardGridConfig } from "../../core";
 
@@ -15,7 +15,7 @@ export class MobileHorizontalResultScene extends BaseResultScene {
     const leftRect = getGridRect(0, 6, grid);
     const rightRect = getGridRect(6, 6, grid);
 
-    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
     const sidebarH = height - PANEL_MARGIN * 2;
 
@@ -37,12 +37,7 @@ export class MobileHorizontalResultScene extends BaseResultScene {
     const columnX = canFitList ? leftRect.x + leftRect.width / 2 : width / 2;
     const columnW = canFitList ? leftRect.width : width;
 
-    this.layoutWinnerTitle(
-      columnX,
-      8,
-      Math.min(canFitList ? 32 : 36, height * 0.09),
-      Math.min(5, height * 0.018),
-    );
+    this.layoutWinnerTitle(columnX, 8, Math.min(canFitList ? 32 : 36, height * 0.09));
 
     const podiumScale = canFitList ? 0.75 : 0.85;
     const podiumW = Math.min(columnW * (canFitList ? 0.9 : 0.7), canFitList ? 280 : 400);

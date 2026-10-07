@@ -7,7 +7,7 @@ import {
   LoadingScene,
 } from "../scenes";
 import { Racer } from "../entities";
-import { CHARACTERS, ITEMS } from "../config";
+import { CHARACTERS, ITEMS, FONT } from "../config";
 import type { Scene } from "./Scene";
 import type { RacerAnimations, GroundTextures, GrassTextures } from "./types";
 
@@ -42,6 +42,17 @@ export class Game {
   }
 
   async start() {
+    // The UI font must be ready before any text is created, or Pixi caches the fallback font
+    try {
+      await Promise.all(
+        FONT.FILES.map((f) =>
+          Assets.load({ src: f.path, data: { family: FONT.FAMILY, weights: [f.weight] } }),
+        ),
+      );
+    } catch (e) {
+      console.warn("Failed to load UI font, using fallback", e);
+    }
+
     const loadingScene = new LoadingScene();
     this.setScene(loadingScene);
 

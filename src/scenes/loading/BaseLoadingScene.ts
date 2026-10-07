@@ -1,5 +1,6 @@
-import { Container, Graphics, Text, TextStyle } from "pixi.js";
-import { COLORS, PALETTE } from "../../config";
+import { Container, Graphics, Text } from "pixi.js";
+import { UI } from "../../config";
+import { textStyle } from "../../ui";
 
 export abstract class BaseLoadingScene extends Container {
   protected bg: Graphics;
@@ -23,28 +24,11 @@ export abstract class BaseLoadingScene extends Container {
     this.progressBar = new Graphics();
     this.addChild(this.progressBar);
 
-    const textStyle = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 32,
-      fontWeight: "900",
-      stroke: { color: COLORS.SIDEBAR_WOOD, width: 6 },
-      dropShadow: {
-        alpha: 0.5,
-        angle: Math.PI / 4,
-        blur: 4,
-        color: PALETTE.STR_BLACK,
-        distance: 4,
-      },
-    });
-
-    this.loadingText = new Text({ text: "LOADING ASSETS...", style: textStyle });
+    this.loadingText = new Text({ text: "Loading…", style: textStyle("heading", 32) });
     this.loadingText.anchor.set(0.5);
     this.addChild(this.loadingText);
 
-    this.percentageText = new Text({
-      text: "0%",
-      style: { ...textStyle, fontSize: 24 },
-    });
+    this.percentageText = new Text({ text: "0%", style: textStyle("label", 22) });
     this.percentageText.anchor.set(0.5);
     this.addChild(this.percentageText);
   }
@@ -56,18 +40,14 @@ export abstract class BaseLoadingScene extends Container {
 
   protected updateBar() {
     const padding = 4;
-    const innerWidth = (this.barWidth - padding * 2) * this.progress;
+    const innerH = this.barHeight - padding * 2;
+    // Keep the fill at least as wide as it is tall so the pill ends stay round
+    const innerWidth = Math.max(innerH, (this.barWidth - padding * 2) * this.progress);
 
     this.progressBar.clear();
     this.progressBar
-      .roundRect(
-        -this.barWidth / 2 + padding,
-        -this.barHeight / 2 + padding,
-        innerWidth,
-        this.barHeight - padding * 2,
-        4,
-      )
-      .fill({ color: COLORS.STAMINA_GOOD });
+      .roundRect(-this.barWidth / 2 + padding, -innerH / 2, innerWidth, innerH, innerH / 2)
+      .fill({ color: UI.BLUE });
 
     this.percentageText.text = `${Math.round(this.progress * 100)}%`;
   }

@@ -1,5 +1,5 @@
 import { BaseResultScene } from "./BaseResultScene";
-import { PALETTE } from "../../config";
+import { UI } from "../../config";
 import type { ResultContext } from "../../core";
 import { getGridRect, getStandardGridConfig } from "../../core";
 
@@ -12,14 +12,13 @@ export class MobileVerticalResultScene extends BaseResultScene {
     const grid = getStandardGridConfig(width);
     const rankingRect = getGridRect(1, 10, grid); // 10 columns
 
-    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
     // ─── Winner Title ───
     const titleBottom = this.layoutWinnerTitle(
       centerX,
       Math.min(24, height * 0.03),
       Math.min(42, width * 0.1, height * 0.055),
-      Math.min(6, width * 0.014),
     );
 
     // ─── Restart Button ───

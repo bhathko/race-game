@@ -1,7 +1,7 @@
-import { Container, Text, TextStyle } from "pixi.js";
+import { Container, Text } from "pixi.js";
 import { Hole } from "../../entities";
-import { createColorPencilButton } from "../../ui";
-import { COLORS, PALETTE, TRACK } from "../../config";
+import { createGameButton, textStyle } from "../../ui";
+import { COLORS, TRACK } from "../../config";
 import type { TrackLayoutData } from "../../core";
 import type { TrackManager } from "./TrackManager";
 
@@ -89,9 +89,9 @@ export class FunnyModeManager {
   }
 
   private createScrollButtons() {
-    this.scrollLeftBtn = createColorPencilButton({
+    this.scrollLeftBtn = createGameButton({
       label: "<",
-      color: COLORS.BUTTON_PRIMARY,
+      color: COLORS.BUTTON_NEUTRAL,
       onClick: () => this.handleScroll("left"),
       width: 60,
       height: 60,
@@ -100,9 +100,9 @@ export class FunnyModeManager {
     this.scrollLeftBtn.x = 50;
     this.ui.addChild(this.scrollLeftBtn);
 
-    this.scrollRightBtn = createColorPencilButton({
+    this.scrollRightBtn = createGameButton({
       label: ">",
-      color: COLORS.BUTTON_PRIMARY,
+      color: COLORS.BUTTON_NEUTRAL,
       onClick: () => this.handleScroll("right"),
       width: 60,
       height: 60,
@@ -115,14 +115,7 @@ export class FunnyModeManager {
     // Progress (startIndex / holes) comes from the constructor config, so a resumed setup keeps it
     this.setupPhase = true;
 
-    const style = new TextStyle({
-      fill: PALETTE.STR_WHITE,
-      fontSize: 36,
-      fontWeight: "900",
-      stroke: { color: PALETTE.STR_BLACK, width: 6 },
-      dropShadow: { alpha: 0.5, blur: 4, distance: 4 },
-    });
-    this.setupInstructionText = new Text({ text: "", style });
+    this.setupInstructionText = new Text({ text: "", style: textStyle("overlay", 34) });
     this.setupInstructionText.anchor.set(0.5);
     this.setupInstructionText.x = this.layout.viewWidth / 2;
     this.setupInstructionText.y = 60;
@@ -135,8 +128,8 @@ export class FunnyModeManager {
     this.world.on("pointerdown", this.handlePointerDown, this);
     this.world.on("pointermove", this.handlePointerMove, this);
 
-    this.skipBtn = createColorPencilButton({
-      label: "SKIP",
+    this.skipBtn = createGameButton({
+      label: "Skip",
       color: COLORS.BUTTON_NEUTRAL,
       onClick: () => this.handleSkip(),
       width: 140,
@@ -147,8 +140,8 @@ export class FunnyModeManager {
     this.skipBtn.y = 130;
     this.ui.addChild(this.skipBtn);
 
-    this.startMatchBtn = createColorPencilButton({
-      label: "START MATCH",
+    this.startMatchBtn = createGameButton({
+      label: "Start match",
       color: COLORS.BUTTON_SUCCESS,
       onClick: () => this.finish(),
       width: 280,
@@ -182,11 +175,9 @@ export class FunnyModeManager {
   private updateInstruction() {
     if (!this.setupInstructionText) return;
     if (this.currentSetupPlayerIndex < this.layout.racerCount) {
-      this.setupInstructionText.text = `Player ${this.currentSetupPlayerIndex + 1}: Place a Trap!`;
-      this.setupInstructionText.style.fill = PALETTE.STR_WHITE;
+      this.setupInstructionText.text = `Player ${this.currentSetupPlayerIndex + 1}: place a trap!`;
     } else {
-      this.setupInstructionText.text = "All Traps Placed!";
-      this.setupInstructionText.style.fill = PALETTE.STR_WHITE;
+      this.setupInstructionText.text = "All traps placed!";
     }
     this.fitInstruction();
   }

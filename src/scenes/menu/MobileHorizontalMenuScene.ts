@@ -1,62 +1,38 @@
 import { BaseMenuScene } from "./BaseMenuScene";
-import { PALETTE } from "../../config";
+import { UI } from "../../config";
 import type { MenuContext } from "../../core";
-import { getGridRect, getStandardGridConfig } from "../../core";
+import { getStandardGridConfig } from "../../core";
+
+const CARD_GAP = 14;
 
 export class MobileHorizontalMenuScene extends BaseMenuScene {
   constructor(ctx: MenuContext) {
     super(ctx);
   }
   public resize(width: number, height: number) {
-    const grid = getStandardGridConfig(width);
-    const leftCol = getGridRect(0, 6, grid);
-    const rightCol = getGridRect(6, 6, grid);
-
-    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
-
-    this.title.x = width / 2;
-    this.title.y = 40;
-    this.title.style.fontSize = 32;
-    this.title.scale.set(1);
-
-    const maxTitleWidth = width - 2 * grid.margin;
-    if (this.title.width > maxTitleWidth) {
-      const scale = maxTitleWidth / this.title.width;
-      this.title.scale.set(scale);
-    }
-
     const centerX = width / 2;
-    const leftX = leftCol.x + leftCol.width / 2;
-    const rightX = rightCol.x + rightCol.width / 2;
+    const grid = getStandardGridConfig(width);
 
-    // Split count and distance into two columns
-    this.countLabel.x = leftX;
-    this.countLabel.y = height * 0.3;
-    this.countLabel.scale.set(0.8);
-    this.countValue.x = leftX;
-    this.countValue.y = height * 0.48;
-    this.countValue.scale.set(0.6);
-    this.countStepper.x = leftX;
-    this.countStepper.y = height * 0.48;
-    this.countStepper.scale.set(0.55);
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
-    this.distLabel.x = rightX;
-    this.distLabel.y = height * 0.3;
-    this.distLabel.scale.set(0.8);
-    this.distValue.x = rightX;
-    this.distValue.y = height * 0.48;
-    this.distValue.scale.set(0.5); // "200m" needs more scale-down than "2"
-    this.distStepper.x = rightX;
-    this.distStepper.y = height * 0.48;
-    this.distStepper.scale.set(0.55);
+    this.placeTitle(centerX, height * 0.11, Math.min(34, height * 0.09), width - grid.margin * 2);
 
-    this.funnyBtn.x = centerX;
-    this.funnyBtn.y = height * 0.72;
-    this.funnyBtn.scale.set(0.7);
+    // Three settings cards in a row
+    const cardW = Math.min(240, (width - grid.margin * 2 - CARD_GAP * 2) / 3);
+    const cardH = Math.min(150, height * 0.42);
+    const cardY = height * 0.46;
+    this.layoutCards(
+      [-1, 0, 1].map((k) => ({
+        cx: centerX + k * (cardW + CARD_GAP),
+        cy: cardY,
+        w: cardW,
+        h: cardH,
+      })),
+    );
 
     this.startBtn.x = centerX;
-    this.startBtn.y = height - 35;
-    this.startBtn.scale.set(0.65);
+    this.startBtn.y = height - Math.max(34, height * 0.11);
+    this.startBtn.scale.set(Math.min(0.8, height / 470));
 
     this.versionText.x = width - grid.margin;
     this.versionText.y = height - grid.margin / 2;

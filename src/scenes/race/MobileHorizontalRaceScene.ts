@@ -38,11 +38,13 @@ export class MobileHorizontalRaceScene extends BaseRaceScene {
     sidebarBg
       .clear()
       .rect(this.gameViewW, 0, sidebarW, height)
-      .fill({ color: COLORS.SIDEBAR_BG, alpha: 0.95 });
+      .fill({ color: COLORS.SIDEBAR_BG })
+      .rect(this.gameViewW, 0, 1, height)
+      .fill({ color: COLORS.SIDEBAR_WOOD });
 
     // The grass strips are too thin for the distance counter here, so it heads the sidebar
     const distanceFont = Math.min(28, height * 0.08);
-    this.placeDistanceText(this.gameViewW + sidebarW / 2, SIDEBAR_PAD, distanceFont);
+    this.placeDistanceText(this.gameViewW + sidebarW / 2, SIDEBAR_PAD, distanceFont, true);
     this.lbTop = SIDEBAR_PAD + distanceFont * 1.3 + SIDEBAR_PAD;
 
     const lbContainer = this.uiManager.getLeaderboardContainer();

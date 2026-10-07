@@ -1,7 +1,9 @@
 import { BaseMenuScene } from "./BaseMenuScene";
-import { PALETTE } from "../../config";
+import { UI } from "../../config";
 import type { MenuContext } from "../../core";
 import { getStandardGridConfig } from "../../core";
+
+const CARD_GAP = 24;
 
 export class DesktopMenuScene extends BaseMenuScene {
   constructor(ctx: MenuContext) {
@@ -11,35 +13,25 @@ export class DesktopMenuScene extends BaseMenuScene {
     const centerX = width / 2;
     const grid = getStandardGridConfig(width);
 
-    this.bg.clear().rect(0, 0, width, height).fill({ color: PALETTE.GRASS_LIGHT });
+    this.bg.clear().rect(0, 0, width, height).fill({ color: UI.BG });
 
-    this.title.x = centerX;
-    this.title.y = height * 0.15;
-    this.title.style.fontSize = 64;
+    this.placeTitle(centerX, height * 0.18, Math.min(64, height * 0.09), width - grid.margin * 2);
 
-    const labelY1 = height * 0.28;
-    const valueY1 = height * 0.38;
-    this.countLabel.x = centerX;
-    this.countLabel.y = labelY1;
-    this.countValue.x = centerX;
-    this.countValue.y = valueY1;
-    this.countStepper.x = centerX;
-    this.countStepper.y = valueY1;
-
-    const labelY2 = height * 0.5;
-    const valueY2 = height * 0.6;
-    this.distLabel.x = centerX;
-    this.distLabel.y = labelY2;
-    this.distValue.x = centerX;
-    this.distValue.y = valueY2;
-    this.distStepper.x = centerX;
-    this.distStepper.y = valueY2;
-
-    this.funnyBtn.x = centerX;
-    this.funnyBtn.y = height * 0.73;
+    // Three settings cards in a row
+    const cardW = Math.min(300, (width - grid.margin * 2 - CARD_GAP * 2) / 3);
+    const cardH = Math.min(220, height * 0.32);
+    const cardY = height * 0.47;
+    this.layoutCards(
+      [-1, 0, 1].map((k) => ({
+        cx: centerX + k * (cardW + CARD_GAP),
+        cy: cardY,
+        w: cardW,
+        h: cardH,
+      })),
+    );
 
     this.startBtn.x = centerX;
-    this.startBtn.y = height * 0.86;
+    this.startBtn.y = Math.min(height * 0.8, cardY + cardH / 2 + 100);
     this.startBtn.scale.set(1.0);
 
     this.versionText.x = width - grid.margin;

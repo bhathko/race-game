@@ -3,7 +3,8 @@ import { sound } from "@pixi/sound";
 import type { IMediaInstance } from "@pixi/sound";
 import { Racer, Hole } from "../../entities";
 import { createRacers } from "../../factories";
-import { RACER, TRACK, GAMEPLAY, VISUALS, COLORS } from "../../config";
+import { RACER, TRACK, GAMEPLAY, VISUALS, UI } from "../../config";
+import { setFontSize } from "../../ui";
 import type {
   Scene,
   RaceContext,
@@ -232,14 +233,18 @@ export abstract class BaseRaceScene extends Container implements Scene {
     this.trackManager.repositionRacers(this.racers);
   }
 
-  /** Position and size the "remaining distance" counter. */
-  protected placeDistanceText(x: number, y: number, fontSize: number) {
+  /**
+   * Position and size the "remaining distance" counter.
+   * @param onPanel Plain text for the sidebar panel instead of shadowed white text over the track.
+   */
+  protected placeDistanceText(x: number, y: number, fontSize: number, onPanel = false) {
     const text = this.uiManager.getRemainingDistanceText();
     if (!text) return;
     text.x = x;
     text.y = y;
-    text.style.fontSize = fontSize;
-    text.style.stroke = { color: COLORS.TEXT_MARKER, width: Math.max(3, fontSize / 10) };
+    setFontSize(text, fontSize);
+    text.style.fill = onPanel ? UI.TEXT : UI.WHITE;
+    if (onPanel) text.style.dropShadow = false;
   }
 
   protected setupTracks(layout: TrackLayoutData) {

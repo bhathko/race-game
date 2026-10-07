@@ -1,4 +1,4 @@
-import { Container, Text, TextStyle, AnimatedSprite } from "pixi.js";
+import { Container, Text, AnimatedSprite } from "pixi.js";
 import { RACER, GAMEPLAY } from "../config";
 import type { RacerAnimations } from "../core";
 import type { StrategyBehavior, RacerStrategy } from "../strategies";
@@ -7,6 +7,7 @@ import { RacerDrama } from "./racer/RacerDrama";
 import { RacerMovement } from "./racer/RacerMovement";
 import { RacerEffects } from "./racer/RacerEffects";
 import { calculatePaceModifiers } from "./racer/ComebackEngine";
+import { textStyle } from "../ui/TextStyles";
 
 export type { RacerAnimations, RacerStrategy };
 
@@ -111,15 +112,8 @@ export class Racer extends Container {
     this.addChild(this.sprite);
     this.addChild(this.fx.front);
 
-    this.labelText = new Text({
-      text: name,
-      style: new TextStyle({
-        fill: "#ffffff",
-        fontSize: 13,
-        fontWeight: "bold",
-        dropShadow: { alpha: 0.5, angle: Math.PI / 6, blur: 2, color: "#000000", distance: 2 },
-      }),
-    });
+    // Dark label: the racer's name sits on the light dirt track
+    this.labelText = new Text({ text: name, style: textStyle("ink", 13) });
     this.labelText.anchor.set(0.5);
     this.labelText.y = RACER.LABEL_Y;
     this.addChild(this.labelText);

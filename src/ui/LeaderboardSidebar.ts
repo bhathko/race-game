@@ -1,10 +1,15 @@
-import { Container, Graphics, Text, TextStyle, Sprite } from "pixi.js";
-import { PALETTE, ITEMS } from "../config";
+import { Container, Graphics, Text, Sprite } from "pixi.js";
+import { ITEMS, UI } from "../config";
+import { textStyle } from "./TextStyles";
 import type { RacerAnimations } from "../core";
 import { LeaderboardList } from "./leaderboard/LeaderboardList";
 import type { RankEntry } from "./leaderboard/types";
 
 export type { RankEntry };
+
+/** Height of the header area holding the "Ranking" title (divider line below it). */
+const HEADER_H = 58;
+const PANEL_RADIUS = 24;
 
 export class LeaderboardSidebar extends Container {
   private bg: Graphics;
@@ -41,19 +46,10 @@ export class LeaderboardSidebar extends Container {
 
     this.trophySprite = Sprite.from(ITEMS.trophy.path);
     this.trophySprite.anchor.set(0.5);
-    this.trophySprite.scale.set(1.5);
+    this.trophySprite.scale.set(1.4);
     this.titleContainer.addChild(this.trophySprite);
 
-    this.titleText = new Text({
-      text: "Ranking",
-      style: new TextStyle({
-        fill: PALETTE.STR_WHITE,
-        fontSize: 32,
-        fontWeight: "900",
-        letterSpacing: 2,
-        stroke: { color: PALETTE.STR_BLACK, width: 6, join: "round" },
-      }),
-    });
+    this.titleText = new Text({ text: "Ranking", style: textStyle("heading", 28) });
     this.titleText.anchor.set(0, 0.5);
     this.titleContainer.addChild(this.titleText);
 
@@ -82,29 +78,21 @@ export class LeaderboardSidebar extends Container {
   }
 
   private drawBackground() {
-    // Drop shadow
+    const w = this.sidebarW;
+    const h = this.sidebarH;
+    // Soft shadow
+    for (let i = 4; i >= 1; i--) {
+      this.bg
+        .roundRect(-i, i * 1.5, w + i * 2, h + i, PANEL_RADIUS + i)
+        .fill({ color: UI.SHADOW, alpha: 0.04 });
+    }
     this.bg
-      .roundRect(4, 6, this.sidebarW, this.sidebarH, 16)
-      .fill({ color: PALETTE.CHUNKY_SHADOW });
-    this.bg
-      .roundRect(4, 6, this.sidebarW, this.sidebarH, 16)
-      .stroke({ color: PALETTE.STR_BLACK, width: 3, alpha: 0.5 });
-
-    // Main paper-like background
-    this.bg
-      .roundRect(0, 0, this.sidebarW, this.sidebarH, 16)
-      .fill({ color: 0xffffff, alpha: 0.85 });
-
-    // Sketchy outlines
-    this.bg
-      .roundRect(0, 0, this.sidebarW, this.sidebarH, 16)
-      .stroke({ color: PALETTE.STR_BLACK, width: 4, join: "round" });
-    this.bg
-      .roundRect(-1, 2, this.sidebarW + 2, this.sidebarH - 1, 16)
-      .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.5, join: "round" });
-    this.bg
-      .roundRect(2, -1, this.sidebarW - 3, this.sidebarH + 2, 16)
-      .stroke({ color: PALETTE.STR_BLACK, width: 2, alpha: 0.3, join: "round" });
+      .roundRect(0, 0, w, h, PANEL_RADIUS)
+      .fill({ color: UI.SURFACE })
+      .stroke({ color: UI.LINE, width: 2 })
+      // Divider under the header
+      .rect(20, HEADER_H, w - 40, 2)
+      .fill({ color: UI.LINE });
   }
 
   private layout() {
@@ -112,7 +100,7 @@ export class LeaderboardSidebar extends Container {
     const startX = (this.sidebarW - totalW) / 2;
     this.trophySprite.x = startX + (this.trophySprite.width * 1.5) / 2;
     this.titleText.x = startX + this.trophySprite.width * 1.5 + 10;
-    this.titleContainer.y = 35;
+    this.titleContainer.y = HEADER_H / 2;
 
     if (this.list) {
       this.list.x = 18;

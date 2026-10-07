@@ -72,7 +72,8 @@ src/
 │
 ├── ui/                     Reusable UI Components
 │   ├── index.ts            Barrel for UI
-│   ├── WoodenButton.ts     Themed button factory
+│   ├── GameButton.ts       Pill button (green hover frame)
+│   ├── TextStyles.ts       Shared text styles (title / heading / body / label / overlay)
 │   └── LeaderboardSidebar.ts Podium-style leaderboard
 │
 └── ...

@@ -1,5 +1,6 @@
-import { Container, Graphics, Text, TextStyle, AnimatedSprite } from "pixi.js";
-import { PALETTE } from "../../config";
+import { Container, Graphics, Text, AnimatedSprite } from "pixi.js";
+import { PALETTE, UI } from "../../config";
+import { textStyle } from "../TextStyles";
 import type { RacerAnimations } from "../../core";
 import type { RankEntry } from "./types";
 
@@ -31,12 +32,7 @@ export class LeaderboardList extends Container {
       card.y = row * (cardH + LIST_GAP);
       this.addChild(card);
 
-      const body = new Graphics()
-        .roundRect(0, 0, cardW, cardH, 8)
-        .fill({ color: 0xffffff, alpha: 0.95 })
-        .stroke({ color: PALETTE.STR_BLACK, width: 3, join: "round" })
-        .roundRect(1, -1, cardW - 2, cardH + 1, 8)
-        .stroke({ color: PALETTE.STR_BLACK, width: 1.5, alpha: 0.5, join: "round" });
+      const body = new Graphics().roundRect(0, 0, cardW, cardH, 12).fill({ color: UI.SURFACE_ALT });
       card.addChild(body);
 
       const icon = this.createIcon(entry.character, animations);
@@ -49,11 +45,7 @@ export class LeaderboardList extends Container {
         entry.rank === 1 ? "st" : entry.rank === 2 ? "nd" : entry.rank === 3 ? "rd" : "th";
       const text = new Text({
         text: `${entry.rank}${suffix}: ${entry.name}`,
-        style: new TextStyle({
-          fill: PALETTE.STR_BLACK,
-          fontSize: 14,
-          fontWeight: "900",
-        }),
+        style: textStyle("body", 15),
       });
       text.anchor.set(0, 0.5);
       text.x = 45;

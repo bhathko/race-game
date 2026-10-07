@@ -47,8 +47,6 @@ export class MenuScene extends Container implements Scene {
 
     this.currentMode = mode;
     this.context.initialSettings = { count: this.selectedCount, distance: this.selectedDistance };
-    // We need to pass isFunnyMode to the new layout somehow?
-    // BaseMenuScene defaults to false. We might need to set it after creation.
 
     switch (mode) {
       case LayoutMode.Desktop:

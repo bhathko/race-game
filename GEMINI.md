@@ -45,7 +45,7 @@ Each racer receives a `StrategyBehavior` object controlling stat multipliers, sp
 ## Key Features
 
 - **Nature-Themed Aesthetic:** Dirt racetrack with grass edges and animated pixel-art trees.
-- **Hand-Crafted UI:** "Color Pencil Sketch" aesthetic featuring semi-transparent white/gray paper backgrounds, thick jittered (hand-drawn) black outlines, and sketchy drop shadows instead of primitive shapes.
+- **Controller-Palette UI:** Black screens with dark rounded cards; pill `GameButton`s with face-button color roles (blue confirm, red back, green selection frame, pink toggle on); shared `TextStyles` using the bundled M PLUS Rounded 1c font (SIL OFL, Latin subset). Palette in `UI` (`ThemeConfig.ts`).
 - **Loading Progress:** Real-time visual feedback with specialized responsive layouts for every orientation.
 - **Robust Responsiveness:** Seamless layout switching between desktop and mobile orientations (including specialized Landscape split-layouts). Result scenes lay out the 4th+ ranking list in one or two columns (shrinking the podium slightly if needed) and only hide it as a last resort. Upright tablets use the vertical layouts.
 - **Selection Confirmation Popup:** When all racers are selected, a centered modal overlay appears with START RACE and CANCEL buttons. CANCEL deselects the last character. In landscape mobile, this replaces the inline start button to save space.
